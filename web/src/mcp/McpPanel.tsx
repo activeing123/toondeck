@@ -77,11 +77,7 @@ export default function McpPanel() {
     setHealthErr(null);
     checkHealth()
       .then((b) => setHealth(b.results))
-      .catch(() =>
-        setHealthErr(
-          "health check failed — 体检失败（超时或引擎无响应，35s 上限），可直接重试",
-        ),
-      )
+      .catch(() => setHealthErr(t("mcp.healthFailed")))
       .finally(() => setChecking(false));
   };
 
@@ -144,14 +140,14 @@ export default function McpPanel() {
       <TokenCard ts={state.token_savings} />
 
       <div className="flex flex-wrap items-center gap-2 text-xs">
-        <span className="text-deck-muted">接管来源:</span>
+        <span className="text-deck-muted">{t("mcp.takeoverSources")}</span>
         {Object.entries(sourceCount).map(([src, n]) => (
           <span key={src} className="rounded-full border border-deck-line px-2.5 py-1">
             <b>{src}</b> · {n}
           </span>
         ))}
         <span className="ml-auto text-deck-muted">
-          共接管 {state.servers.reduce((n, s) => n + s.tool_total, 0)} 个工具
+          {t("mcp.managedTools", { n: state.servers.reduce((n, s) => n + s.tool_total, 0) })}
         </span>
       </div>
 

@@ -60,9 +60,41 @@ const DICT: Record<string, { en: string; zh: string }> = {
   "vault.delete": { en: "delete", zh: "删除" },
   "status.engine": { en: "engine", zh: "引擎" },
   "status.offline": { en: "offline", zh: "离线" },
+  // UX-C1: fleet dashboard + panel chrome
+  "fleet.overview": { en: "🚀 mcptoon fleet overview", zh: "🚀 mcptoon 舰队总览" },
+  "fleet.capabilities": { en: "capabilities, all managed by mcptoon", zh: "个能力，全部由 mcptoon 统一管理" },
+  "fleet.probing": { en: "probing everything…", zh: "全量实探中…" },
+  "fleet.summary": {
+    en: "{tools} MCP tools + {skills} skills + {agents} CLI agents",
+    zh: "{tools} MCP 工具 + {skills} 技能 + {agents} CLI agents",
+  },
+  "fleet.mcpTools": { en: "MCP tools (live-probed)", zh: "MCP 工具（全量实探）" },
+  "fleet.adoptedSub": { en: "{a} adopted · {d} found ready to adopt", zh: "{a} 已接管 · {d} 发现待收编" },
+  "fleet.firstScan": { en: "first full scan takes ~10-30s", zh: "首次全量扫描约 10-30 秒" },
+  "fleet.skills": { en: "skills (gbrain/jiyi & more)", zh: "技能（含 gbrain/jiyi 等）" },
+  "fleet.skillsSub": { en: "{total} in total · views {ok}/{views} healthy", zh: "{total} 总数 · 视图 {ok}/{views} 健康" },
+  "fleet.launchable": { en: "{n} launchable in one click", zh: "{n} 个可一键启动" },
+  "fleet.bySource": { en: "tool sources:", zh: "工具来源：" },
+  "fleet.tools": { en: "tools", zh: "工具" },
+  "fleet.sourcesScanned": { en: "sources ({n} config sources scanned):", zh: "来源（{n} 个配置源已扫）：" },
+  "fleet.sot": { en: "single source of truth: {path}", zh: "单一真源: {path}" },
+  // UX-C2: three-state component
+  "state.unreachable": { en: "engine unreachable — check the service and retry", zh: "引擎无响应——请检查服务后重试" },
+  "state.retry": { en: "retry", zh: "重试" },
+  // UX-C1: McpPanel chrome
+  "mcp.takeoverSources": { en: "takeover sources:", zh: "接管来源:" },
+  "mcp.managedTools": { en: "{n} tools under management", zh: "共接管 {n} 个工具" },
+  "mcp.healthFailed": {
+    en: "health check failed — 体检失败（超时或引擎无响应，35s 上限），可直接重试",
+    zh: "体检失败（超时或引擎无响应，35s 上限），可直接重试 — health check failed",
+  },
 };
 
-type I18nCtx = { lang: Lang; setLang: (l: Lang) => void; t: (k: string) => string };
+type I18nCtx = {
+  lang: Lang;
+  setLang: (l: Lang) => void;
+  t: (k: string, vars?: Record<string, string | number>) => string;
+};
 
 const Ctx = createContext<I18nCtx>({ lang: "en", setLang: () => {}, t: (k) => k });
 
@@ -71,7 +103,15 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     const saved = localStorage.getItem("toondeck.lang");
     return saved === "zh" || saved === "en" ? saved : "en";
   });
-  const t = (k: string) => DICT[k]?.[lang] ?? k;
+  const t = (k: string, vars?: Record<string, string | number>) => {
+    let s: string = DICT[k]?.[lang] ?? k;
+    if (vars) {
+      for (const [name, value] of Object.entries(vars)) {
+        s = s.replaceAll(`{${name}}`, String(value));
+      }
+    }
+    return s;
+  };
   const wrap = (l: Lang) => {
     localStorage.setItem("toondeck.lang", l);
     setLang(l);

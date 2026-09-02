@@ -100,7 +100,11 @@ describe("UX-A3: probe resilience", () => {
       return baseMock()(url);
     });
     vi.stubGlobal("fetch", fetchMock);
-    render(<McpPanel />);
+    render(
+      <I18nProvider>
+        <McpPanel />
+      </I18nProvider>,
+    );
     const btn = await screen.findByRole("button", { name: /run health check/ });
     fireEvent.click(btn);
     expect(btn).toBeDisabled(); // probing…
@@ -124,7 +128,11 @@ describe("UX-A3: probe resilience", () => {
         },
       }),
     );
-    render(<McpPanel />);
+    render(
+      <I18nProvider>
+        <McpPanel />
+      </I18nProvider>,
+    );
     await userEvent.click(await screen.findByRole("button", { name: /run health check/ }));
     expect(await screen.findByText(/1 ok · 1 timeout · 1 error/)).toBeInTheDocument();
   });
