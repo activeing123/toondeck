@@ -51,6 +51,13 @@ class SourceWatcher:
             self.error = str(e)
 
     def start(self) -> None:
+        # watchfiles raises on a nonexistent path — a fresh tmp home (tests)
+        # or a never-yet-created skills dir would kill the thread before any
+        # event arrives. Create it (idempotent) so the watcher survives.
+        try:
+            source_dir().mkdir(parents=True, exist_ok=True)
+        except OSError:
+            pass  # genuinely unwritable — let watch() surface the real error
         self.thread = threading.Thread(target=self._loop, name="toondeck-watcher", daemon=True)
         self.thread.start()
 
