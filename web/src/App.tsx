@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import DesignSheet from "./design/DesignSheet";
 import McpPanel from "./mcp/McpPanel";
+import SkillsPanel from "./skills/SkillsPanel";
 
 function useHashRoute(): string {
   const [hash, setHash] = useState(() => window.location.hash);
@@ -25,6 +26,7 @@ function Nav() {
     <nav className="flex gap-4">
       <a className={link} href="#/">deck</a>
       <a className={link} href="#/mcp">mcp</a>
+      <a className={link} href="#/skills">skills</a>
       <a className={link} href="#/design">design</a>
     </nav>
   );
@@ -94,6 +96,13 @@ export default function App() {
     return (
       <Shell>
         <McpPanel />
+      </Shell>
+    );
+  }
+  if (route.startsWith("#/skills")) {
+    return (
+      <Shell>
+        <SkillsPanel />
       </Shell>
     );
   }

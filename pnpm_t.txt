@@ -2,11 +2,12 @@ $ vitest run
 
  RUN  v3.2.7 E:/openthink/projects/toondeck/web
 
- ✓ src/App.test.tsx (2 tests) 48ms
- ✓ src/mcp/McpPanel.test.tsx (5 tests) 271ms
+ ✓ src/App.test.tsx (2 tests) 40ms
+ ✓ src/mcp/McpPanel.test.tsx (5 tests) 280ms
+ ✓ src/skills/SkillsPanel.test.tsx (4 tests) 357ms
 
- Test Files  2 passed (2)
-      Tests  7 passed (7)
-   Start at  10:31:17
-   Duration  932ms (transform 57ms, setup 181ms, collect 139ms, tests 319ms, environment 497ms, prepare 152ms)
+ Test Files  3 passed (3)
+      Tests  11 passed (11)
+   Start at  11:25:16
+   Duration  989ms (transform 78ms, setup 266ms, collect 227ms, tests 677ms, environment 687ms, prepare 218ms)
 
