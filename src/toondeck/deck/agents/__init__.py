@@ -120,6 +120,7 @@ def log_download(agent_id: str) -> dict:
         f"- launched_at: {started}",
         f"- launch_command: {' '.join(adapter.get('launch_command', [])) or 'n/a'}",
         f"- model: {get_model(agent_id) or '(agent default)'}",
+        f"- capture_mode: {'window (TUI streams to the desktop console; the ring only records pipe launches)' if adapter.get('tui') else 'pipe'}",
         f"- exported_at: {_time.strftime('%Y-%m-%d %H:%M:%S')}",
         f"- lines: {len(lines)}",
         "",
