@@ -7,6 +7,7 @@ fingerprinting lands in T-065 on top of this scanner.
 
 from __future__ import annotations
 
+import time as _time
 from pathlib import Path
 
 from . import internal
@@ -86,6 +87,8 @@ def import_names(candidates: list[dict], names: list[str]) -> dict:
             cfg = {"url": cand["url"]}
         mcptoon_config.add_server(name, cfg)
         imported.append(name)
+    if imported:
+        _bust_inventory_cache()  # UI must never show stale numbers after an import
     return {"ok": True, "imported": len(imported), "skipped": len(skipped),
             "names": imported}
 
@@ -170,9 +173,116 @@ def import_selected(names: list[str]) -> dict:
 
 
 # ── T-070: full local tool inventory — the honest "how many tools do I own" number ──
+# ── UX-A2: parallel probing + hard deadlines + import busts the cache ──
 
 _CACHE: dict = {"ts": 0.0, "data": None}
 _CACHE_TTL = 120.0
+
+# child processes of in-flight inventory probes, by server name — the joiner
+# kills a timed-out probe's child so the blocked readline thread drains (EOF)
+# instead of leaking until process exit (same mechanism as engine.check_all_legacy).
+_ACTIVE_PROCS: dict[str, object] = {}
+
+
+def _bust_inventory_cache() -> None:
+    """Drop the 2-minute cache so the next inventory() re-probes live."""
+    _CACHE["ts"] = 0.0
+    _CACHE["data"] = None
+
+
+def _probe_one(name: str, cfg: dict, timeout: float, results: dict) -> None:
+    """Legacy-handshake probe of one server; always writes a verdict.
+
+    Daemon-thread body: every failure becomes a status, never an exception.
+    Lifecycle managed manually so the child proc can be registered for the
+    deadline kill right after initialize — the hang site is list_tools.
+    """
+    from mcptoon.client import MCPClient, MCPError
+
+    start = _time.time()
+    client: MCPClient | None = None
+    try:
+        if cfg.get("transport", "stdio") == "http":
+            client = MCPClient(http_url=cfg.get("url", ""),
+                               headers=cfg.get("headers", {}), timeout=timeout,
+                               spec="legacy")
+        else:
+            command = cfg.get("command", [])
+            cmd_list = command if isinstance(command, list) else [command]
+            client = MCPClient(stdio=[*cmd_list, *cfg.get("args", [])],
+                               env=cfg.get("env", {}), timeout=timeout,
+                               spec="legacy")
+        client.initialize()
+        _ACTIVE_PROCS[name] = getattr(client, "_proc", None)
+        tools = client.list_tools() or []
+        results.setdefault(name, {
+            "server": name, "status": "ok",
+            "tools": [{"name": t.get("name", "?"),
+                       "description": (t.get("description") or "")[:140]}
+                      for t in tools if isinstance(t, dict)],
+            "latency_ms": int((_time.time() - start) * 1000),
+            "error": None,
+        })
+    except MCPError as e:
+        is_timeout = "timeout" in e.code.lower() or "timeout" in e.message.lower()
+        results.setdefault(name, {
+            "server": name,
+            "status": "timeout" if is_timeout else "error",
+            "tools": [], "error": f"[{e.code}] {e.message}"[:160],
+        })
+    except Exception as e:  # noqa: BLE001 — one dead server must not sink the fleet
+        results.setdefault(name, {
+            "server": name, "status": "error", "tools": [],
+            "error": str(e)[:160],
+        })
+    finally:
+        _ACTIVE_PROCS.pop(name, None)
+        if client is not None:
+            try:
+                client.close()
+            except Exception:  # noqa: BLE001 — close is best-effort cleanup
+                pass
+
+
+def _kill_stuck(name: str) -> None:
+    """Kill the child of a timed-out probe so its readline thread drains."""
+    proc = _ACTIVE_PROCS.pop(name, None)
+    if proc is None:
+        return
+    try:
+        if proc.poll() is None:
+            proc.kill()
+    except OSError:
+        pass
+
+
+def _run_probes(jobs: list[tuple[str, dict]], timeout: float) -> list[dict]:
+    """Probe (name, cfg) pairs in parallel under one overall deadline.
+
+    Wall time ≈ slowest probe, not the sum (UX-A2); a server that goes
+    quiet becomes status="timeout" — never a hang.
+    """
+    import threading
+
+    results: dict[str, dict] = {}
+    threads = []
+    for name, cfg in jobs:
+        t = threading.Thread(target=_probe_one, args=(name, cfg, timeout, results),
+                             daemon=True)
+        threads.append((name, t))
+    for _, t in threads:
+        t.start()
+    deadline = _time.time() + timeout + 2.0  # grace for spawn/handshake overhead
+    for name, t in threads:
+        t.join(max(0.0, deadline - _time.time()))
+        if name not in results:
+            results[name] = {
+                "server": name, "status": "timeout", "tools": [],
+                "error": f"no answer within {timeout}s (inventory probe)",
+            }
+            _kill_stuck(name)
+            t.join(1.0)
+    return [results[name] for name, _ in threads]
 
 
 def inventory(refresh: bool = False, timeout: float = 8.0) -> dict:
@@ -180,52 +290,23 @@ def inventory(refresh: bool = False, timeout: float = 8.0) -> dict:
 
     tools_total is the headline: the real count of tools ToonDeck manages
     (adopted) plus what it has found ready to adopt. Cached 2 min so the
-    dashboard stays fast; refresh=True forces a live re-probe.
+    dashboard stays fast; refresh=True forces a live re-probe. UX-A2:
+    probes run in parallel under a hard deadline — no serial sum of
+    latencies, no hang on a server that stops answering.
     """
-    import time as _time
-
     now = _time.time()
     if not refresh and _CACHE["data"] is not None and now - _CACHE["ts"] < _CACHE_TTL:
         return _CACHE["data"]
 
     from mcptoon import config as mcptoon_config
-    from mcptoon.client import MCPClient
+
+    from .. import mcpcompat  # noqa: F401 — Windows stdio shim must be active
 
     adopted_names = set(mcptoon_config.list_servers())
 
-    def probe(name: str, cfg: dict) -> dict:
-        entry: dict = {"server": name, "tools": [], "error": None, "tool_count": 0}
-        try:
-            if cfg.get("transport", "stdio") == "http":
-                client_cm = MCPClient(http_url=cfg.get("url", ""),
-                                      headers=cfg.get("headers", {}), timeout=timeout,
-                                      spec="legacy")
-            else:
-                command = cfg.get("command", [])
-                cmd_list = command if isinstance(command, list) else [command]
-                client_cm = MCPClient(stdio=[*cmd_list, *cfg.get("args", [])],
-                                      env=cfg.get("env", {}), timeout=timeout,
-                                      spec="legacy")
-            with client_cm as client:
-                tools = client.list_tools() or []
-            entry["status"] = "ok"
-            entry["tools"] = [
-                {"name": t.get("name", "?"),
-                 "description": (t.get("description") or "")[:140]}
-                for t in tools if isinstance(t, dict)
-            ]
-        except Exception as e:  # noqa: BLE001 — one dead server must not sink the fleet
-            entry["status"] = "error"
-            entry["error"] = str(e)[:160]
-        entry["tool_count"] = len(entry["tools"])
-        return entry
-
-    servers: list[dict] = []
+    jobs: list[tuple[str, dict]] = []
     for name in sorted(adopted_names):
-        cfg = mcptoon_config.get_server_config(name) or {}
-        e = probe(name, cfg)
-        e["adopted"] = True
-        servers.append(e)
+        jobs.append((name, mcptoon_config.get_server_config(name) or {}))
 
     disc = scan()
     by_name = {c["name"]: c for c in disc["candidates"]}
@@ -236,8 +317,14 @@ def inventory(refresh: bool = False, timeout: float = 8.0) -> dict:
             if c["transport"] == "stdio"
             else {"url": c.get("url", "")}
         )
-        e = probe(name, cfg)
-        e["adopted"] = False
+        jobs.append((name, cfg))
+
+    probed = _run_probes(jobs, timeout)
+
+    servers: list[dict] = []
+    for e in probed:
+        e["adopted"] = e["server"] in adopted_names
+        e["tool_count"] = len(e["tools"])
         servers.append(e)
 
     tools_total = sum(s["tool_count"] for s in servers)
