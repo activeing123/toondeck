@@ -1,0 +1,10 @@
+{
+  "id": "catpaw",
+  "display_name": "CatPaw",
+  "executable_probes": ["catpaw", "CatPawAI"],
+  "dir_probes": ["~/.catpaw"],
+  "config_paths": ["~/.catpaw/config.json"],
+  "skills_dir": "~/.catpaw/skills",
+  "launch_command": null,
+  "env_config_support": false
+}

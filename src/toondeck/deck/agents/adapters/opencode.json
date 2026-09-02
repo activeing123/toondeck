@@ -1,0 +1,10 @@
+{
+  "id": "opencode",
+  "display_name": "opencode",
+  "executable_probes": ["opencode"],
+  "dir_probes": ["~/.config/opencode"],
+  "config_paths": ["~/.config/opencode/opencode.json"],
+  "skills_dir": "~/.config/opencode/skills",
+  "launch_command": ["opencode"],
+  "env_config_support": true
+}

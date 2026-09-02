@@ -1,0 +1,10 @@
+{
+  "id": "claude-code",
+  "display_name": "Claude Code",
+  "executable_probes": ["cla", "claude"],
+  "dir_probes": ["~/.claude"],
+  "config_paths": ["~/.claude.json", "~/.claude/settings.json"],
+  "skills_dir": "~/.claude/skills",
+  "launch_command": ["cla"],
+  "env_config_support": false
+}

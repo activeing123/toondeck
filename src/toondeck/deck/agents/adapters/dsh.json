@@ -1,0 +1,10 @@
+{
+  "id": "dsh",
+  "display_name": "DSH",
+  "executable_probes": ["dsh"],
+  "dir_probes": ["~/.agents"],
+  "config_paths": ["~/.agents/settings.json"],
+  "skills_dir": "~/.agents/skills",
+  "launch_command": ["dsh"],
+  "env_config_support": true
+}

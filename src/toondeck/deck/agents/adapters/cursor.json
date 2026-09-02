@@ -1,0 +1,10 @@
+{
+  "id": "cursor",
+  "display_name": "Cursor",
+  "executable_probes": ["cursor", "cursor-agent"],
+  "dir_probes": ["~/.cursor"],
+  "config_paths": ["~/.cursor/mcp.json"],
+  "skills_dir": "~/.cursor/skills",
+  "launch_command": ["cursor"],
+  "env_config_support": true
+}
