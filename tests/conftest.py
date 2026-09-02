@@ -32,4 +32,6 @@ def engine_env(tmp_path, monkeypatch):
 
     monkeypatch.setattr(mcfg, "TOGGLE_FILE", tmp_path / "toggles.json")
     monkeypatch.setattr(mcache, "_CACHE_FILE", tmp_path / "schema_cache.json")
+    monkeypatch.setenv("TOONDECK_SKILLS_DIR", str(tmp_path / "skills"))
+    monkeypatch.setenv("TOONDECK_VIEWS_DIR", str(tmp_path / "views"))
     return tmp_path

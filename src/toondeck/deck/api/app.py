@@ -12,6 +12,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
 
 from .. import engine
+from .. import skills
 from . import static
 
 
@@ -31,6 +32,14 @@ def _mcptoon_engine() -> dict:
 class ToggleIn(BaseModel):
     server: str
     tool: str
+
+
+class SkillsRemoveIn(BaseModel):
+    name: str
+
+
+class WatcherIn(BaseModel):
+    action: str  # 'start' | 'stop'
 
 
 def create_app() -> FastAPI:
@@ -62,6 +71,30 @@ def create_app() -> FastAPI:
     @app.get("/api/mcp/health")
     def mcp_health(timeout: float = 10.0) -> dict:
         return engine.check_health(timeout=timeout)
+
+    @app.get("/api/skills/state")
+    def skills_state() -> dict:
+        return skills.get_state()
+
+    @app.post("/api/skills/sync")
+    def skills_sync() -> dict:
+        return {"results": skills.sync_all()}
+
+    @app.get("/api/skills/doctor")
+    def skills_doctor() -> dict:
+        return skills.doctor()
+
+    @app.post("/api/skills/remove")
+    def skills_remove(payload: SkillsRemoveIn) -> dict:
+        return skills.remove_skill(payload.name)
+
+    @app.post("/api/skills/watcher")
+    def skills_watcher_post(payload: WatcherIn) -> dict:
+        return skills.watcher(payload.action)
+
+    @app.get("/api/skills/watcher")
+    def skills_watcher_get() -> dict:
+        return skills.watcher("status")
 
     # ── SPA hosting (catch-all, last) ──
     @app.get("/{path:path}")
