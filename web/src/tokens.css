@@ -1,14 +1,32 @@
 @import "tailwindcss";
 
-/* T-004 seed — Direction A "Toon Workbench" tokens (frozen values land in T-004). */
+/* T-004 — Direction A "Toon Workbench" (user-approved 2026-09-02).
+   B/C palettes live in src/design/palettes.ts for the #/design comparison sheet. */
 @theme {
   --color-deck-bg: oklch(0.16 0.02 260);
   --color-deck-panel: oklch(0.21 0.02 260);
+  --color-deck-panel2: oklch(0.25 0.02 260);
   --color-deck-line: oklch(0.3 0.02 260);
   --color-deck-ink: oklch(0.93 0.01 260);
   --color-deck-muted: oklch(0.65 0.02 260);
   --color-deck-accent: oklch(0.8 0.15 85); /* toon gold */
+  --color-deck-accent2: oklch(0.72 0.14 300); /* arcane violet */
   --color-led-ok: oklch(0.75 0.17 155);
   --color-led-warn: oklch(0.8 0.16 85);
   --color-led-err: oklch(0.65 0.2 25);
+
+  --font-sans: ui-sans-serif, system-ui, "Segoe UI Variable", "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "Cascadia Code", Consolas, monospace;
+
+  --radius-deck: 0.9rem;
+  --shadow-glow-gold: 0 0 24px oklch(0.8 0.15 85 / 0.25);
+  --shadow-glow-ok: 0 0 12px oklch(0.75 0.17 155 / 0.35);
+  --shadow-glow-err: 0 0 12px oklch(0.65 0.2 25 / 0.35);
+}
+
+/* glass panel utility — the workbench surface */
+.glass {
+  background: color-mix(in oklch, var(--color-deck-panel) 72%, transparent);
+  backdrop-filter: blur(14px);
+  border: 1px solid var(--color-deck-line);
 }
