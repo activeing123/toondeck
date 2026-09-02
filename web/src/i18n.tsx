@@ -46,6 +46,13 @@ const DICT: Record<string, { en: string; zh: string }> = {
   "agents.adopted": { en: "adopted", zh: "已收养" },
   "agents.probe": { en: "probe", zh: "试探" },
   "agents.launchCmd": { en: "launch command…", zh: "启动命令…" },
+  "agents.addLaunchCmd": { en: "add launch command", zh: "添加启动命令" },
+  "agents.saveCmd": { en: "save", zh: "保存" },
+  "agents.vaultLink": { en: "manage & test in Vault →", zh: "在 Vault 页管理/测试 →" },
+  "vault.relation": {
+    en: "Agents-page provider catalog = quick enable; this Vault = full management (store keys / probe / delete).",
+    zh: "Agents 页的提供商目录=快捷启用；本保险库=全量管理（存密钥 / 测试 / 删除）。",
+  },
   "agents.noUnknown": { en: "no unknown agents — all known ✓", zh: "无陌生 agent——全部在册 ✓" },
   "skills.syncNow": { en: "sync now", zh: "立即同步" },
   "vault.store": { en: "store", zh: "保存" },

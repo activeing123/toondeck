@@ -81,6 +81,10 @@ class AdoptIn(BaseModel):
     launch_command: list[str] | None = None
 
 
+class LaunchCommandIn(BaseModel):
+    command: str  # raw user string, e.g. "catpaw --workspace demo"
+
+
 def create_app() -> FastAPI:
     app = FastAPI(title="ToonDeck", version=metadata.version("toondeck"))
 
@@ -210,6 +214,20 @@ def create_app() -> FastAPI:
     @app.post("/api/agents/adopt")
     def agents_adopt(payload: AdoptIn) -> dict:
         return agentdiscover.adopt(payload.label, payload.launch_command)
+
+    @app.post("/api/agents/{agent_id}/launch-command")
+    def agent_set_launch_command(agent_id: str, payload: LaunchCommandIn) -> dict:
+        # UX-B5: GUI-only agents get a user-supplied launch command
+        from fastapi import HTTPException
+
+        from ..agents import internal as agents_internal
+
+        if agent_id not in agents_internal.load_all():
+            raise HTTPException(status_code=404, detail=f"unknown agent: {agent_id}")
+        parts = payload.command.split()
+        if not parts:
+            raise HTTPException(status_code=422, detail="empty command")
+        return agentdiscover.override_launch_command(agent_id, parts)
 
     @app.get("/api/agents/status")
     def agents_status() -> dict:

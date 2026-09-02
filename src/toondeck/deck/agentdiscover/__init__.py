@@ -104,3 +104,41 @@ def adopt(label: str, launch_command: list[str] | None = None, home: Path | None
 
 def discover_all(home: Path | None = None) -> dict:
     return {"unknown": unknown_agents(home=home), "signatures": len(signature_db())}
+
+
+def override_launch_command(agent_id: str, launch_command: list[str]) -> dict:
+    """Write a FULL override adapter into TOONDECK_HOME/adapters.d/{id}.json.
+
+    UX-B5: GUI-only agents (catpaw) ship with launch_command=null. The user
+    supplies a real command in the UI; the registry merges user adapters
+    last, so this overrides the builtin without touching it. Different from
+    adopt(): the agent is already known — we only patch its launch command.
+    """
+    import os
+
+    if launch_command is not None and (
+        not isinstance(launch_command, list)
+        or not launch_command
+        or any(not isinstance(p, str) or not p.strip() for p in launch_command)
+    ):
+        return {"ok": False, "error": "launch_command must be a non-empty list of non-empty strings"}
+    if not re.fullmatch(r"[a-z0-9][a-z0-9_-]{1,30}", agent_id):
+        return {"ok": False, "error": f"bad agent id: {agent_id!r}"}
+
+    from ..agents import internal as agents_registry
+
+    builtin = agents_registry.load_all()
+    if agent_id not in builtin:
+        return {"ok": False, "error": f"unknown agent: {agent_id}"}
+
+    thome = os.environ.get("TOONDECK_HOME")
+    root = Path(thome) if thome else Path.home() / ".toondeck"
+    dest = root / "adapters.d"
+    dest.mkdir(parents=True, exist_ok=True)
+    base = dict(builtin[agent_id])
+    base["launch_command"] = [p.strip() for p in launch_command]
+    base["adopted"] = True
+    (dest / f"{agent_id}.json").write_text(
+        json.dumps(base, indent=2, ensure_ascii=False), encoding="utf-8"
+    )
+    return {"ok": True, "agent_id": agent_id, "adapter": str(dest / f"{agent_id}.json")}

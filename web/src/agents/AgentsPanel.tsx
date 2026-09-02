@@ -46,6 +46,8 @@ export default function AgentsPanel() {
   const [openLogs, setOpenLogs] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [flash, setFlash] = useState<Record<string, string>>({});
+  const [cmdFor, setCmdFor] = useState<string | null>(null);
+  const [cmdInput, setCmdInput] = useState("");
 
   const load = useCallback(async () => {
     const [a, s, m, p, pr] = await Promise.all([
@@ -65,6 +67,36 @@ export default function AgentsPanel() {
   useEffect(() => {
     load();
   }, [load]);
+
+  // UX-B3: honest polling — refresh statuses every 10s, but only for
+  // visible tabs (hidden tabs freeze until they come back)
+  useEffect(() => {
+    const id = setInterval(() => {
+      if (document.visibilityState === "visible") load();
+    }, 10_000);
+    const onVis = () => {
+      if (document.visibilityState === "visible") load();
+    };
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, [load]);
+
+  // UX-B5: GUI-only agents get a user-supplied launch command (adapters.d override)
+  const addLaunchCommand = async (id: string) => {
+    const cmd = cmdInput.trim();
+    if (!cmd) return;
+    await fetch(`/api/agents/${id}/launch-command`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ command: cmd }),
+    });
+    setCmdFor(null);
+    setCmdInput("");
+    await load();
+  };
 
   const changeModel = async (id: string, model: string) => {
     setModels((p) => ({ ...p, [id]: model }));
@@ -250,6 +282,11 @@ export default function AgentsPanel() {
               </button>
             </div>
           </details>
+          <div className="pt-2 border-t border-deck-line">
+            <a href="#/vault" className="text-xs text-deck-accent hover:underline">
+              {t("agents.vaultLink")}
+            </a>
+          </div>
         </div>
       </details>
 
@@ -322,6 +359,33 @@ export default function AgentsPanel() {
                 >
                   {openLogs === a.id ? t("agents.hideLogs") : t("agents.logs")}
                 </button>
+                {a.installed && a.launch_command == null && (
+                  cmdFor === a.id ? (
+                    <>
+                      <input
+                        value={cmdInput}
+                        onChange={(e) => setCmdInput(e.target.value)}
+                        placeholder={t("agents.launchCmd")}
+                        autoFocus
+                        className="rounded-deck border border-deck-line bg-deck-panel px-2 py-1.5 text-xs font-mono w-56"
+                      />
+                      <button
+                        onClick={() => addLaunchCommand(a.id)}
+                        disabled={!cmdInput.trim()}
+                        className="rounded-deck bg-deck-accent px-2.5 py-1.5 text-xs font-semibold text-deck-bg disabled:opacity-40"
+                      >
+                        {t("agents.saveCmd")}
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      onClick={() => setCmdFor(a.id)}
+                      className="rounded-deck border border-deck-line px-2.5 py-1.5 text-xs hover:bg-deck-panel2"
+                    >
+                      + {t("agents.addLaunchCmd")}
+                    </button>
+                  )
+                )}
                 {st.state !== "never" && (
                   <a
                     href={`/api/agents/${a.id}/logs/download`}

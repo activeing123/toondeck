@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useI18n } from "../i18n";
 
 type ProviderRow = {
   id: string;
@@ -11,6 +12,7 @@ type ProviderRow = {
 };
 
 export default function VaultPanel() {
+  const { t } = useI18n();
   const [providers, setProviders] = useState<ProviderRow[] | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
@@ -74,6 +76,10 @@ export default function VaultPanel() {
           of {providers.length} providers · keys live in your OS keychain, never on disk
         </span>
       </h1>
+
+      <p className="text-sm text-deck-muted">
+        {t("vault.relation")}
+      </p>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {providers.map((p) => (
