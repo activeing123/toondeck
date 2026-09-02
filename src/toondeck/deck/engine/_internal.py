@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import json
+import threading
 import time
 
 import mcptoon.cache as mcache
-import mcptoon.health as mhealth
 import mcptoon.manifest as mmanifest
 import mcptoon.sync as msync
 
@@ -32,7 +32,140 @@ def sync_to_all(**kwargs) -> list[dict]:
 
 
 def check_all(**kwargs) -> list[dict]:
-    return mhealth.check_all(**kwargs)
+    """Seam (tests monkeypatch this name) → legacy+deadline probe in production."""
+    return check_all_legacy(**kwargs)
+
+
+# child processes of in-flight probes, by server name — lets the joiner kill
+# a timed-out probe's subprocess so its blocked readline thread drains (EOF)
+# instead of leaking until process exit.
+_ACTIVE_PROCS: dict[str, object] = {}
+
+
+def check_all_legacy(timeout: float = 10.0) -> list[dict]:
+    """Toondeck-owned health probe: legacy handshake, one thread per server.
+
+    Why not mcptoon.health.check_all (R1/R2 evidence, 2026-09-02): it builds
+    MCPClient with spec="auto", whose 2026-07-28 `server/discover` probe is
+    silently ignored by MCP-SDK servers (verified against mcp_server_fetch
+    2026.8.18: zero bytes back, not even a -32601 error) — and mcptoon's
+    stdio readline has no timeout, so that probe hangs forever. The legacy
+    initialize-first handshake works for every real server; this is also
+    why all deck code must pass spec="legacy" (project red line).
+
+    Implementation: one daemon thread per server, joined under an overall
+    deadline. A thread that misses the deadline gets a forced
+    status="timeout" verdict and its child process is killed (the blocked
+    readline drains on EOF) — one dead server can never hang the fleet.
+    """
+    import mcptoon.config as mcfg
+
+    from .. import mcpcompat  # noqa: F401 — Windows stdio shim must be active
+
+    names = sorted(mcfg.list_servers())
+    results: dict[str, dict] = {}
+    threads: list[tuple[str, threading.Thread]] = []
+
+    for name in names:
+        t = threading.Thread(target=_probe_one_legacy, args=(name, timeout, results),
+                             daemon=True)
+        threads.append((name, t))
+
+    for _, t in threads:
+        t.start()
+    deadline = time.time() + timeout + 2.0  # grace for spawn/handshake overhead
+    for name, t in threads:
+        t.join(max(0.0, deadline - time.time()))
+        if name not in results:  # missed the deadline
+            results[name] = {
+                "server": name,
+                "transport": "?",
+                "status": "timeout",
+                "tools": 0,
+                "latency_ms": int(timeout * 1000),
+                "error": f"no answer within {timeout}s (legacy probe)",
+            }
+            _kill_stuck_probe(name)  # drain the blocked thread's child
+            t.join(1.0)
+
+    return [results[name] for name in names]
+
+
+def _probe_one_legacy(name: str, timeout: float, results: dict) -> None:
+    """Probe one server via the legacy handshake; always writes a verdict.
+
+    Runs in a daemon thread; every failure becomes a status, never an
+    exception that would leave the joiner without a result slot.
+    Lifecycle is managed manually (initialize → list_tools → close) so the
+    child proc can be registered for the joiner's deadline kill right
+    after the handshake — the observed hang site is list_tools.
+    """
+    import mcptoon.config as mcfg
+    from mcptoon.client import MCPClient, MCPError
+
+    start = time.time()
+    client: MCPClient | None = None
+    try:
+        cfg = mcfg.get_server_config(name)
+        if not cfg:
+            results.setdefault(name, {"server": name, "transport": "?", "status": "no-config",
+                                      "tools": 0, "latency_ms": 0, "error": "no config"})
+            return
+        transport = cfg.get("transport", "stdio")
+        if transport == "http":
+            client = MCPClient(http_url=cfg.get("url", ""),
+                               headers=cfg.get("headers", {}), timeout=timeout,
+                               spec="legacy")
+        else:
+            command = cfg.get("command", [])
+            cmd_list = command if isinstance(command, list) else [command]
+            client = MCPClient(stdio=[*cmd_list, *cfg.get("args", [])],
+                               env=cfg.get("env", {}), timeout=timeout,
+                               spec="legacy")
+        client.initialize()
+        _ACTIVE_PROCS[name] = getattr(client, "_proc", None)
+        tools = client.list_tools() or []
+        results.setdefault(name, {
+            "server": name, "transport": transport, "status": "ok",
+            "tools": len(tools),
+            "latency_ms": int((time.time() - start) * 1000),
+            "error": None,
+        })
+    except MCPError as e:
+        is_timeout = "timeout" in e.code.lower() or "timeout" in e.message.lower()
+        results.setdefault(name, {
+            "server": name, "transport": "?",
+            "status": "timeout" if is_timeout else "error",
+            "tools": 0,
+            "latency_ms": int((time.time() - start) * 1000),
+            "error": f"[{e.code}] {e.message}"[:160],
+        })
+    except Exception as e:  # noqa: BLE001 — a broken probe is a verdict, not a crash
+        results.setdefault(name, {
+            "server": name, "transport": "?", "status": "error",
+            "tools": 0,
+            "latency_ms": int((time.time() - start) * 1000),
+            "error": str(e)[:160],
+        })
+    finally:
+        _ACTIVE_PROCS.pop(name, None)
+        if client is not None:
+            try:
+                client.close()
+            except Exception:  # noqa: BLE001 — close is best-effort cleanup
+                pass
+
+
+def _kill_stuck_probe(name: str) -> None:
+    """Kill the child of a timed-out probe so its readline thread drains."""
+    proc = _ACTIVE_PROCS.pop(name, None)
+    if proc is None:
+        return
+    try:
+        if proc.poll() is None:
+            proc.kill()
+    except OSError:
+        pass
 
 
 def get_manifest(use_cache: bool = True) -> dict[str, list[dict]]:

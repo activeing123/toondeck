@@ -68,6 +68,14 @@ def request_sync() -> list[dict]:
 
 
 def check_health(timeout: float = 10.0) -> dict:
-    """Live probe every configured server. Explicit action, costs real connections."""
+    """Live probe every configured server. Explicit action, costs real connections.
+
+    Probes via the toondeck-owned legacy path (UX-A1): initialize handshake
+    first, one daemon thread per server, overall deadline — a server that
+    never answers becomes status="timeout" and the endpoint can no longer
+    hang (R1/R2: mcptoon's spec="auto" discover probe is silently ignored
+    by MCP-SDK servers, and mcptoon's stdio readline never times out).
+    Seam: _internal.check_all (monkeypatched by tests) → check_all_legacy.
+    """
     results = _internal.check_all(timeout=timeout)
     return {"checked": len(results), "results": results}
