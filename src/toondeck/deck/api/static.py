@@ -38,4 +38,8 @@ def resolve(path: str) -> Path | None:
         candidate.relative_to(root)
     except ValueError:
         return None
-    return candidate if candidate.is_file() else None
+    if candidate.is_file():
+        return candidate
+    # SPA fallback: extensionless misses serve the shell; asset-like misses 404.
+    last = clean.rsplit("/", 1)[-1]
+    return None if "." in last else root / _INDEX

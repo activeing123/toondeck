@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+/* T-004 seed — Direction A "Toon Workbench" tokens (frozen values land in T-004). */
+@theme {
+  --color-deck-bg: oklch(0.16 0.02 260);
+  --color-deck-panel: oklch(0.21 0.02 260);
+  --color-deck-line: oklch(0.3 0.02 260);
+  --color-deck-ink: oklch(0.93 0.01 260);
+  --color-deck-muted: oklch(0.65 0.02 260);
+  --color-deck-accent: oklch(0.8 0.15 85); /* toon gold */
+  --color-led-ok: oklch(0.75 0.17 155);
+  --color-led-warn: oklch(0.8 0.16 85);
+  --color-led-err: oklch(0.65 0.2 25);
+}

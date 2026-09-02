@@ -46,6 +46,8 @@ def test_serves_existing_assets(tmp_path):
     monkey.setattr(static_mod, "_dist_root", lambda: dist)
     try:
         assert static_mod.resolve("/assets/app.js") == dist / "assets" / "app.js"
-        assert static_mod.resolve("/missing.js") is None  # SPA fallback
+        assert static_mod.resolve("/missing.js") is None  # asset-like miss → 404
+        # SPA fallback: extensionless deep route must serve the shell
+        assert static_mod.resolve("/some/deep/route") == dist / "index.html"
     finally:
         monkey.undo()
