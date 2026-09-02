@@ -138,10 +138,14 @@ class Manager:
     def __init__(self) -> None:
         self.procs: dict[str, AgentProcess] = {}
 
-    def launch(self, agent_id: str, adapter: dict, cwd: Path | None = None) -> dict:
+    def launch(
+        self, agent_id: str, adapter: dict, cwd: Path | None = None, args: list[str] | None = None
+    ) -> dict:
         cmd = adapter.get("launch_command")
         if not cmd:
             return {"ok": False, "error": f"{agent_id} has no launch command (GUI-only agent)"}
+        if args:
+            cmd = [*cmd, *args]
         old = self.procs.get(agent_id)
         if old is not None and old.running():
             return {"ok": False, "error": f"{agent_id} is already running (pid {old.process.pid})"}

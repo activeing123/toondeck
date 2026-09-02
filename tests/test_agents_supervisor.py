@@ -138,3 +138,19 @@ def test_launch_handles_windows_cmd_wrapper(fake_adapters, tmp_path, monkeypatch
             break
         time.sleep(0.2)
     assert any("wrapped-ok" in x for x in logs), logs
+
+
+def test_launch_extra_args_are_passed_through(fake_adapters):
+    from toondeck.deck.agents import launch, status, stop
+
+    r = launch("quitter", args=["--flag"])
+    assert r["ok"] is True, r
+    deadline = time.time() + 10
+    st = {}
+    while time.time() < deadline:
+        st = status("quitter")
+        if st["state"] == "exited":
+            break
+        time.sleep(0.2)
+    assert st["state"] == "exited"
+    assert st["exit_code"] == 7  # EXIT_CMD ignores args but must still run

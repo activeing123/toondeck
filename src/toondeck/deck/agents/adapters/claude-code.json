@@ -5,6 +5,6 @@
   "dir_probes": ["~/.claude"],
   "config_paths": ["~/.claude.json", "~/.claude/settings.json"],
   "skills_dir": "~/.claude/skills",
-  "launch_command": ["cla"],
+  "launch_command": ["claude"],
   "env_config_support": false
 }

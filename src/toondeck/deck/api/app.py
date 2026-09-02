@@ -43,6 +43,11 @@ class WatcherIn(BaseModel):
     action: str  # 'start' | 'stop'
 
 
+class LaunchIn(BaseModel):
+    args: list[str] | None = None
+    cwd: str | None = None
+
+
 def create_app() -> FastAPI:
     app = FastAPI(title="ToonDeck", version=metadata.version("toondeck"))
 
@@ -110,8 +115,12 @@ def create_app() -> FastAPI:
         return agents.status(agent_id)
 
     @app.post("/api/agents/{agent_id}/launch")
-    def agent_launch(agent_id: str) -> dict:
-        return agents.launch(agent_id)
+    def agent_launch(agent_id: str, payload: LaunchIn | None = None) -> dict:
+        return agents.launch(
+            agent_id,
+            cwd=payload.cwd if payload else None,
+            args=payload.args if payload else None,
+        )
 
     @app.post("/api/agents/{agent_id}/stop")
     def agent_stop(agent_id: str) -> dict:
