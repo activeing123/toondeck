@@ -14,9 +14,9 @@ from .internal import frontmatter
 
 def get_state() -> dict:
     """Scan the source dir; return lean per-skill metadata. Missing dir is not fatal."""
-    from .internal import paths
+    from .internal import source_dir
 
-    src = paths.source_dir()
+    src = source_dir()
     skills = []
     if src.is_dir():
         for entry in sorted(src.iterdir()):
