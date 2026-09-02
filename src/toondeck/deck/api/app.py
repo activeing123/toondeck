@@ -11,6 +11,7 @@ from fastapi import FastAPI, WebSocket
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
 
+from .. import agentdiscover
 from .. import agents
 from .. import engine
 from .. import mcpdiscover
@@ -65,6 +66,11 @@ class McpImportIn(BaseModel):
 
 class AgentModelIn(BaseModel):
     model: str | None = None  # None clears
+
+
+class AdoptIn(BaseModel):
+    label: str
+    launch_command: list[str] | None = None
 
 
 def create_app() -> FastAPI:
@@ -156,6 +162,14 @@ def create_app() -> FastAPI:
     @app.put("/api/agents/{agent_id}/model")
     def agent_set_model(agent_id: str, payload: AgentModelIn) -> dict:
         return agents.set_model(agent_id, payload.model)
+
+    @app.get("/api/agents/discover")
+    def agents_discover() -> dict:
+        return agentdiscover.discover_all()
+
+    @app.post("/api/agents/adopt")
+    def agents_adopt(payload: AdoptIn) -> dict:
+        return agentdiscover.adopt(payload.label, payload.launch_command)
 
     @app.get("/api/agents/status")
     def agents_status() -> dict:

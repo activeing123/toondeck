@@ -36,12 +36,27 @@ def load_one(path: Path) -> dict:
     return data
 
 
+def adapters_d() -> Path:
+    """User-adopted adapters (T-065). Lives under TOONDECK_HOME, merged last."""
+    import os
+
+    home = os.environ.get("TOONDECK_HOME")
+    root = Path(home) if home else Path.home() / ".toondeck"
+    return root / "adapters.d"
+
+
 def load_all(directory: Path | None = None) -> dict[str, dict]:
     d = directory or ADAPTERS_DIR
     out: dict[str, dict] = {}
     for p in sorted(d.glob("*.json")):
         a = load_one(p)
         out[a["id"]] = a
+    if directory is None:  # user-adopted adapters only merge for the real registry
+        extra = adapters_d()
+        if extra.is_dir():
+            for p in sorted(extra.glob("*.json")):
+                a = load_one(p)
+                out[a["id"]] = a
     return out
 
 
