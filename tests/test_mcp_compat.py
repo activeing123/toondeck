@@ -24,7 +24,6 @@ def shim_env(tmp_path, monkeypatch):
 
 def test_shim_resolves_cmd_wrappers(shim_env, tmp_path, monkeypatch):
     """A fake npx.cmd server answers JSON-RPC through the shimmed client."""
-    import json as jsonlib
     import os
 
     from mcptoon.client import MCPClient
@@ -49,7 +48,6 @@ def test_shim_resolves_cmd_wrappers(shim_env, tmp_path, monkeypatch):
 
 def test_check_server_ok_through_shim(shim_env, tmp_path, monkeypatch):
     """Full health path: check_server on a fake .cmd MCP server returns ok."""
-    import json as jsonlib
     import os
 
     from mcptoon import config as mcptoon_config
@@ -76,9 +74,6 @@ def test_check_server_ok_through_shim(shim_env, tmp_path, monkeypatch):
 
 def test_real_exe_paths_unaffected_by_shim(shim_env, tmp_path, monkeypatch):
     """Plain .exe (python) stdio servers keep working — shim only wraps .cmd/.bat."""
-    import json as jsonlib
-    import os
-    import sys
 
     from mcptoon import config as mcptoon_config
     from mcptoon.health import check_server
