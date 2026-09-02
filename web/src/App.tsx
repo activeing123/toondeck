@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import DesignSheet from "./design/DesignSheet";
+import McpPanel from "./mcp/McpPanel";
 
 function useHashRoute(): string {
   const [hash, setHash] = useState(() => window.location.hash);
@@ -18,6 +19,17 @@ type Health = {
   engine: { available: boolean; version: string | null };
 };
 
+function Nav() {
+  const link = "text-sm text-deck-muted hover:text-deck-ink";
+  return (
+    <nav className="flex gap-4">
+      <a className={link} href="#/">deck</a>
+      <a className={link} href="#/mcp">mcp</a>
+      <a className={link} href="#/design">design</a>
+    </nav>
+  );
+}
+
 function Console() {
   const [health, setHealth] = useState<Health | null>(null);
 
@@ -33,7 +45,7 @@ function Console() {
       <h1 className="text-4xl font-bold tracking-tight">
         Toon<span className="text-deck-accent">Deck</span>
       </h1>
-      <p className="text-deck-muted">One deck for every agent — scaffold M0</p>
+      <p className="text-deck-muted">One deck for every agent — M1 in progress</p>
       {health ? (
         <div className="glass rounded-deck px-6 py-4 text-sm shadow-glow-gold">
           <div>
@@ -51,15 +63,39 @@ function Console() {
       ) : (
         <div className="text-deck-muted">connecting…</div>
       )}
-      <a href="#/design" className="text-xs text-deck-muted underline">
-        design directions
-      </a>
     </main>
+  );
+}
+
+function Shell({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="min-h-screen bg-deck-bg text-deck-ink p-8">
+      <header className="flex items-center gap-6 mb-8">
+        <a href="#/" className="text-xl font-bold">
+          Toon<span className="text-deck-accent">Deck</span>
+        </a>
+        <Nav />
+      </header>
+      {children}
+    </div>
   );
 }
 
 export default function App() {
   const route = useHashRoute();
-  if (route.startsWith("#/design")) return <DesignSheet />;
+  if (route.startsWith("#/design")) {
+    return (
+      <Shell>
+        <DesignSheet />
+      </Shell>
+    );
+  }
+  if (route.startsWith("#/mcp")) {
+    return (
+      <Shell>
+        <McpPanel />
+      </Shell>
+    );
+  }
   return <Console />;
 }
