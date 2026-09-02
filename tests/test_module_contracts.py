@@ -13,9 +13,9 @@ def test_engine_exports_exactly_four_operations():
     assert set(["get_state", "toggle", "request_sync", "check_health"]) <= set(public)
 
 
-def test_skills_exports_exactly_three_operations():
+def test_skills_exports_exactly_four_operations():
     public = [n for n in dir(skills) if not n.startswith("_")]
-    assert set(["sync_all", "remove_skill", "doctor"]) <= set(public)
+    assert set(["get_state", "sync_all", "remove_skill", "doctor"]) <= set(public)
 
 
 def test_agents_exports_exactly_three_operations():
