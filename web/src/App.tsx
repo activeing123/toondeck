@@ -3,6 +3,7 @@ import AgentsPanel from "./agents/AgentsPanel";
 import DesignSheet from "./design/DesignSheet";
 import McpPanel from "./mcp/McpPanel";
 import SkillsPanel from "./skills/SkillsPanel";
+import VaultPanel from "./vault/VaultPanel";
 
 function useHashRoute(): string {
   const [hash, setHash] = useState(() => window.location.hash);
@@ -71,6 +72,7 @@ function Nav() {
       <a className={link} href="#/mcp">mcp</a>
       <a className={link} href="#/skills">skills</a>
       <a className={link} href="#/agents">agents</a>
+      <a className={link} href="#/vault">vault</a>
       <a className={link} href="#/design">design</a>
     </nav>
   );
@@ -155,6 +157,13 @@ export default function App() {
     return (
       <Shell>
         <AgentsPanel />
+      </Shell>
+    );
+  }
+  if (route.startsWith("#/vault")) {
+    return (
+      <Shell>
+        <VaultPanel />
       </Shell>
     );
   }

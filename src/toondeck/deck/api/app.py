@@ -47,6 +47,7 @@ class WatcherIn(BaseModel):
 class LaunchIn(BaseModel):
     args: list[str] | None = None
     cwd: str | None = None
+    use_vault: bool = False
 
 
 class VaultKeyIn(BaseModel):
@@ -138,10 +139,12 @@ def create_app() -> FastAPI:
 
     @app.post("/api/agents/{agent_id}/launch")
     def agent_launch(agent_id: str, payload: LaunchIn | None = None) -> dict:
+        env_extra = vault.resolve_env() if (payload and payload.use_vault) else None
         return agents.launch(
             agent_id,
             cwd=payload.cwd if payload else None,
             args=payload.args if payload else None,
+            env_extra=env_extra,
         )
 
     @app.post("/api/agents/{agent_id}/stop")
