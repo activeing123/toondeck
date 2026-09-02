@@ -25,6 +25,12 @@ def get_state() -> dict:
             per_server_disabled.setdefault(server, []).append(tool)
 
     out = []
+    try:
+        from .. import mcpdiscover
+
+        attributions = mcpdiscover.attributions()
+    except Exception:  # noqa: BLE001 — attribution is decoration, never breaks state
+        attributions = {}
     for name in sorted(servers):
         cfg = servers[name]
         tool_total, cache_age = _internal.cache_meta(name)
@@ -38,6 +44,7 @@ def get_state() -> dict:
                 "disabled_tools": sorted(per_server_disabled.get(name, [])),
                 "tool_total": tool_total,
                 "cache_age_s": cache_age,
+                "sources": attributions.get(name, ["toondeck"]),
             }
         )
     return {

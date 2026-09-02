@@ -1,10 +1,19 @@
 {
   "id": "gemini-cli",
   "display_name": "Gemini CLI",
-  "executable_probes": ["gemini"],
-  "dir_probes": ["~/.gemini"],
-  "config_paths": ["~/.gemini/settings.json"],
+  "executable_probes": [
+    "gemini"
+  ],
+  "dir_probes": [
+    "~/.gemini"
+  ],
+  "config_paths": [
+    "~/.gemini/settings.json"
+  ],
   "skills_dir": "~/.gemini/skills",
-  "launch_command": ["gemini"],
-  "env_config_support": true
+  "launch_command": [
+    "gemini"
+  ],
+  "env_config_support": true,
+  "tui": true
 }

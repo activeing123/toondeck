@@ -78,6 +78,13 @@ export default function McpPanel() {
   if (!state) return <p className="text-deck-muted">loading deck…</p>;
 
   const healthBy = Object.fromEntries((health ?? []).map((h) => [h.server, h]));
+  const sourceCount = state.servers.reduce(
+    (acc, s) => {
+      for (const src of s.sources ?? []) acc[src] = (acc[src] ?? 0) + 1;
+      return acc;
+    },
+    {} as Record<string, number>,
+  );
 
   return (
     <div className="space-y-6">
@@ -116,6 +123,18 @@ export default function McpPanel() {
       </div>
 
       <TokenCard ts={state.token_savings} />
+
+      <div className="flex flex-wrap items-center gap-2 text-xs">
+        <span className="text-deck-muted">接管来源:</span>
+        {Object.entries(sourceCount).map(([src, n]) => (
+          <span key={src} className="rounded-full border border-deck-line px-2.5 py-1">
+            <b>{src}</b> · {n}
+          </span>
+        ))}
+        <span className="ml-auto text-deck-muted">
+          共接管 {state.servers.reduce((n, s) => n + s.tool_total, 0)} 个工具
+        </span>
+      </div>
 
       <ToolsBrowser />
 
@@ -174,6 +193,18 @@ export default function McpPanel() {
                 )}
               </div>
               <p className="mt-2 font-mono text-xs text-deck-muted break-all">{s.target}</p>
+              {(s.sources?.length ?? 0) > 0 && (
+                <div className="mt-1.5 flex flex-wrap gap-1">
+                  {(s.sources ?? []).map((src: string) => (
+                    <span
+                      key={src}
+                      className="rounded-full border border-deck-line px-2 py-0.5 text-xs text-deck-muted"
+                    >
+                      ← {src}
+                    </span>
+                  ))}
+                </div>
+              )}
               {(s.env_keys.length > 0 || s.header_keys.length > 0) && (
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {s.env_keys.map((k) => (

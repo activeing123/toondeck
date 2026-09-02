@@ -94,6 +94,28 @@ def discover() -> dict:
     return scan()
 
 
+def attributions(home: Path | None = None) -> dict[str, list[str]]:
+    """Configured server name -> agent-config sources that define it.
+
+    Matches by name across all scheduled sources. Servers not found in any
+    agent config are attributed to "toondeck" (added here first).
+    """
+    home = home or Path.home()
+
+    from .internal import read_json_mcp_servers, read_toml_mcp_servers, source_files
+
+    out: dict[str, list[str]] = {}
+    for label, kind, path in source_files(home):
+        servers = (
+            read_toml_mcp_servers(path) if kind == "toml" else read_json_mcp_servers(path)
+        )
+        if not servers:
+            continue
+        for name in servers:
+            out.setdefault(name, []).append(label)
+    return out
+
+
 def list_tools(timeout: float = 6.0) -> dict:
     """Per-server tool listings via mcptoon MCPClient (mcpcompat shim applies).
 

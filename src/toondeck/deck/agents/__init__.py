@@ -7,6 +7,9 @@ Operations (frozen contract):
 - configure()  → env/profile injection (M4 vault handoff)
 """
 
+from __future__ import annotations
+
+import re
 from pathlib import Path
 
 
@@ -27,8 +30,13 @@ def detect_all() -> dict:
 def launch(
     agent_id: str, cwd: str | None = None, args: list[str] | None = None,
     env_extra: dict[str, str] | None = None, window: bool | None = None,
+    profile: str | None = None,
 ) -> dict:
-    """Spawn the agent process; TUI adapters default to a new console window."""
+    """Spawn the agent process; TUI adapters default to a new console window.
+
+    profile: name of a model profile (T-067) — its base_url/keyring key are
+    injected as env on top of env_extra.
+    """
     from . import internal
     from .internal import manager
 
@@ -36,8 +44,10 @@ def launch(
     adapter = adapters.get(agent_id)
     if adapter is None:
         return {"ok": False, "error": f"unknown agent: {agent_id}"}
+    profile_env = profile_launch_env(profile) if profile else None
     return manager.get_manager().launch(
-        agent_id, adapter, Path(cwd) if cwd else None, args, env_extra, window
+        agent_id, adapter, Path(cwd) if cwd else None, args, env_extra, window,
+        profile_env=profile_env,
     )
 
 
@@ -112,6 +122,98 @@ def _save_models(models: dict) -> None:
     f.write_text(json.dumps({"models": models}, indent=2), encoding="utf-8")
 
 
+# ── model profiles (T-067): named "provider/model" sources the user defines ──
+
+_VALID_PROFILE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]{0,30}")
+
+
+def _load_profiles() -> dict:
+    import json
+
+    f = _models_file()
+    if f.is_file():
+        try:
+            return json.loads(f.read_text(encoding="utf-8")).get("profiles", {})
+        except (json.JSONDecodeError, OSError):
+            return {}
+    return {}
+
+
+def _save_profiles(profiles: dict) -> None:
+    import json
+
+    f = _models_file()
+    f.parent.mkdir(parents=True, exist_ok=True)
+    data = json.loads(f.read_text(encoding="utf-8")) if f.is_file() else {}
+    data["profiles"] = profiles
+    f.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+
+
+def list_profiles() -> dict:
+    return _load_profiles()
+
+
+def add_profile(name: str, base_url: str | None = None, api_key: str | None = None) -> dict:
+    """Define a custom model source (e.g. my-proxy → https://…/v1 + key).
+
+    The api_key, if given, is stored in the OS keyring under
+    toondeck://model-profile/<name> — never in the JSON file.
+    """
+    if not _VALID_PROFILE.fullmatch(name):
+        return {"ok": False, "error": f"bad profile name: {name!r}"}
+    profiles = _load_profiles()
+    entry: dict = {}
+    if base_url:
+        entry["base_url"] = base_url
+    if api_key:
+        try:
+            import keyring
+
+            keyring.set_password("toondeck://model-profile", name, api_key)
+            entry["keyring"] = True
+        except Exception as e:  # noqa: BLE001 — keyring failures must be visible
+            return {"ok": False, "error": f"keyring: {e}"}
+    profiles[name] = entry
+    _save_profiles(profiles)
+    return {"ok": True, "name": name}
+
+
+def remove_profile(name: str) -> dict:
+    profiles = _load_profiles()
+    if name not in profiles:
+        return {"ok": False, "error": f"unknown profile: {name}"}
+    profiles.pop(name)
+    _save_profiles(profiles)
+    try:
+        import keyring
+
+        keyring.delete_password("toondeck://model-profile", name)
+    except Exception:  # noqa: BLE001 — entry may not exist in the keyring
+        pass
+    return {"ok": True, "name": name}
+
+
+def profile_launch_env(name: str) -> dict[str, str]:
+    """Env for launching with a model profile: base_url + key from keyring."""
+    env: dict[str, str] = {}
+    entry = _load_profiles().get(name)
+    if not entry:
+        return env
+    if entry.get("base_url"):
+        env["OPENAI_BASE_URL"] = entry["base_url"]
+        env["ANTHROPIC_BASE_URL"] = entry["base_url"]
+    try:
+        import keyring
+
+        key = keyring.get_password("toondeck://model-profile", name)
+        if key:
+            env["OPENAI_API_KEY"] = key
+            env["ANTHROPIC_API_KEY"] = key
+    except Exception:  # noqa: BLE001
+        pass
+    return env
+
+
 def set_model(agent_id: str, model: str | None) -> dict:
     """Persist (or clear with None) the preferred model for one agent."""
     models = _load_models()
@@ -129,6 +231,35 @@ def get_model(agent_id: str) -> str | None:
 
 def get_models() -> dict:
     return _load_models()
+
+
+def set_source(agent_id: str, profile: str | None) -> dict:
+    """Persist which model profile (API source) an agent launches with."""
+    import json
+
+    f = _models_file()
+    data = json.loads(f.read_text(encoding="utf-8")) if f.is_file() else {}
+    sources = data.get("sources", {})
+    if profile is None:
+        sources.pop(agent_id, None)
+    else:
+        sources[agent_id] = profile
+    data["sources"] = sources
+    f.parent.mkdir(parents=True, exist_ok=True)
+    f.write_text(json.dumps(data, indent=2), encoding="utf-8")
+    return {"ok": True, "agent_id": agent_id, "source": profile}
+
+
+def get_sources() -> dict:
+    import json
+
+    f = _models_file()
+    if f.is_file():
+        try:
+            return json.loads(f.read_text(encoding="utf-8")).get("sources", {})
+        except Exception:  # noqa: BLE001
+            return {}
+    return {}
 
 
 def configure() -> dict:

@@ -9,6 +9,7 @@ export type ServerView = {
   disabled_tools: string[];
   tool_total: number;
   cache_age_s: number | null;
+  sources?: string[];
 };
 
 export type TokenSavings = {

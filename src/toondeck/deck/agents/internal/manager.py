@@ -146,6 +146,7 @@ class Manager:
         args: list[str] | None = None,
         env_extra: dict[str, str] | None = None,
         window: bool | None = None,
+        profile_env: dict[str, str] | None = None,
     ) -> dict:
         cmd = adapter.get("launch_command")
         if not cmd:
@@ -176,11 +177,14 @@ class Manager:
             return {"ok": False, "error": f"{agent_id} is already running (pid {old.process.pid})"}
         try:
             child_env = None
-            if env_extra:
+            if env_extra or profile_env:
                 import os as _os
 
                 child_env = dict(_os.environ)
-                child_env.update(env_extra)
+                if env_extra:
+                    child_env.update(env_extra)
+                if profile_env:
+                    child_env.update(profile_env)
             popen_kw: dict = {}
             mode = "pipe"
             if use_window and os.name == "nt":

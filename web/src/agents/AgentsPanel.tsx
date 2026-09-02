@@ -32,19 +32,27 @@ export default function AgentsPanel() {
   const [agents, setAgents] = useState<AgentRow[] | null>(null);
   const [statuses, setStatuses] = useState<Record<string, StatusRow>>({});
   const [models, setModels] = useState<Record<string, string>>({});
+  const [sources, setSources] = useState<Record<string, string>>({});
+  const [profiles, setProfiles] = useState<Record<string, { base_url?: string }>>({});
+  const [newProfile, setNewProfile] = useState("");
+  const [newUrl, setNewUrl] = useState("");
+  const [newKey, setNewKey] = useState("");
   const [openLogs, setOpenLogs] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [flash, setFlash] = useState<Record<string, string>>({});
 
   const load = useCallback(async () => {
-    const [a, s, m] = await Promise.all([
+    const [a, s, m, p] = await Promise.all([
       fetch("/api/agents").then((r) => r.json()),
       fetch("/api/agents/status").then((r) => r.json()),
       fetch("/api/agents/models").then((r) => r.json()),
+      fetch("/api/agents/profiles").then((r) => r.json()),
     ]);
     setAgents(a.agents);
     setStatuses(s);
     setModels(m.models ?? {});
+    setSources(m.sources ?? {});
+    setProfiles(p.profiles ?? {});
   }, []);
   useEffect(() => {
     load();
@@ -57,6 +65,37 @@ export default function AgentsPanel() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ model: model === "" ? null : model }),
     });
+  };
+
+  const changeSource = async (id: string, profile: string) => {
+    setSources((p) => ({ ...p, [id]: profile }));
+    await fetch(`/api/agents/${id}/source`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ model: profile === "" ? null : profile }),
+    });
+  };
+
+  const addProfile = async () => {
+    if (!newProfile.trim()) return;
+    await fetch("/api/agents/profiles", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: newProfile.trim(),
+        base_url: newUrl.trim() || null,
+        api_key: newKey || null,
+      }),
+    });
+    setNewProfile("");
+    setNewUrl("");
+    setNewKey("");
+    await load();
+  };
+
+  const removeProfile = async (name: string) => {
+    await fetch(`/api/agents/profiles/${name}`, { method: "DELETE" });
+    await load();
   };
 
   const act = async (id: string, action: "launch" | "stop") => {
@@ -101,6 +140,53 @@ export default function AgentsPanel() {
           {agents.filter((a) => a.installed).length} installed · {running} running
         </span>
       </h1>
+
+      <details className="glass rounded-deck p-4 text-sm">
+        <summary className="cursor-pointer font-semibold">
+          🔌 API 模型源 ({Object.keys(profiles).length})
+        </summary>
+        <div className="mt-3 space-y-2">
+          {Object.entries(profiles).map(([name, p]) => (
+            <div key={name} className="flex items-center gap-2 text-xs">
+              <b className="font-mono">{name}</b>
+              {p.base_url && <span className="text-deck-muted font-mono">{p.base_url}</span>}
+              <button
+                onClick={() => removeProfile(name)}
+                className="ml-auto text-deck-muted hover:text-led-err"
+              >
+                delete
+              </button>
+            </div>
+          ))}
+          <div className="flex flex-wrap gap-2 pt-2 border-t border-deck-line">
+            <input
+              value={newProfile}
+              onChange={(e) => setNewProfile(e.target.value)}
+              placeholder="名称 (如 my-proxy)"
+              className="rounded-deck border border-deck-line bg-deck-panel px-2 py-1 text-xs w-40"
+            />
+            <input
+              value={newUrl}
+              onChange={(e) => setNewUrl(e.target.value)}
+              placeholder="Base URL (https://…/v1)"
+              className="rounded-deck border border-deck-line bg-deck-panel px-2 py-1 text-xs w-56"
+            />
+            <input
+              value={newKey}
+              onChange={(e) => setNewKey(e.target.value)}
+              placeholder="API Key（进系统钥匙串）"
+              type="password"
+              className="rounded-deck border border-deck-line bg-deck-panel px-2 py-1 text-xs w-48"
+            />
+            <button
+              onClick={addProfile}
+              className="rounded-deck bg-deck-accent px-3 py-1 text-xs font-semibold text-deck-bg"
+            >
+              保存
+            </button>
+          </div>
+        </div>
+      </details>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {agents.map((a) => {
@@ -185,6 +271,19 @@ export default function AgentsPanel() {
                       placeholder={t("agents.model")}
                       className="ml-auto w-44 rounded-deck bg-deck-panel2 px-2.5 py-1.5 text-xs font-mono"
                     />
+                    <select
+                      value={sources[a.id] ?? ""}
+                      onChange={(e) => changeSource(a.id, e.target.value)}
+                      className="rounded-deck bg-deck-panel2 px-2 py-1.5 text-xs"
+                      title="API 模型源"
+                    >
+                      <option value="">默认 API</option>
+                      {Object.keys(profiles).map((n) => (
+                        <option key={n} value={n}>
+                          {n}
+                        </option>
+                      ))}
+                    </select>
                   </>
                 )}
               </div>

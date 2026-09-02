@@ -54,6 +54,13 @@ class LaunchIn(BaseModel):
     aliases: dict[str, str] | None = None  # target_env_var -> provider_id (secret stays backend)
     plain_env: dict[str, str] | None = None  # non-secret env passthrough
     window: bool | None = None  # None = auto by adapter tui flag
+    profile: str | None = None  # model profile name (T-067)
+
+
+class ProfileIn(BaseModel):
+    name: str
+    base_url: str | None = None
+    api_key: str | None = None  # goes straight into the OS keyring, never the JSON
 
 
 class VaultKeyIn(BaseModel):
@@ -162,11 +169,27 @@ def create_app() -> FastAPI:
 
     @app.get("/api/agents/models")
     def agent_models() -> dict:
-        return {"models": agents.get_models()}
+        return {"models": agents.get_models(), "sources": agents.get_sources()}
+
+    @app.put("/api/agents/{agent_id}/source")
+    def agent_set_source(agent_id: str, payload: AgentModelIn) -> dict:
+        return agents.set_source(agent_id, payload.model)
 
     @app.put("/api/agents/{agent_id}/model")
     def agent_set_model(agent_id: str, payload: AgentModelIn) -> dict:
         return agents.set_model(agent_id, payload.model)
+
+    @app.get("/api/agents/profiles")
+    def agent_profiles() -> dict:
+        return {"profiles": agents.list_profiles()}
+
+    @app.post("/api/agents/profiles")
+    def agent_add_profile(payload: ProfileIn) -> dict:
+        return agents.add_profile(payload.name, payload.base_url, payload.api_key)
+
+    @app.delete("/api/agents/profiles/{name}")
+    def agent_del_profile(name: str) -> dict:
+        return agents.remove_profile(name)
 
     @app.get("/api/agents/discover")
     def agents_discover() -> dict:
@@ -193,12 +216,14 @@ def create_app() -> FastAPI:
             env_extra.update(vault.alias_env(payload.aliases))
         if payload and payload.plain_env:
             env_extra.update(payload.plain_env)
+        profile = payload.profile if payload and payload.profile else agents.get_sources().get(agent_id)
         return agents.launch(
             agent_id,
             cwd=payload.cwd if payload else None,
             args=payload.args if payload else None,
             env_extra=env_extra or None,
             window=payload.window if payload else None,
+            profile=profile,
         )
 
     @app.post("/api/agents/{agent_id}/stop")
