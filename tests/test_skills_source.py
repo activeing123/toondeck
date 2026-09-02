@@ -62,6 +62,43 @@ def test_frontmatter_missing_description_is_reported():
     assert any("description" in e.lower() for e in errors)
 
 
+def test_frontmatter_folded_scalar_joins_lines():
+    """Real-world: description: >- with indented continuation lines (insforge style)."""
+    from toondeck.deck.skills.internal import frontmatter
+
+    text = (
+        "---\nname: insforge\ndescription: >-\n  Use this skill when writing app code.\n"
+        "  Trigger on requests like add auth.\nlicense: Apache-2.0\n---\n\n# Body\n"
+    )
+    meta, errors = frontmatter.parse(text)
+    assert errors == []
+    assert meta["name"] == "insforge"
+    assert meta["description"] == "Use this skill when writing app code. Trigger on requests like add auth."
+
+
+def test_frontmatter_nested_blocks_are_not_errors():
+    """Real-world: metadata: with indented sub-keys (archify style) must not fail lint."""
+    from toondeck.deck.skills.internal import frontmatter
+
+    text = (
+        "---\nname: archify\ndescription: Diagrams as explorable standalone HTML.\n"
+        "license: MIT\nmetadata:\n  version: \"2.16\"\n  author: tt-a1i\n---\n\n# Body\n"
+    )
+    meta, errors = frontmatter.parse(text)
+    assert errors == [], errors
+    assert meta["name"] == "archify"
+    assert meta["license"] == "MIT"
+
+
+def test_frontmatter_literal_scalar_preserves_newlines():
+    from toondeck.deck.skills.internal import frontmatter
+
+    text = "---\nname: lit\ndescription: |\n  line one\n  line two\n---\n\nBody\n"
+    meta, errors = frontmatter.parse(text)
+    assert errors == []
+    assert meta["description"] == "line one\nline two"
+
+
 def test_get_state_lists_all_skill_dirs_with_validity(source_env):
     from toondeck.deck.skills import get_state
 

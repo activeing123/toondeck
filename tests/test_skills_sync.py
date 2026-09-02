@@ -143,3 +143,21 @@ def test_flat_derivation_keeps_frontmatter_for_roo(world):
     sync_all()
     content = (world["views"] / ".roo" / "commands" / "demo.md").read_text(encoding="utf-8")
     assert content.startswith("---")  # roo keeps header (strip_frontmatter=False)
+
+
+def test_flat_writer_and_doctor_agree_on_validity(world):
+    """Regression: a skill with broken frontmatter is NEVER derived and never
+    reported stale — writer and doctor must share the same validity rule."""
+    from toondeck.deck.skills import doctor, sync_all
+
+    _mk_skill(world["src"], "good")
+    bad = world["src"] / "badmd"
+    bad.mkdir()
+    (bad / "SKILL.md").write_text("# no frontmatter\n", encoding="utf-8")
+    sync_all()
+    roo = world["views"] / ".roo" / "commands"
+    assert (roo / "good.md").is_file()
+    assert not (roo / "badmd.md").exists(), "invalid skill must not be derived"
+    d = doctor()
+    roo_view = next(v for v in d["views"] if v["agent"] == "roo")
+    assert roo_view["issues"] == []

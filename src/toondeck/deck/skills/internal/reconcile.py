@@ -14,6 +14,7 @@ import time
 from pathlib import Path
 
 from . import links
+from .frontmatter import parse as parse_frontmatter
 from .views import ALL, FARM, FLAT, KEEP_LOCAL, WHOLE, view_path
 
 SKIP_SOURCE = {".git", "__pycache__", "node_modules", "_index", ".DS_Store"}
@@ -101,10 +102,15 @@ def _reconcile_flat(agent: str, src: Path, actions: list[str]) -> None:
     out = view_path(agent)
     out.mkdir(parents=True, exist_ok=True)
     canon = {d.name: d for d in canon_skills(src)}
+    valid: set[str] = set()
     for name, d in canon.items():
         md = d / "SKILL.md"
         if not md.is_file():
-            continue  # doctor reports these; derivation skips bodyless dirs
+            continue  # doctor reports these
+        _, errs = parse_frontmatter(md.read_text(encoding="utf-8", errors="replace"))
+        if errs:
+            continue  # broken frontmatter: never derived, doctor owns the report
+        valid.add(name)
         text = md.read_text(encoding="utf-8", errors="replace")
         dest = out / f"{name}.md"
         if not dest.is_file() or dest.read_text(encoding="utf-8", errors="replace") != text:
@@ -123,8 +129,8 @@ def _reconcile_flat(agent: str, src: Path, actions: list[str]) -> None:
             owner = f.name[:-3]
         else:
             stem = f.name[:-3]
-            owner = next((c for c in canon if stem.startswith(c + "_")), None)
-        if owner not in canon:
+            owner = next((c for c in valid if stem.startswith(c + "_")), None)
+        if owner not in valid:
             f.unlink()
             actions.append(f"remove stale {f.name}")
 
