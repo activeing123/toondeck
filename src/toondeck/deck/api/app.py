@@ -160,8 +160,10 @@ def create_app() -> FastAPI:
         return mcpdiscover.discover()
 
     @app.get("/api/mcp/tools")
-    def mcp_tools() -> dict:
-        return mcpdiscover.list_tools()
+    def mcp_tools(refresh: bool = False) -> dict:
+        import toondeck.deck.mcpcompat  # noqa: F401 — runtime shim must be active
+
+        return mcpdiscover.inventory(refresh=refresh)
 
     @app.post("/api/mcp/import")
     def mcp_import(payload: McpImportIn) -> dict:

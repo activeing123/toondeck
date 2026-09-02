@@ -120,7 +120,8 @@ def list_tools(timeout: float = 6.0) -> dict:
     """Per-server tool listings via mcptoon MCPClient (mcpcompat shim applies).
 
     Unlike mcptoon.health (counts only), this keeps names + descriptions so
-    the GUI can show what each server actually offers.
+    the GUI can show what each server actually offers. Superseded by
+    inventory() (T-070) which also covers discovered-but-unadopted servers.
     """
     import time as _time
 
@@ -166,3 +167,95 @@ def list_tools(timeout: float = 6.0) -> dict:
 
 def import_selected(names: list[str]) -> dict:
     return import_names(scan()["candidates"], names)
+
+
+# ── T-070: full local tool inventory — the honest "how many tools do I own" number ──
+
+_CACHE: dict = {"ts": 0.0, "data": None}
+_CACHE_TTL = 120.0
+
+
+def inventory(refresh: bool = False, timeout: float = 8.0) -> dict:
+    """Probe every MCP server on this machine: adopted + discovered-not-yet.
+
+    tools_total is the headline: the real count of tools ToonDeck manages
+    (adopted) plus what it has found ready to adopt. Cached 2 min so the
+    dashboard stays fast; refresh=True forces a live re-probe.
+    """
+    import time as _time
+
+    now = _time.time()
+    if not refresh and _CACHE["data"] is not None and now - _CACHE["ts"] < _CACHE_TTL:
+        return _CACHE["data"]
+
+    from mcptoon import config as mcptoon_config
+    from mcptoon.client import MCPClient
+
+    adopted_names = set(mcptoon_config.list_servers())
+
+    def probe(name: str, cfg: dict) -> dict:
+        entry: dict = {"server": name, "tools": [], "error": None, "tool_count": 0}
+        try:
+            if cfg.get("transport", "stdio") == "http":
+                client_cm = MCPClient(http_url=cfg.get("url", ""),
+                                      headers=cfg.get("headers", {}), timeout=timeout,
+                                      spec="legacy")
+            else:
+                command = cfg.get("command", [])
+                cmd_list = command if isinstance(command, list) else [command]
+                client_cm = MCPClient(stdio=[*cmd_list, *cfg.get("args", [])],
+                                      env=cfg.get("env", {}), timeout=timeout,
+                                      spec="legacy")
+            with client_cm as client:
+                tools = client.list_tools() or []
+            entry["status"] = "ok"
+            entry["tools"] = [
+                {"name": t.get("name", "?"),
+                 "description": (t.get("description") or "")[:140]}
+                for t in tools if isinstance(t, dict)
+            ]
+        except Exception as e:  # noqa: BLE001 — one dead server must not sink the fleet
+            entry["status"] = "error"
+            entry["error"] = str(e)[:160]
+        entry["tool_count"] = len(entry["tools"])
+        return entry
+
+    servers: list[dict] = []
+    for name in sorted(adopted_names):
+        cfg = mcptoon_config.get_server_config(name) or {}
+        e = probe(name, cfg)
+        e["adopted"] = True
+        servers.append(e)
+
+    disc = scan()
+    by_name = {c["name"]: c for c in disc["candidates"]}
+    for name in sorted(set(by_name) - adopted_names):
+        c = by_name[name]
+        cfg = (
+            {"command": c["command"], "args": c.get("args", [])}
+            if c["transport"] == "stdio"
+            else {"url": c.get("url", "")}
+        )
+        e = probe(name, cfg)
+        e["adopted"] = False
+        servers.append(e)
+
+    tools_total = sum(s["tool_count"] for s in servers)
+    attrs = attributions()
+    by_source: dict[str, int] = {}
+    for s in servers:
+        for src in attrs.get(s["server"], ["toondeck"]):
+            by_source[src] = by_source.get(src, 0) + s["tool_count"]
+
+    out = {
+        "checked": len(servers),
+        "adopted_total": len(adopted_names),
+        "discovered_total": len(servers) - len(adopted_names),
+        "tools_total": tools_total,
+        "by_source": dict(sorted(by_source.items(), key=lambda kv: -kv[1])),
+        "servers": servers,
+        "probed_at": now,
+    }
+    _CACHE["ts"] = now
+    _CACHE["data"] = out
+    return out
