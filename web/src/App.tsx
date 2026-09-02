@@ -20,6 +20,48 @@ type Health = {
   engine: { available: boolean; version: string | null };
 };
 
+type AgentRow = {
+  id: string;
+  display_name: string;
+  installed: boolean;
+  evidence: Record<string, boolean>;
+};
+
+function AgentGrid() {
+  const [agents, setAgents] = useState<AgentRow[] | null>(null);
+  useEffect(() => {
+    fetch("/api/agents")
+      .then((r) => r.json())
+      .then((b) => setAgents(b.agents))
+      .catch(() => setAgents(null));
+  }, []);
+  if (!agents) return null;
+  return (
+    <div className="glass rounded-deck px-5 py-3 text-sm w-full max-w-md">
+      <div className="text-xs text-deck-muted uppercase tracking-wide mb-2">
+        agents on this machine
+      </div>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+        {agents.map((a) => (
+          <div key={a.id} className="flex items-center gap-2">
+            <span
+              className={`inline-block h-2 w-2 rounded-full ${
+                a.installed ? "bg-led-ok shadow-glow-ok" : "bg-deck-muted"
+              }`}
+            />
+            <span className={a.installed ? "" : "text-deck-muted"}>{a.display_name}</span>
+          </div>
+        ))}
+      </div>
+      <div className="mt-3 text-right">
+        <a className="text-xs text-deck-accent hover:underline" href="#/skills">
+          manage skills →
+        </a>
+      </div>
+    </div>
+  );
+}
+
 function Nav() {
   const link = "text-sm text-deck-muted hover:text-deck-ink";
   return (
@@ -65,6 +107,7 @@ function Console() {
       ) : (
         <div className="text-deck-muted">connecting…</div>
       )}
+      <AgentGrid />
     </main>
   );
 }
