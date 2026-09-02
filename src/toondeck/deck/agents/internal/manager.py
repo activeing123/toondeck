@@ -145,6 +145,10 @@ _manager: "Manager | None" = None
 class Manager:
     def __init__(self) -> None:
         self.procs: dict[str, AgentProcess] = {}
+        # R23: launch is check-then-act (running? → Popen → register); without
+        # this lock a double-click's concurrent requests both pass the gate and
+        # the second Popen orphans the first. Popen is fast (~10ms) — serialize.
+        self._lock = threading.Lock()
 
     def launch(
         self,
@@ -180,49 +184,51 @@ class Manager:
                 env_extra.setdefault(adapter["model_env"], model)
             elif adapter.get("model_arg"):
                 cmd = [*cmd[:1], adapter["model_arg"], model, *cmd[1:]]
-        old = self.procs.get(agent_id)
-        if old is not None and old.running():
-            return {"ok": False, "error": f"{agent_id} is already running (pid {old.process.pid})"}
-        try:
-            child_env = None
-            if env_extra or profile_env:
-                import os as _os
+        with self._lock:
+            old = self.procs.get(agent_id)
+            if old is not None and old.running():
+                return {"ok": False, "error": f"{agent_id} is already running (pid {old.process.pid})"}
+            try:
+                child_env = None
+                if env_extra or profile_env:
+                    import os as _os
 
-                child_env = dict(_os.environ)
-                if env_extra:
-                    child_env.update(env_extra)
-                if profile_env:
-                    child_env.update(profile_env)
-            popen_kw: dict = {}
-            mode = "pipe"
-            if use_window and os.name == "nt":
-                popen_kw["creationflags"] = subprocess.CREATE_NEW_CONSOLE
-                mode = "window"
-            else:
-                popen_kw.update(
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    text=True,
-                    encoding="utf-8",
-                    errors="replace",
+                    child_env = dict(_os.environ)
+                    if env_extra:
+                        child_env.update(env_extra)
+                    if profile_env:
+                        child_env.update(profile_env)
+                popen_kw: dict = {}
+                mode = "pipe"
+                if use_window and os.name == "nt":
+                    popen_kw["creationflags"] = subprocess.CREATE_NEW_CONSOLE
+                    mode = "window"
+                else:
+                    popen_kw.update(
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        text=True,
+                        encoding="utf-8",
+                        errors="replace",
+                    )
+                proc = subprocess.Popen(
+                    _resolve_windows_cmd(cmd),
+                    cwd=str(cwd) if cwd else None,
+                    env=child_env,
+                    **popen_kw,
                 )
-            proc = subprocess.Popen(
-                _resolve_windows_cmd(cmd),
-                cwd=str(cwd) if cwd else None,
-                env=child_env,
-                **popen_kw,
-            )
-        except OSError as e:
-            return {"ok": False, "error": f"spawn failed: {e}"}
-        self.procs[agent_id] = AgentProcess(agent_id, proc)
+            except OSError as e:
+                return {"ok": False, "error": f"spawn failed: {e}"}
+            self.procs[agent_id] = AgentProcess(agent_id, proc)
         return {"ok": True, "agent_id": agent_id, "pid": proc.pid, "mode": mode}
 
     def stop(self, agent_id: str) -> dict:
-        proc = self.procs.get(agent_id)
-        if proc is None:
-            return {"ok": False, "error": f"{agent_id} was never launched here"}
-        code = proc.stop()
-        return {"ok": True, "agent_id": agent_id, "exit_code": code}
+        with self._lock:
+            proc = self.procs.get(agent_id)
+            if proc is None:
+                return {"ok": False, "error": f"{agent_id} was never launched here"}
+            code = proc.stop()
+            return {"ok": True, "agent_id": agent_id, "exit_code": code}
 
     def status(self, agent_id: str) -> dict:
         proc = self.procs.get(agent_id)
