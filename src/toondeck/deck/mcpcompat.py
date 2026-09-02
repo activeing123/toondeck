@@ -64,8 +64,21 @@ def _apply() -> None:
                     if resolved:
                         suffix = Path(resolved).suffix.lower()
                         if suffix in (".cmd", ".bat"):
-                            cmd = ["cmd", "/c", resolved, *cmd[1:]]
-                        elif suffix == ".ps1":
+                            # Two cmd.exe traps (verified empirically, R20):
+                            # (1) plain list2cmdline only quotes args containing
+                            #     whitespace, so 'a&b' / '(x)' reach cmd UNQUOTED
+                            #     and & splits commands; (2) without /s, cmd /c
+                            #     strips the first+last quote of the whole line,
+                            #     breaking spaced paths. Fix: quote EVERY arg
+                            #     cmd-style (internal " doubled), then wrap the
+                            #     whole line in an extra quote pair under /s —
+                            #     the Windows-sanctioned construction.
+                            def _cmd_quote(arg: str) -> str:
+                                return '"' + arg.replace('"', '""') + '"'
+
+                            inner = " ".join(_cmd_quote(a) for a in [resolved, *cmd[1:]])
+                            return orig_popen(f'cmd /s /c "{inner}"', *a, **kw)
+                        if suffix == ".ps1":
                             shell = shutil.which("pwsh") or shutil.which("powershell") or "powershell"
                             cmd = [shell, "-NoProfile", "-File", resolved, *cmd[1:]]
                         else:
