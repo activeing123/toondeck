@@ -78,6 +78,15 @@ export default function FleetDashboard() {
       </div>
 
       <div className="flex flex-wrap gap-3">
+        <div className="glass rounded-deck p-4 min-w-52 border border-deck-accent/40">
+          <div className="text-4xl font-mono font-bold text-deck-accent">
+            {invLoading ? "…" : totalTools + o.skills.valid + o.agents.installed}
+          </div>
+          <div className="mt-1 text-sm font-semibold">个能力，全部由 mcptoon 统一管理</div>
+          <div className="text-xs text-deck-muted">
+            {invLoading ? "全量实探中…" : `${totalTools} MCP 工具 + ${o.skills.valid} 技能 + ${o.agents.installed} CLI agents`}
+          </div>
+        </div>
         <Big
           n={invLoading ? "…" : totalTools}
           label="MCP 工具（全量实探）"
@@ -88,9 +97,8 @@ export default function FleetDashboard() {
           }
           accent
         />
-        <Big n={m.servers_total} label="MCP servers 已接管" sub={`另发现 ${m.discovered_total} 个候选`} />
+        <Big n={`${o.skills.valid}`} label="技能（含 gbrain/jiyi 等）" sub={`${o.skills.total} 总数 · 视图 ${o.skills.views_ok}/${o.skills.views_total} 健康`} />
         <Big n={`${o.agents.installed}/${o.agents.total}`} label="CLI agents" sub={`${o.agents.cli_capable} 个可一键启动`} />
-        <Big n={`${o.skills.valid}/${o.skills.total}`} label="技能" sub={`视图 ${o.skills.views_ok}/${o.skills.views_total} 健康`} />
       </div>
 
       {Object.keys(bySource).length > 0 && (
