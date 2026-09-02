@@ -34,7 +34,7 @@ function Big({ n, label, sub, accent }: { n: number | string; label: string; sub
 }
 
 /** MCP 页旗舰仪表盘：mcptoon 管理了什么、从哪来、通不通。 */
-export default function FleetDashboard() {
+export default function FleetDashboard({ reloadSignal = 0 }: { reloadSignal?: number }) {
   const [o, setO] = useState<Overview | null>(null);
   const [inv, setInv] = useState<Inventory | null>(null);
   const [invLoading, setInvLoading] = useState(true);
@@ -60,6 +60,12 @@ export default function FleetDashboard() {
       .then((h) => setEngine(h.engine?.version ?? null))
       .catch(() => setEngine(null));
   }, []);
+
+  // UX-B2: the standalone "重新全量探测" button is gone — the page-level
+  // refresh bumps reloadSignal, which re-probes the inventory right here.
+  useEffect(() => {
+    if (reloadSignal > 0) loadInventory(true);
+  }, [reloadSignal]);
 
   if (!o?.mcptoon) return null;
   const m = o.mcptoon;
@@ -121,15 +127,8 @@ export default function FleetDashboard() {
             </span>
           ))}
         </div>
-        <button
-          onClick={() => loadInventory(true)}
-          disabled={invLoading}
-          className="ml-auto rounded-deck border border-deck-line px-2.5 py-1 hover:bg-deck-panel2 disabled:opacity-40"
-        >
-          {invLoading ? "探测中…" : "↻ 重新全量探测"}
-        </button>
+        <div className="font-mono text-xs text-deck-muted break-all">single source of truth: {m.config_path}</div>
       </div>
-      <div className="font-mono text-xs text-deck-muted break-all">single source of truth: {m.config_path}</div>
     </section>
   );
 }

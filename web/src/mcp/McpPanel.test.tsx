@@ -113,6 +113,7 @@ describe("McpPanel", () => {
   });
 
   it("sync button posts to the sync endpoint", async () => {
+    vi.spyOn(window, "confirm").mockReturnValue(true); // UX-B4: sync now confirms
     const fetchMock = mockFetch({ "/api/mcp/sync": { results: [{ agent: "claude-code", ok: true }] } });
     vi.stubGlobal("fetch", fetchMock);
     render(<McpPanel />);

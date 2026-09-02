@@ -21,6 +21,12 @@ const DICT: Record<string, { en: string; zh: string }> = {
   "mcp.scanning": { en: "scanning…", zh: "扫描中…" },
   "mcp.import": { en: "import", zh: "导入" },
   "mcp.importSelected": { en: "import selected", zh: "导入选中" },
+  "mcp.adoptAll": { en: "adopt all", zh: "一键收编" },
+  "mcp.importing": { en: "importing…", zh: "导入中…" },
+  "mcp.syncWarn": {
+    en: "Sync pushes the ToonDeck toolset into ALL detected agents (overwrites their MCP config lists). Continue?",
+    zh: "同步会把 ToonDeck 工具集写入所有已检测到的 agent（覆盖其 MCP 配置清单）。继续？",
+  },
   "mcp.configured": { en: "configured", zh: "已配置" },
   "agents.launch": { en: "launch", zh: "启动" },
   "agents.stop": { en: "stop", zh: "停止" },

@@ -43,6 +43,7 @@ export default function DiscoverPanel({
   } | null>(null);
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [scanning, setScanning] = useState(false);
+  const [importing, setImporting] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
   const scan = () => {
@@ -65,15 +66,22 @@ export default function DiscoverPanel({
       return n;
     });
 
-  const doImport = async () => {
-    const r = await importServers([...picked]);
-    setMsg(`+${r.imported} · ${r.skipped} skipped`);
-    setPicked(new Set());
-    onImported();
+  const doImport = async (names: string[]) => {
+    setImporting(true);
+    try {
+      const r = await importServers(names);
+      setMsg(`+${r.imported} · ${r.skipped} skipped`);
+      setPicked(new Set());
+      onImported();
+    } finally {
+      setImporting(false);
+    }
   };
 
   const configured = new Set(configuredNames);
   const fresh = (found?.candidates ?? []).filter((c) => !configured.has(c.name));
+  // UX-B1: one click adopts every fresh candidate — no per-checkbox ritual
+  const adoptAll = () => doImport(fresh.map((c) => c.name));
 
   return (
     <section className="glass rounded-deck p-4">
@@ -91,15 +99,27 @@ export default function DiscoverPanel({
             {found.sources_scanned} sources scanned
           </span>
         )}
-        {picked.size > 0 && (
-          <button
-            onClick={doImport}
-            className="ml-auto rounded-deck bg-deck-accent px-3 py-1 text-sm font-semibold text-deck-bg"
-          >
-            {t("mcp.importSelected")} ({picked.size})
-          </button>
-        )}
-        {msg && <span className="ml-auto text-sm text-led-ok">{msg}</span>}
+        <div className="ml-auto flex items-center gap-2">
+          {msg && <span className="text-sm text-led-ok">{msg}</span>}
+          {fresh.length > 0 && (
+            <button
+              onClick={adoptAll}
+              disabled={importing}
+              className="rounded-deck bg-deck-accent px-3 py-1 text-sm font-semibold text-deck-bg disabled:opacity-40"
+            >
+              {importing ? t("mcp.importing") : t("mcp.adoptAll")} ({fresh.length})
+            </button>
+          )}
+          {picked.size > 0 && (
+            <button
+              onClick={() => doImport([...picked])}
+              disabled={importing}
+              className="rounded-deck border border-deck-line px-3 py-1 text-sm hover:bg-deck-panel2 disabled:opacity-40"
+            >
+              {t("mcp.importSelected")} ({picked.size})
+            </button>
+          )}
+        </div>
       </div>
 
       {fresh.length > 0 && (

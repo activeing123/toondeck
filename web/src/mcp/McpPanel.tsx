@@ -2,6 +2,7 @@ import { useState } from "react";
 import DiscoverPanel from "./DiscoverPanel";
 import FleetDashboard from "./FleetDashboard";
 import ToolsBrowser from "./ToolsBrowser";
+import { useI18n } from "../i18n";
 import {
   checkHealth,
   requestSync,
@@ -58,8 +59,12 @@ export default function McpPanel() {
   const [health, setHealth] = useState<HealthResult[] | null>(null);
   const [healthErr, setHealthErr] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
+  const { t } = useI18n();
+  const [invReload, setInvReload] = useState(0);
 
   const onSync = () => {
+    // UX-B4: name the blast radius before overwriting every agent's MCP list
+    if (!window.confirm(t("mcp.syncWarn"))) return;
     setSyncing(true);
     requestSync()
       .then(setSyncResults)
@@ -108,7 +113,10 @@ export default function McpPanel() {
         </h1>
         <div className="flex gap-2">
           <button
-            onClick={reload}
+            onClick={() => {
+              reload();
+              setInvReload((x) => x + 1); // UX-B2: one refresh = state + full re-probe
+            }}
             disabled={busy}
             className="rounded-deck border border-deck-line px-3 py-1.5 text-sm hover:bg-deck-panel2"
           >
@@ -131,7 +139,7 @@ export default function McpPanel() {
         </div>
       </div>
 
-      <FleetDashboard />
+      <FleetDashboard reloadSignal={invReload} />
 
       <TokenCard ts={state.token_savings} />
 
