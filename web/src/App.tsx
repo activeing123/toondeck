@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import AgentsPanel from "./agents/AgentsPanel";
 import DesignSheet from "./design/DesignSheet";
 import McpPanel from "./mcp/McpPanel";
 import SkillsPanel from "./skills/SkillsPanel";
@@ -69,6 +70,7 @@ function Nav() {
       <a className={link} href="#/">deck</a>
       <a className={link} href="#/mcp">mcp</a>
       <a className={link} href="#/skills">skills</a>
+      <a className={link} href="#/agents">agents</a>
       <a className={link} href="#/design">design</a>
     </nav>
   );
@@ -146,6 +148,13 @@ export default function App() {
     return (
       <Shell>
         <SkillsPanel />
+      </Shell>
+    );
+  }
+  if (route.startsWith("#/agents")) {
+    return (
+      <Shell>
+        <AgentsPanel />
       </Shell>
     );
   }

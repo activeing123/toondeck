@@ -1,0 +1,18 @@
+? Verifying lockfile against supply-chain policies (280 entries)...
+(node:62696) Warning: Setting the NODE_TLS_REJECT_UNAUTHORIZED environment variable to '0' makes TLS connections and HTTPS requests insecure by disabling certificate verification.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Progress: resolved 1, reused 0, downloaded 0, added 0
+Progress: resolved 11, reused 10, downloaded 0, added 0
+Progress: resolved 79, reused 77, downloaded 1, added 0
+[WARN] 1 deprecated subdependencies found: whatwg-encoding@3.1.1
+Progress: resolved 281, reused 210, downloaded 1, added 0
+Packages: +1
++
+Progress: resolved 281, reused 210, downloaded 1, added 1, done
+✓ Lockfile passes supply-chain policies (280 entries in 4s)
+[WARN] Issues with peer dependencies found. Run "pnpm peers check" to list them.
+
+dependencies:
++ @xterm/xterm 6.0.0
+
+Done in 4.4s using pnpm v11.9.0

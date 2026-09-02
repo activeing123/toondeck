@@ -161,7 +161,14 @@ class Manager:
     def status_all(self) -> dict[str, dict]:
         for aid in list(self.procs):
             self.procs[aid].reap()
-        return {aid: p.status_summary() if hasattr(p, "status_summary") else {} for aid, p in self.procs.items()}
+        return {
+            aid: {
+                "state": "running" if p.running() else "exited",
+                "exit_code": p.exit_code,
+                "pid": p.process.pid,
+            }
+            for aid, p in self.procs.items()
+        }
 
 
 def get_manager() -> Manager:

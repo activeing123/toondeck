@@ -101,6 +101,10 @@ def create_app() -> FastAPI:
     def agents_detect() -> dict:
         return agents.detect_all()
 
+    @app.get("/api/agents/status")
+    def agents_status() -> dict:
+        return agents.status_all()
+
     @app.get("/api/agents/{agent_id}/status")
     def agent_status(agent_id: str) -> dict:
         return agents.status(agent_id)

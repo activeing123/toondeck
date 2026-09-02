@@ -43,6 +43,13 @@ def status(agent_id: str) -> dict:
     return manager.get_manager().status(agent_id)
 
 
+def status_all() -> dict:
+    """Compact state map for every process this deck has launched."""
+    from .internal import manager
+
+    return manager.get_manager().status_all()
+
+
 def stop(agent_id: str) -> dict:
     """Terminate a launched agent; reaps the exit code."""
     from .internal import manager
