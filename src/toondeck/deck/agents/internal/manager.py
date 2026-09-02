@@ -145,12 +145,18 @@ class Manager:
         cwd: Path | None = None,
         args: list[str] | None = None,
         env_extra: dict[str, str] | None = None,
+        window: bool | None = None,
     ) -> dict:
         cmd = adapter.get("launch_command")
         if not cmd:
             return {"ok": False, "error": f"{agent_id} has no launch command (GUI-only agent)"}
         if args:
             cmd = [*cmd, *args]
+
+        # TUI agents (codex, claude REPL, ...) die with "stdin is not a
+        # terminal" under pipes. Default: launch in a NEW CONSOLE window the
+        # user can actually drive. Explicit window=False forces pipe mode.
+        use_window = bool(adapter.get("tui")) if window is None else window
 
         model = None
         try:
@@ -175,20 +181,29 @@ class Manager:
 
                 child_env = dict(_os.environ)
                 child_env.update(env_extra)
+            popen_kw: dict = {}
+            mode = "pipe"
+            if use_window and os.name == "nt":
+                popen_kw["creationflags"] = subprocess.CREATE_NEW_CONSOLE
+                mode = "window"
+            else:
+                popen_kw.update(
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    encoding="utf-8",
+                    errors="replace",
+                )
             proc = subprocess.Popen(
                 _resolve_windows_cmd(cmd),
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                encoding="utf-8",
-                errors="replace",
                 cwd=str(cwd) if cwd else None,
                 env=child_env,
+                **popen_kw,
             )
         except OSError as e:
             return {"ok": False, "error": f"spawn failed: {e}"}
         self.procs[agent_id] = AgentProcess(agent_id, proc)
-        return {"ok": True, "agent_id": agent_id, "pid": proc.pid}
+        return {"ok": True, "agent_id": agent_id, "pid": proc.pid, "mode": mode}
 
     def stop(self, agent_id: str) -> dict:
         proc = self.procs.get(agent_id)

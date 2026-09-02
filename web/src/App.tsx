@@ -149,7 +149,30 @@ function Sidebar({ route }: { route: string }) {
 
 function ConsoleTagline() {
   const { t } = useI18n();
-  return <p className="text-deck-muted">{t("brand.tagline")}</p>;
+  return (
+    <p className="text-deck-muted">
+      {t("brand.tagline")}
+      <span className="ml-2 rounded-full border border-deck-line px-2 py-0.5 text-xs">
+        powered by mcptoon
+      </span>
+    </p>
+  );
+}
+
+function ConsoleMcpSummary() {
+  const [mcp, setMcp] = useState<{ server_total: number; tool_total: number } | null>(null);
+  useEffect(() => {
+    fetch("/api/mcp/state")
+      .then((r) => r.json())
+      .then((b) => setMcp(b))
+      .catch(() => setMcp(null));
+  }, []);
+  if (!mcp) return null;
+  return (
+    <div className="text-sm text-deck-muted">
+      🔌 {mcp.server_total} MCP servers · {mcp.tool_total ?? "…"} tools
+    </div>
+  );
 }
 
 function Console() {
@@ -169,9 +192,10 @@ function Console() {
       </h1>
       <ConsoleTagline />
       {health ? (
-        <div className="glass rounded-deck px-6 py-4 text-sm shadow-glow-gold">
+        <div className="glass rounded-deck px-6 py-4 text-sm shadow-glow-gold space-y-1">
           <div>
-            service <span className="text-deck-accent">{health.version}</span>
+            service <span className="text-deck-accent">{health.version}</span> ·{" "}
+            <span className="font-mono">127.0.0.1:8721</span>
           </div>
           <div className="flex items-center gap-2">
             <span
@@ -181,6 +205,7 @@ function Console() {
             />
             mcptoon engine {health.engine.available ? health.engine.version : "unavailable"}
           </div>
+          <ConsoleMcpSummary />
         </div>
       ) : (
         <div className="text-deck-muted">connecting…</div>

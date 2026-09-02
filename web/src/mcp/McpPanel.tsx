@@ -1,5 +1,6 @@
 import { useState } from "react";
 import DiscoverPanel from "./DiscoverPanel";
+import ToolsBrowser from "./ToolsBrowser";
 import {
   checkHealth,
   requestSync,
@@ -115,6 +116,8 @@ export default function McpPanel() {
       </div>
 
       <TokenCard ts={state.token_savings} />
+
+      <ToolsBrowser />
 
       <DiscoverPanel
         configuredNames={state.servers.map((s) => s.name)}

@@ -34,6 +34,7 @@ export default function AgentsPanel() {
   const [models, setModels] = useState<Record<string, string>>({});
   const [openLogs, setOpenLogs] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [flash, setFlash] = useState<Record<string, string>>({});
 
   const load = useCallback(async () => {
     const [a, s, m] = await Promise.all([
@@ -60,9 +61,29 @@ export default function AgentsPanel() {
 
   const act = async (id: string, action: "launch" | "stop") => {
     setBusy(true);
+    setFlash((f) => ({ ...f, [id]: "" }));
     try {
       const r = await fetch(`/api/agents/${id}/${action}`, { method: "POST" }).then((r2) => r2.json());
-      if (!r.ok) window.alert(r.error ?? "action failed");
+      if (!r.ok) {
+        window.alert(`${id}: ${r.error ?? "action failed"}`);
+      } else if (action === "launch") {
+        setFlash((f) => ({
+          ...f,
+          [id]:
+            r.mode === "window"
+              ? `🪟 ${t("agents.windowLaunched")} · pid ${r.pid}`
+              : `${t("agents.running")} · pid ${r.pid}`,
+        }));
+        // quick-exit visibility: re-check shortly; auto-open logs with the reason
+        setTimeout(async () => {
+          await load();
+          const s = await fetch("/api/agents/status").then((x) => x.json());
+          if (s[id]?.state === "exited") {
+            setFlash((f) => ({ ...f, [id]: `⚠ ${t("agents.exited")} code ${s[id].exit_code}` }));
+            setOpenLogs(id);
+          }
+        }, 1500);
+      }
       await load();
     } finally {
       setBusy(false);
@@ -93,7 +114,7 @@ export default function AgentsPanel() {
                     st.state === "running"
                       ? "bg-led-ok shadow-glow-ok"
                       : st.state === "exited"
-                        ? "bg-led-warn"
+                        ? "bg-led-err shadow-glow-err"
                         : a.installed
                           ? "bg-deck-muted"
                           : "bg-deck-muted opacity-40"
@@ -110,6 +131,9 @@ export default function AgentsPanel() {
                         : t("agents.notInstalled")}
                 </span>
               </div>
+              {flash[a.id] && (
+                <div className="mt-1.5 text-xs text-deck-muted">{flash[a.id]}</div>
+              )}
 
               <div className="mt-2 flex flex-wrap gap-1.5 text-xs">
                 {Object.entries(a.evidence).map(([k, v]) => (

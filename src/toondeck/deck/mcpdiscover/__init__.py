@@ -94,5 +94,53 @@ def discover() -> dict:
     return scan()
 
 
+def list_tools(timeout: float = 6.0) -> dict:
+    """Per-server tool listings via mcptoon MCPClient (mcpcompat shim applies).
+
+    Unlike mcptoon.health (counts only), this keeps names + descriptions so
+    the GUI can show what each server actually offers.
+    """
+    import time as _time
+
+    from mcptoon import config as mcptoon_config
+    from mcptoon.client import MCPClient, MCPError
+
+    servers = []
+    for name in sorted(mcptoon_config.list_servers()):
+        cfg = mcptoon_config.get_server_config(name)
+        entry: dict = {"server": name, "tools": [], "error": None}
+        if not cfg:
+            entry["status"] = "no-config"
+            servers.append(entry)
+            continue
+        start = _time.time()
+        try:
+            if cfg.get("transport", "stdio") == "http":
+                client_cm = MCPClient(http_url=cfg.get("url", ""),
+                                      headers=cfg.get("headers", {}), timeout=timeout,
+                                      spec="legacy")
+            else:
+                command = cfg.get("command", [])
+                cmd_list = command if isinstance(command, list) else [command]
+                client_cm = MCPClient(stdio=[*cmd_list, *cfg.get("args", [])],
+                                      env=cfg.get("env", {}), timeout=timeout,
+                                      spec="legacy")
+            with client_cm as client:
+                tools = client.list_tools() or []
+            entry["status"] = "ok"
+            entry["tools"] = [
+                {"name": t.get("name", "?"),
+                 "description": (t.get("description") or "")[:140]}
+                for t in tools
+                if isinstance(t, dict)
+            ]
+        except (MCPError, OSError, ValueError) as e:
+            entry["status"] = "error"
+            entry["error"] = str(e)[:200]
+        entry["latency_ms"] = int((_time.time() - start) * 1000)
+        servers.append(entry)
+    return {"checked": len(servers), "servers": servers}
+
+
 def import_selected(names: list[str]) -> dict:
     return import_names(scan()["candidates"], names)

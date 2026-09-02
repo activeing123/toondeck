@@ -53,6 +53,7 @@ class LaunchIn(BaseModel):
     use_vault: bool = False
     aliases: dict[str, str] | None = None  # target_env_var -> provider_id (secret stays backend)
     plain_env: dict[str, str] | None = None  # non-secret env passthrough
+    window: bool | None = None  # None = auto by adapter tui flag
 
 
 class VaultKeyIn(BaseModel):
@@ -151,6 +152,10 @@ def create_app() -> FastAPI:
     def mcp_discover() -> dict:
         return mcpdiscover.discover()
 
+    @app.get("/api/mcp/tools")
+    def mcp_tools() -> dict:
+        return mcpdiscover.list_tools()
+
     @app.post("/api/mcp/import")
     def mcp_import(payload: McpImportIn) -> dict:
         return mcpdiscover.import_selected(payload.names)
@@ -193,6 +198,7 @@ def create_app() -> FastAPI:
             cwd=payload.cwd if payload else None,
             args=payload.args if payload else None,
             env_extra=env_extra or None,
+            window=payload.window if payload else None,
         )
 
     @app.post("/api/agents/{agent_id}/stop")
