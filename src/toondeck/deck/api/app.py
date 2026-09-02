@@ -16,6 +16,7 @@ from .. import engine
 from .. import mcpdiscover
 from .. import skills
 from .. import vault
+from .. import mcpcompat  # noqa: F401 — Windows stdio .cmd shim for mcptoon (T-064)
 from . import static
 
 
