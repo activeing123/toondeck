@@ -183,7 +183,7 @@ describe("UX-A4: TUI window-mode log explainer", () => {
     await screen.findByText("Codex CLI");
     await userEvent.click(screen.getByRole("button", { name: /logs/i }));
     expect(
-      await screen.findByText(/日志在桌面窗口内运行|streaming in its own desktop window/i),
+      await screen.findByText(/桌面窗口内运行|own desktop window/i),
     ).toBeInTheDocument();
   });
 });

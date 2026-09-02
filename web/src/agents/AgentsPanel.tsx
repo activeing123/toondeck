@@ -200,19 +200,19 @@ export default function AgentsPanel() {
 
       <details className="glass rounded-deck p-4 text-sm">
         <summary className="cursor-pointer font-semibold">
-          🔌 模型提供商（{providers.filter((p) => p.configured).length}/{providers.length} 已启用）
+          {t("agents.providers", { ok: providers.filter((p) => p.configured).length, n: providers.length })}
         </summary>
         <div className="mt-3 space-y-2">
           {providers.map((p) => (
             <div key={p.id} className="flex flex-wrap items-center gap-2 text-xs border border-deck-line rounded-deck px-3 py-2">
               <b>{p.display_name}</b>
               <span className="text-deck-muted font-mono">{p.base_url}</span>
-              <span className="text-deck-muted">({p.models.length} 模型)</span>
+              <span className="text-deck-muted">{t("agents.modelsCount", { n: p.models.length })}</span>
               {p.configured ? (
                 <>
-                  <span className="text-led-ok">✓ 已启用</span>
+                  <span className="text-led-ok">{t("agents.enabled")}</span>
                   <button onClick={() => removeProfile(p.id)} className="ml-auto text-deck-muted hover:text-led-err">
-                    停用
+                    {t("agents.disable")}
                   </button>
                 </>
               ) : p.keyless ? (
@@ -220,7 +220,7 @@ export default function AgentsPanel() {
                   onClick={() => enableProvider(p.id, true)}
                   className="ml-auto rounded-deck bg-deck-accent px-2.5 py-1 font-semibold text-deck-bg"
                 >
-                  一键启用（本地免 Key）
+                  {t("agents.enableKeyless")}
                 </button>
               ) : (
                 <>
@@ -228,7 +228,7 @@ export default function AgentsPanel() {
                     onClick={() => setKeyFor(keyFor === p.id ? null : p.id)}
                     className="ml-auto rounded-deck border border-deck-line px-2.5 py-1 hover:bg-deck-panel2"
                   >
-                    {keyFor === p.id ? "取消" : "启用"}
+                    {keyFor === p.id ? t("agents.cancel") : t("agents.enable")}
                   </button>
                   {keyFor === p.id && (
                     <>
@@ -236,14 +236,14 @@ export default function AgentsPanel() {
                         type="password"
                         value={keyInput}
                         onChange={(e) => setKeyInput(e.target.value)}
-                        placeholder="API Key（进系统钥匙串）"
+                        placeholder={t("agents.keyPlaceholder")}
                         className="rounded-deck border border-deck-line bg-deck-panel px-2 py-1 w-52"
                       />
                       <button
                         onClick={() => enableProvider(p.id, false)}
                         className="rounded-deck bg-deck-accent px-2.5 py-1 font-semibold text-deck-bg"
                       >
-                        保存
+                        {t("agents.save")}
                       </button>
                     </>
                   )}
@@ -253,24 +253,24 @@ export default function AgentsPanel() {
           ))}
 
           <details className="pt-2 border-t border-deck-line">
-            <summary className="cursor-pointer text-deck-muted text-xs">＋ 自定义源（任意 OpenAI 兼容网关）</summary>
+            <summary className="cursor-pointer text-deck-muted text-xs">{t("agents.customSource")}</summary>
             <div className="flex flex-wrap gap-2 pt-2">
               <input
                 value={newProfile}
                 onChange={(e) => setNewProfile(e.target.value)}
-                placeholder="名称 (如 my-proxy)"
+                placeholder={t("agents.profileName")}
                 className="rounded-deck border border-deck-line bg-deck-panel px-2 py-1 text-xs w-40"
               />
               <input
                 value={newUrl}
                 onChange={(e) => setNewUrl(e.target.value)}
-                placeholder="Base URL (https://…/v1)"
+                placeholder={t("agents.baseUrl")}
                 className="rounded-deck border border-deck-line bg-deck-panel px-2 py-1 text-xs w-56"
               />
               <input
                 value={newKey}
                 onChange={(e) => setNewKey(e.target.value)}
-                placeholder="API Key（进系统钥匙串）"
+                placeholder={t("agents.keyPlaceholder")}
                 type="password"
                 className="rounded-deck border border-deck-line bg-deck-panel px-2 py-1 text-xs w-48"
               />
@@ -278,7 +278,7 @@ export default function AgentsPanel() {
                 onClick={addProfile}
                 className="rounded-deck bg-deck-accent px-3 py-1 text-xs font-semibold text-deck-bg"
               >
-                保存
+                {t("agents.save")}
               </button>
             </div>
           </details>
@@ -414,9 +414,9 @@ export default function AgentsPanel() {
                       value={sources[a.id] ?? ""}
                       onChange={(e) => changeSource(a.id, e.target.value)}
                       className="rounded-deck bg-deck-panel2 px-2 py-1.5 text-xs"
-                      title="API 模型源"
+                      title={t("agents.sourceTitle")}
                     >
-                      <option value="">默认 API</option>
+                      <option value="">{t("agents.defaultApi")}</option>
                       {Object.keys(profiles).map((n) => (
                         <option key={n} value={n}>
                           {n}
@@ -430,10 +430,7 @@ export default function AgentsPanel() {
               {openLogs === a.id && st.state !== "never" && (
                 <div className="mt-3 border border-deck-line rounded-deck p-2 bg-black/40">
                   {a.tui && st.state === "running" ? (
-                    <p className="text-xs text-deck-muted px-1 py-2">
-                      🪟 日志在桌面窗口内运行 — streaming in its own desktop window; the
-                      ring below only records pipe launches.
-                    </p>
+                    <p className="text-xs text-deck-muted px-1 py-2">{t("agents.windowLog")}</p>
                   ) : (
                     <LogTerminal agentId={a.id} />
                   )}

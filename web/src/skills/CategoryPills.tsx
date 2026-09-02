@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { CATEGORY_RULES, categoryOf, type SkillLike as SkillRow } from "./categories";
+import { useI18n } from "../i18n";
+import { CATEGORY_RULES, categoryOf, OTHER, type SkillLike as SkillRow } from "./categories";
 
 /** 分类 pill 导航：一排看全分类数，点击过滤，搜索框置顶。 */
 export default function CategoryPills({
@@ -11,6 +12,7 @@ export default function CategoryPills({
   query: string;
   onQuery: (q: string) => void;
 }) {
+  const { t } = useI18n();
   const [active, setActive] = useState<string>("__all__");
 
   const catList = useMemo(() => {
@@ -21,9 +23,7 @@ export default function CategoryPills({
     }
     return Object.entries(CATEGORY_RULES)
       .map(([label, emoji]) => ({ label, emoji, n: counts.get(label) ?? 0 }))
-      .concat(
-        counts.has("📦 其他") ? [{ label: "📦 其他", emoji: "", n: counts.get("📦 其他")! }] : [],
-      )
+      .concat(counts.has(OTHER) ? [{ label: OTHER, emoji: "", n: counts.get(OTHER)! }] : [])
       .filter((c) => c.n > 0);
   }, [skills]);
 
@@ -45,7 +45,7 @@ export default function CategoryPills({
       <input
         value={query}
         onChange={(e) => onQuery(e.target.value)}
-        placeholder="🔍 搜索技能名或描述…"
+        placeholder={t("skills.searchPlaceholder")}
         className="w-full rounded-deck border border-deck-line bg-deck-panel px-4 py-2.5 text-sm outline-none focus:border-deck-accent"
       />
       <div className="flex flex-wrap gap-2">
@@ -57,7 +57,7 @@ export default function CategoryPills({
               : "border-deck-line text-deck-muted hover:border-deck-accent/50"
           }`}
         >
-          📚 全部 {skills.length}
+          {t("skills.all", { n: skills.length })}
         </button>
         {catList.map((c) => (
           <button
@@ -79,7 +79,7 @@ export default function CategoryPills({
         ))}
       </div>
       {shown.length === 0 && (
-        <p className="text-sm text-deck-muted">没有匹配的技能 — 换个分类或搜索词。</p>
+        <p className="text-sm text-deck-muted">{t("skills.noMatch")}</p>
       )}
     </div>
   );

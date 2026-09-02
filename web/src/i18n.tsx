@@ -88,6 +88,44 @@ const DICT: Record<string, { en: string; zh: string }> = {
     en: "health check failed — 体检失败（超时或引擎无响应，35s 上限），可直接重试",
     zh: "体检失败（超时或引擎无响应，35s 上限），可直接重试 — health check failed",
   },
+  // UX-C1 part 2: agents provider catalog + custom source + TUI explainer
+  "agents.providers": { en: "🔌 model providers ({ok}/{n} enabled)", zh: "🔌 模型提供商（{ok}/{n} 已启用）" },
+  "agents.modelsCount": { en: "({n} models)", zh: "({n} 模型)" },
+  "agents.enabled": { en: "✓ enabled", zh: "✓ 已启用" },
+  "agents.disable": { en: "disable", zh: "停用" },
+  "agents.enableKeyless": { en: "enable (local, keyless)", zh: "一键启用（本地免 Key）" },
+  "agents.enable": { en: "enable", zh: "启用" },
+  "agents.cancel": { en: "cancel", zh: "取消" },
+  "agents.keyPlaceholder": { en: "API key (goes to OS keychain)", zh: "API Key（进系统钥匙串）" },
+  "agents.customSource": { en: "＋ custom source (any OpenAI-compatible gateway)", zh: "＋ 自定义源（任意 OpenAI 兼容网关）" },
+  "agents.profileName": { en: "name (e.g. my-proxy)", zh: "名称 (如 my-proxy)" },
+  "agents.baseUrl": { en: "base URL (https://…/v1)", zh: "Base URL (https://…/v1)" },
+  "agents.save": { en: "save", zh: "保存" },
+  "agents.sourceTitle": { en: "API model source", zh: "API 模型源" },
+  "agents.defaultApi": { en: "default API", zh: "默认 API" },
+  "agents.windowLog": {
+    en: "🪟 logs stream in their own desktop window — the ring only records pipe launches.",
+    zh: "🪟 日志在桌面窗口内运行 — 下方的环形记录仅捕获管道启动。",
+  },
+  // logs panel
+  "logs.subtitle": { en: "live logs · download an md report to hand any agent for self-repair", zh: "实时日志 · 下载 md 报告直接丢给任意 agent 自修" },
+  "logs.running": { en: "running · pid {pid}", zh: "运行中 · pid {pid}" },
+  "logs.exited": { en: "exited · code {code}", zh: "已退出 · code {code}" },
+  "logs.downloadMd": { en: "⬇ md report", zh: "⬇ 下载 md 报告" },
+  "logs.collapse": { en: "collapse", zh: "收起" },
+  "logs.live": { en: "live log", zh: "实时日志" },
+  "logs.never": {
+    en: "never-launched agents: {names} — one-click launch them on the Agents page and their logs appear here.",
+    zh: "未启动过的 agent：{names} — 去 Agents 页一键启动后，日志会出现在这里。",
+  },
+  "logs.empty": {
+    en: "no logs yet — launch an agent (Agents page) or run an MCP health check first.",
+    zh: "还没有任何日志 — 启动一个 agent（Agents 页）或跑一次 MCP 体检后再来。",
+  },
+  // skills pills
+  "skills.searchPlaceholder": { en: "🔍 search skill names or descriptions…", zh: "🔍 搜索技能名或描述…" },
+  "skills.all": { en: "📚 all {n}", zh: "📚 全部 {n}" },
+  "skills.noMatch": { en: "no matching skills — try another category or search term.", zh: "没有匹配的技能 — 换个分类或搜索词。" },
 };
 
 type I18nCtx = {
