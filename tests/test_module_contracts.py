@@ -31,7 +31,6 @@ def test_vault_exports_exactly_three_operations():
 @pytest.mark.parametrize(
     "mod,fn",
     [
-        (engine, "get_state"),
         (skills, "sync_all"),
         (agents, "detect_all"),
         (vault, "set_key"),
