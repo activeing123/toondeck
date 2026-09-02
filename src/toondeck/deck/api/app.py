@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from importlib import metadata
 
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
 
@@ -100,6 +100,44 @@ def create_app() -> FastAPI:
     @app.get("/api/agents")
     def agents_detect() -> dict:
         return agents.detect_all()
+
+    @app.get("/api/agents/{agent_id}/status")
+    def agent_status(agent_id: str) -> dict:
+        return agents.status(agent_id)
+
+    @app.post("/api/agents/{agent_id}/launch")
+    def agent_launch(agent_id: str) -> dict:
+        return agents.launch(agent_id)
+
+    @app.post("/api/agents/{agent_id}/stop")
+    def agent_stop(agent_id: str) -> dict:
+        return agents.stop(agent_id)
+
+    @app.websocket("/api/agents/{agent_id}/logs")
+    async def agent_logs(ws: WebSocket, agent_id: str) -> None:
+        channel = agents.log_channel(agent_id)
+        if channel is None:
+            await ws.close(code=4404)
+            return
+        await ws.accept()
+        import asyncio
+        import queue as qmod
+
+        q = channel["queue"]
+        try:
+            for line in channel["snapshot"][-50:]:
+                await ws.send_text(line)
+            while True:
+                try:
+                    line = q.get_nowait()
+                except qmod.Empty:
+                    await asyncio.sleep(0.05)
+                    continue
+                await ws.send_text(line)
+        except Exception:  # noqa: BLE001 — disconnect is the normal end of stream
+            pass
+        finally:
+            agents.log_unsubscribe(agent_id, q)
 
     # ── SPA hosting (catch-all, last) ──
     @app.get("/{path:path}")

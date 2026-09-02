@@ -31,8 +31,6 @@ def test_vault_exports_exactly_three_operations():
 @pytest.mark.parametrize(
     "mod,fn",
     [
-        (agents, "launch"),
-        (agents, "stop"),
         (agents, "configure"),
         (vault, "set_key"),
     ],
