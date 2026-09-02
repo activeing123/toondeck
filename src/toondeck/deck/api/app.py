@@ -5,7 +5,10 @@ Route order matters: real API routes register BEFORE the SPA catch-all.
 
 from __future__ import annotations
 
+import threading
+from concurrent.futures import ThreadPoolExecutor
 from importlib import metadata
+from typing import Any
 
 from fastapi import FastAPI, WebSocket
 from fastapi.responses import FileResponse, JSONResponse, Response
@@ -19,6 +22,27 @@ from .. import skills
 from .. import vault
 from .. import mcpcompat  # noqa: F401 — Windows stdio .cmd shim for mcptoon (T-064)
 from . import static
+
+# singleflight executor for concurrent refresh=1 sweeps (one worker = natural dedupe)
+_REFRESH_EXECUTOR = ThreadPoolExecutor(max_workers=1, thread_name_prefix="inv-refresh")
+_REFRESH_SINGLE_LOCK = threading.Lock()
+_REFRESH_INFLIGHT: dict[str, Any] = {}
+
+
+def _inventory_singleflight() -> dict:
+    """Concurrent refresh=1 calls share ONE probe sweep (hardening: N callers
+    must not trigger N full npx fleets)."""
+    with _REFRESH_SINGLE_LOCK:
+        fut = _REFRESH_INFLIGHT.get("sweep")
+        if fut is None:
+            fut = _REFRESH_EXECUTOR.submit(mcpdiscover.inventory, True)
+            _REFRESH_INFLIGHT["sweep"] = fut
+    try:
+        return fut.result(timeout=120.0)
+    finally:
+        with _REFRESH_SINGLE_LOCK:
+            if _REFRESH_INFLIGHT.get("sweep") is fut:
+                del _REFRESH_INFLIGHT["sweep"]
 
 
 def _mcptoon_engine() -> dict:
@@ -113,7 +137,12 @@ def create_app() -> FastAPI:
 
     @app.get("/api/mcp/health")
     def mcp_health(timeout: float = 10.0) -> dict:
-        return engine.check_health(timeout=timeout)
+        # Hardening: query params are untrusted — clamp to [1, 30] so no
+        # caller can out-wait the frontend's 35s abort fuse.
+        clamped = min(30.0, max(1.0, float(timeout)))
+        out = engine.check_health(timeout=clamped)
+        out["timeout_s"] = clamped
+        return out
 
     @app.get("/api/skills/state")
     def skills_state() -> dict:
@@ -167,7 +196,7 @@ def create_app() -> FastAPI:
     def mcp_tools(refresh: bool = False) -> dict:
         import toondeck.deck.mcpcompat  # noqa: F401 — runtime shim must be active
 
-        return mcpdiscover.inventory(refresh=refresh)
+        return mcpdiscover.inventory(refresh=refresh) if not refresh else _inventory_singleflight()
 
     @app.post("/api/mcp/import")
     def mcp_import(payload: McpImportIn) -> dict:
