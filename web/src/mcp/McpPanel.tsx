@@ -1,4 +1,5 @@
 import { useState } from "react";
+import DiscoverPanel from "./DiscoverPanel";
 import {
   checkHealth,
   requestSync,
@@ -114,6 +115,11 @@ export default function McpPanel() {
       </div>
 
       <TokenCard ts={state.token_savings} />
+
+      <DiscoverPanel
+        configuredNames={state.servers.map((s) => s.name)}
+        onImported={reload}
+      />
 
       {health && (
         <div className="glass rounded-deck p-3 text-sm">

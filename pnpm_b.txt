@@ -1,12 +1,12 @@
 $ tsc -b && vite build
 vite v6.4.3 building for production...
 transforming...
-✓ 39 modules transformed.
+✓ 41 modules transformed.
 rendering chunks...
 computing gzip size...
 dist/index.html                   0.44 kB │ gzip:  0.30 kB
 dist/assets/xterm-6GBZ9nXN.css    5.24 kB │ gzip:  1.92 kB
-dist/assets/index-DxTi1Bsi.css   15.06 kB │ gzip:  3.73 kB
-dist/assets/index-C169IU3j.js   168.35 kB │ gzip: 52.61 kB
+dist/assets/index-BvCSlKzJ.css   15.90 kB │ gzip:  3.85 kB
+dist/assets/index-BU0bshW9.js   175.01 kB │ gzip: 54.69 kB
 dist/assets/xterm-BT7tBf8A.js   332.62 kB │ gzip: 84.18 kB
-✓ built in 660ms
+✓ built in 694ms

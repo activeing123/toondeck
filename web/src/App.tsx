@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import AgentsPanel from "./agents/AgentsPanel";
 import DesignSheet from "./design/DesignSheet";
+import { I18nProvider, useI18n, type Lang } from "./i18n";
 import McpPanel from "./mcp/McpPanel";
 import SkillsPanel from "./skills/SkillsPanel";
 import VaultPanel from "./vault/VaultPanel";
@@ -64,18 +65,91 @@ function AgentGrid() {
   );
 }
 
-function Nav() {
-  const link = "text-sm text-deck-muted hover:text-deck-ink";
+const NAV = [
+  { hash: "#/", key: "nav.deck", icon: "🃏" },
+  { hash: "#/mcp", key: "nav.mcp", icon: "🔌" },
+  { hash: "#/skills", key: "nav.skills", icon: "🧩" },
+  { hash: "#/agents", key: "nav.agents", icon: "🤖" },
+  { hash: "#/vault", key: "nav.vault", icon: "🔐" },
+  { hash: "#/design", key: "nav.design", icon: "🎨" },
+];
+
+type StatusHealth = {
+  ok: boolean;
+  version: string;
+  engine: { available: boolean; version: string | null };
+};
+
+function Sidebar({ route }: { route: string }) {
+  const { t, lang, setLang } = useI18n();
+  const [health, setHealth] = useState<StatusHealth | null>(null);
+  useEffect(() => {
+    fetch("/api/health")
+      .then((r) => r.json())
+      .then(setHealth)
+      .catch(() => setHealth(null));
+  }, []);
   return (
-    <nav className="flex gap-4">
-      <a className={link} href="#/">deck</a>
-      <a className={link} href="#/mcp">mcp</a>
-      <a className={link} href="#/skills">skills</a>
-      <a className={link} href="#/agents">agents</a>
-      <a className={link} href="#/vault">vault</a>
-      <a className={link} href="#/design">design</a>
-    </nav>
+    <aside className="w-56 shrink-0 border-r border-deck-line flex flex-col p-4 gap-1 min-h-screen">
+      <a href="#/" className="text-xl font-bold mb-6">
+        Toon<span className="text-deck-accent">Deck</span>
+      </a>
+      {NAV.map((n) => {
+        const active = n.hash === "#/" ? route === "#/" || route === "#" : route.startsWith(n.hash);
+        return (
+          <a
+            key={n.hash}
+            href={n.hash}
+            className={`flex items-center gap-2.5 rounded-deck px-3 py-2 text-sm ${
+              active ? "bg-deck-panel2 text-deck-ink font-semibold" : "text-deck-muted hover:text-deck-ink"
+            }`}
+          >
+            <span>{n.icon}</span>
+            {t(n.key)}
+          </a>
+        );
+      })}
+      <div className="mt-auto space-y-2 text-xs text-deck-muted">
+        <div className="flex gap-1">
+          {(["en", "zh"] as Lang[]).map((l) => (
+            <button
+              key={l}
+              onClick={() => setLang(l)}
+              className={`rounded-deck border px-2 py-0.5 ${
+                lang === l ? "border-deck-accent text-deck-accent" : "border-deck-line"
+              }`}
+            >
+              {l === "en" ? "EN" : "中文"}
+            </button>
+          ))}
+        </div>
+        {health ? (
+          <>
+            <div className="flex items-center gap-1.5">
+              <span
+                className={`inline-block h-2 w-2 rounded-full ${
+                  health.engine?.available ? "bg-led-ok shadow-glow-ok" : "bg-led-err"
+                }`}
+              />
+              {t("status.engine")} mcptoon{" "}
+              {health.engine?.available ? health.engine.version : t("status.offline")}
+            </div>
+            <div>deck v{health.version}</div>
+          </>
+        ) : (
+          <div className="flex items-center gap-1.5">
+            <span className="inline-block h-2 w-2 rounded-full bg-led-warn" />
+            {t("status.offline")}
+          </div>
+        )}
+      </div>
+    </aside>
   );
+}
+
+function ConsoleTagline() {
+  const { t } = useI18n();
+  return <p className="text-deck-muted">{t("brand.tagline")}</p>;
 }
 
 function Console() {
@@ -93,7 +167,7 @@ function Console() {
       <h1 className="text-4xl font-bold tracking-tight">
         Toon<span className="text-deck-accent">Deck</span>
       </h1>
-      <p className="text-deck-muted">One deck for every agent — M1 in progress</p>
+      <ConsoleTagline />
       {health ? (
         <div className="glass rounded-deck px-6 py-4 text-sm shadow-glow-gold">
           <div>
@@ -117,20 +191,24 @@ function Console() {
 }
 
 function Shell({ children }: { children: React.ReactNode }) {
+  const route = useHashRoute();
   return (
-    <div className="min-h-screen bg-deck-bg text-deck-ink p-8">
-      <header className="flex items-center gap-6 mb-8">
-        <a href="#/" className="text-xl font-bold">
-          Toon<span className="text-deck-accent">Deck</span>
-        </a>
-        <Nav />
-      </header>
-      {children}
+    <div className="min-h-screen bg-deck-bg text-deck-ink flex">
+      <Sidebar route={route} />
+      <main className="flex-1 p-8 max-w-6xl">{children}</main>
     </div>
   );
 }
 
 export default function App() {
+  return (
+    <I18nProvider>
+      <Routed />
+    </I18nProvider>
+  );
+}
+
+function Routed() {
   const route = useHashRoute();
   if (route.startsWith("#/design")) {
     return (
