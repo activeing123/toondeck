@@ -151,6 +151,20 @@ class Manager:
             return {"ok": False, "error": f"{agent_id} has no launch command (GUI-only agent)"}
         if args:
             cmd = [*cmd, *args]
+
+        model = None
+        try:
+            from ... import agents as agents_pkg
+
+            model = agents_pkg.get_model(agent_id)
+        except Exception:  # noqa: BLE001 — model preference must never block launch
+            model = None
+        if model:
+            if adapter.get("model_env"):
+                env_extra = dict(env_extra or {})
+                env_extra.setdefault(adapter["model_env"], model)
+            elif adapter.get("model_arg"):
+                cmd = [*cmd[:1], adapter["model_arg"], model, *cmd[1:]]
         old = self.procs.get(agent_id)
         if old is not None and old.running():
             return {"ok": False, "error": f"{agent_id} is already running (pid {old.process.pid})"}

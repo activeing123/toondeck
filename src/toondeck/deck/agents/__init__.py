@@ -80,5 +80,56 @@ def log_unsubscribe(agent_id: str, q: "object") -> None:
         proc.unsubscribe(q)
 
 
+# ---- per-agent model preference (T-061) --------------------------------
+
+
+def _models_file():
+    import os
+    from pathlib import Path
+
+    home = os.environ.get("TOONDECK_HOME")
+    root = Path(home) if home else Path.home() / ".toondeck"
+    return root / "agents.json"
+
+
+def _load_models() -> dict:
+    import json
+
+    f = _models_file()
+    if f.is_file():
+        try:
+            return json.loads(f.read_text(encoding="utf-8")).get("models", {})
+        except (json.JSONDecodeError, OSError):
+            return {}
+    return {}
+
+
+def _save_models(models: dict) -> None:
+    import json
+
+    f = _models_file()
+    f.parent.mkdir(parents=True, exist_ok=True)
+    f.write_text(json.dumps({"models": models}, indent=2), encoding="utf-8")
+
+
+def set_model(agent_id: str, model: str | None) -> dict:
+    """Persist (or clear with None) the preferred model for one agent."""
+    models = _load_models()
+    if model is None:
+        models.pop(agent_id, None)
+    else:
+        models[agent_id] = model
+    _save_models(models)
+    return {"ok": True, "agent_id": agent_id, "model": model}
+
+
+def get_model(agent_id: str) -> str | None:
+    return _load_models().get(agent_id)
+
+
+def get_models() -> dict:
+    return _load_models()
+
+
 def configure() -> dict:
     raise NotImplementedError("deck.agents.configure lands in M4")

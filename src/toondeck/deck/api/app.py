@@ -62,6 +62,10 @@ class McpImportIn(BaseModel):
     names: list[str]
 
 
+class AgentModelIn(BaseModel):
+    model: str | None = None  # None clears
+
+
 def create_app() -> FastAPI:
     app = FastAPI(title="ToonDeck", version=metadata.version("toondeck"))
 
@@ -143,6 +147,14 @@ def create_app() -> FastAPI:
     @app.post("/api/mcp/import")
     def mcp_import(payload: McpImportIn) -> dict:
         return mcpdiscover.import_selected(payload.names)
+
+    @app.get("/api/agents/models")
+    def agent_models() -> dict:
+        return {"models": agents.get_models()}
+
+    @app.put("/api/agents/{agent_id}/model")
+    def agent_set_model(agent_id: str, payload: AgentModelIn) -> dict:
+        return agents.set_model(agent_id, payload.model)
 
     @app.get("/api/agents/status")
     def agents_status() -> dict:

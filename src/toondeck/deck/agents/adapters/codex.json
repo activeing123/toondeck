@@ -6,5 +6,7 @@
   "config_paths": ["~/.codex/config.toml"],
   "skills_dir": "~/.codex/skills",
   "launch_command": ["codex"],
+  "model_arg": "-m",
   "env_config_support": false
 }
+
