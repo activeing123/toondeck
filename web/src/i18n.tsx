@@ -126,6 +126,19 @@ const DICT: Record<string, { en: string; zh: string }> = {
   "skills.searchPlaceholder": { en: "🔍 search skill names or descriptions…", zh: "🔍 搜索技能名或描述…" },
   "skills.all": { en: "📚 all {n}", zh: "📚 全部 {n}" },
   "skills.noMatch": { en: "no matching skills — try another category or search term.", zh: "没有匹配的技能 — 换个分类或搜索词。" },
+  // UX-D1: console onboarding
+  "onboard.step1": { en: "step 1 — wire up your MCP fleet", zh: "第 1 步 —— 接管你的 MCP 舰队" },
+  "onboard.step1Body": {
+    en: "No MCP servers are under management yet. Open the MCP page to discover servers from your agent configs and adopt them in one click.",
+    zh: "还没有任何 MCP server 被接管。去 MCP 页从各 agent 配置里发现 server，一键收编。",
+  },
+  "onboard.step2": { en: "next step — put an agent on the deck", zh: "下一步 —— 把 agent 拉上牌桌" },
+  "onboard.step2Body": {
+    en: "{servers} MCP servers and {tools} tools are under management. Launch a CLI agent from the Agents page and its logs stream right here.",
+    zh: "已有 {servers} 个 MCP server、{tools} 个工具被接管。去 Agents 页一键启动 CLI agent，日志会实时出现在这里。",
+  },
+  "onboard.goMcp": { en: "discover on the MCP page →", zh: "去 MCP 页发现收编 →" },
+  "onboard.goAgents": { en: "launch on the Agents page →", zh: "去 Agents 页启动 →" },
 };
 
 type I18nCtx = {

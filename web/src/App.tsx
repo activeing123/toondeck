@@ -161,14 +161,7 @@ function ConsoleTagline() {
   );
 }
 
-function ConsoleMcpSummary() {
-  const [mcp, setMcp] = useState<{ server_total: number; tool_total: number } | null>(null);
-  useEffect(() => {
-    fetch("/api/mcp/state")
-      .then((r) => r.json())
-      .then((b) => setMcp(b))
-      .catch(() => setMcp(null));
-  }, []);
+function ConsoleMcpSummary({ mcp }: { mcp: { server_total: number; tool_total: number } | null }) {
   if (!mcp) return null;
   return (
     <div className="text-sm text-deck-muted">
@@ -177,8 +170,37 @@ function ConsoleMcpSummary() {
   );
 }
 
+/** UX-D1: first-screen onboarding — tell the user what to do FIRST. */
+function ConsoleOnboarding({ mcp }: { mcp: { server_total: number; tool_total: number } | null }) {
+  const { t } = useI18n();
+  if (!mcp) return null; // still loading — the card waits for honest data
+  if (mcp.server_total === 0) {
+    return (
+      <div className="glass rounded-deck px-6 py-4 text-sm space-y-2 max-w-md border border-deck-accent/40">
+        <div className="font-semibold">{t("onboard.step1")}</div>
+        <p className="text-deck-muted">{t("onboard.step1Body")}</p>
+        <a href="#/mcp" className="inline-block text-deck-accent hover:underline">
+          {t("onboard.goMcp")}
+        </a>
+      </div>
+    );
+  }
+  return (
+    <div className="glass rounded-deck px-6 py-4 text-sm space-y-2 max-w-md">
+      <div className="font-semibold">{t("onboard.step2")}</div>
+      <p className="text-deck-muted">
+        {t("onboard.step2Body", { servers: mcp.server_total, tools: mcp.tool_total })}
+      </p>
+      <a href="#/agents" className="inline-block text-deck-accent hover:underline">
+        {t("onboard.goAgents")}
+      </a>
+    </div>
+  );
+}
+
 function Console() {
   const [health, setHealth] = useState<Health | null>(null);
+  const [mcp, setMcp] = useState<{ server_total: number; tool_total: number } | null>(null);
 
   useEffect(() => {
     fetch("/api/health")
@@ -187,12 +209,20 @@ function Console() {
       .catch(() => setHealth(null));
   }, []);
 
+  useEffect(() => {
+    fetch("/api/mcp/state")
+      .then((r) => r.json())
+      .then(setMcp)
+      .catch(() => setMcp(null));
+  }, []);
+
   return (
     <main className="min-h-screen bg-deck-bg text-deck-ink flex flex-col items-center justify-center gap-6">
       <h1 className="text-4xl font-bold tracking-tight">
         Toon<span className="text-deck-accent">Deck</span>
       </h1>
       <ConsoleTagline />
+      <ConsoleOnboarding mcp={mcp} />
       {health ? (
         <div className="glass rounded-deck px-6 py-4 text-sm shadow-glow-gold space-y-1">
           <div>
@@ -207,7 +237,7 @@ function Console() {
             />
             mcptoon engine {health.engine.available ? health.engine.version : "unavailable"}
           </div>
-          <ConsoleMcpSummary />
+          <ConsoleMcpSummary mcp={mcp} />
         </div>
       ) : (
         <div className="text-deck-muted">connecting…</div>
