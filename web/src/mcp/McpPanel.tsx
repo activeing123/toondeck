@@ -56,6 +56,7 @@ export default function McpPanel() {
   const [syncResults, setSyncResults] = useState<SyncResult[] | null>(null);
   const [syncing, setSyncing] = useState(false);
   const [health, setHealth] = useState<HealthResult[] | null>(null);
+  const [healthErr, setHealthErr] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
 
   const onSync = () => {
@@ -67,8 +68,15 @@ export default function McpPanel() {
 
   const onHealth = () => {
     setChecking(true);
+    setHealth(null);
+    setHealthErr(null);
     checkHealth()
       .then((b) => setHealth(b.results))
+      .catch(() =>
+        setHealthErr(
+          "health check failed — 体检失败（超时或引擎无响应，35s 上限），可直接重试",
+        ),
+      )
       .finally(() => setChecking(false));
   };
 
@@ -146,9 +154,20 @@ export default function McpPanel() {
         onImported={reload}
       />
 
+      {healthErr && (
+        <div className="glass rounded-deck p-3 text-sm text-led-err">
+          {healthErr}
+        </div>
+      )}
+
       {health && (
         <div className="glass rounded-deck p-3 text-sm">
-          <p className="text-xs text-deck-muted mb-1">probed statuses below — live connections, just ran</p>
+          <p className="text-xs text-deck-muted mb-1">
+            probed statuses below — live connections, just ran ·{" "}
+            {health.filter((h) => h.status === "ok").length} ok ·{" "}
+            {health.filter((h) => h.status === "timeout").length} timeout ·{" "}
+            {health.filter((h) => h.status === "error").length} error
+          </p>
           {health.map((h) => (
             <div key={h.server} className="flex items-center gap-2">
               <span className={`inline-block h-2.5 w-2.5 rounded-full ${statusLed(h.status)}`} />

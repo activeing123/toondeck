@@ -18,6 +18,7 @@ type AgentRow = {
   evidence: Record<string, boolean>;
   config_paths: Record<string, boolean>;
   launch_command: string[] | null;
+  tui?: boolean;
 };
 
 type StatusRow = {
@@ -364,7 +365,14 @@ export default function AgentsPanel() {
 
               {openLogs === a.id && st.state !== "never" && (
                 <div className="mt-3 border border-deck-line rounded-deck p-2 bg-black/40">
-                  <LogTerminal agentId={a.id} />
+                  {a.tui && st.state === "running" ? (
+                    <p className="text-xs text-deck-muted px-1 py-2">
+                      🪟 日志在桌面窗口内运行 — streaming in its own desktop window; the
+                      ring below only records pipe launches.
+                    </p>
+                  ) : (
+                    <LogTerminal agentId={a.id} />
+                  )}
                 </div>
               )}
             </section>

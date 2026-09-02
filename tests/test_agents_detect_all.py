@@ -12,7 +12,10 @@ def test_detect_all_returns_all_seven_with_summary():
     assert ids == {"claude-code", "codex", "cursor", "gemini-cli", "opencode", "catpaw", "dsh"}
     assert isinstance(r["installed_count"], int)
     for a in r["agents"]:
-        assert set(a) >= {"id", "display_name", "installed", "evidence", "config_paths"}
+        assert set(a) >= {"id", "display_name", "installed", "evidence", "config_paths", "tui"}
+    by_id = {a["id"]: a for a in r["agents"]}
+    assert by_id["codex"]["tui"] is True  # adapter JSON declares TUI (window mode)
+    assert by_id["dsh"]["tui"] is True
 
 
 def test_api_agents_route(engine_env):

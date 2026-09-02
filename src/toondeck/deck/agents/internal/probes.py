@@ -49,4 +49,5 @@ def detect(adapter: dict, home: Path | None = None) -> dict:
         "skills_dir": adapter.get("skills_dir"),
         "launch_command": adapter.get("launch_command"),
         "env_config_support": adapter.get("env_config_support", False),
+        "tui": bool(adapter.get("tui", False)),
     }

@@ -58,7 +58,28 @@ export function requestSync(): Promise<SyncResult[]> {
 }
 
 export function checkHealth(): Promise<{ checked: number; results: HealthResult[] }> {
-  return fetch("/api/mcp/health").then((r) => r.json());
+  // UX-A3: the browser never spins forever either — 35s hard cap (backend
+  // deadline is ~timeout+2s; this is the safety net for dead/crashed engine)
+  return fetchWithTimeout("/api/mcp/health", 35_000).then((r) => r.json());
+}
+
+function fetchWithTimeout(url: string, ms: number, init?: RequestInit): Promise<Response> {
+  // AbortController for real browsers + a rejecting timer so the race fires
+  // even when a mock/polyfill ignores the signal. One timer owns both jobs.
+  const ctl = new AbortController();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const race = Promise.race([
+    fetch(url, { ...init, signal: ctl.signal }),
+    new Promise<never>((_, rej) => {
+      timer = setTimeout(() => {
+        ctl.abort();
+        rej(new Error(`timeout after ${ms}ms`));
+      }, ms);
+    }),
+  ]);
+  return race.finally(() => {
+    if (timer) clearTimeout(timer);
+  });
 }
 
 export function useMcpState() {
