@@ -7,8 +7,10 @@ redaction gateway BEFORE storage — secrets never even rest in memory buffers.
 
 from __future__ import annotations
 
+import os
 import queue
 import re
+import shutil
 import subprocess
 import threading
 import time
@@ -29,6 +31,27 @@ _REDACT_RES = [
     re.compile(r"(?i)bearer\s+[A-Za-z0-9._-]{8,}"),
 ]
 _REDACTED = "***REDACTED***"
+
+
+def _resolve_windows_cmd(cmd: list[str]) -> list[str]:
+    """Windows can't CreateProcess .CMD/.PS1 directly (npm shims!) — wrap them.
+
+    `claude`, `codex`, `cursor` are npm shims on this platform: Popen would
+    raise WinError 2 even though shutil.which finds them. Route through cmd /c
+    (or pwsh for .ps1) with the fully-resolved script path.
+    """
+    if os.name != "nt":
+        return cmd
+    resolved = shutil.which(cmd[0])
+    if not resolved:
+        return cmd
+    suffix = Path(resolved).suffix.lower()
+    if suffix in (".cmd", ".bat"):
+        return ["cmd", "/c", resolved, *cmd[1:]]
+    if suffix == ".ps1":
+        shell = shutil.which("pwsh") or shutil.which("powershell") or "powershell"
+        return [shell, "-NoProfile", "-File", resolved, *cmd[1:]]
+    return cmd
 
 
 def redact(line: str) -> str:
@@ -124,7 +147,7 @@ class Manager:
             return {"ok": False, "error": f"{agent_id} is already running (pid {old.process.pid})"}
         try:
             proc = subprocess.Popen(
-                cmd,
+                _resolve_windows_cmd(cmd),
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,

@@ -104,3 +104,37 @@ def test_exit_code_reaped_after_exit(fake_adapters):
         time.sleep(0.2)
     assert st["state"] == "exited"
     assert st["exit_code"] == 7
+
+
+def test_launch_handles_windows_cmd_wrapper(fake_adapters, tmp_path, monkeypatch):
+    """npm-style .CMD wrappers (claude etc.) must spawn via cmd /c, not WinError 2."""
+    import os
+
+    from toondeck.deck.agents import internal
+    from toondeck.deck.agents import launch, status
+
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    script = bin_dir / "fakewrap.cmd"
+    script.write_text("@echo wrapped-ok\r\n@exit /b 0\r\n", encoding="utf-8")
+    monkeypatch.setenv("PATH", f"{bin_dir}{os.pathsep}{os.environ['PATH']}")
+
+    adapters = dict(internal.load_all())
+    adapters["wrapped"] = {
+        "id": "wrapped",
+        "display_name": "Wrapped",
+        "launch_command": ["fakewrap"],
+        "env_config_support": False,
+    }
+    monkeypatch.setattr(internal, "load_all", lambda: adapters)
+
+    r = launch("wrapped")
+    assert r["ok"] is True, r
+    deadline = time.time() + 10
+    logs = []
+    while time.time() < deadline:
+        logs = status("wrapped")["logs"]
+        if any("wrapped-ok" in x for x in logs):
+            break
+        time.sleep(0.2)
+    assert any("wrapped-ok" in x for x in logs), logs
