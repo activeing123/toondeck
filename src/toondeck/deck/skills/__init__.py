@@ -66,3 +66,10 @@ def doctor() -> dict:
     from .internal import maintenance
 
     return maintenance.doctor()
+
+
+def watcher(action: str) -> dict:
+    """Daemon control: 'start' | 'stop' | 'status'. Source changes auto-reconcile."""
+    from .internal.watcher import watcher as _w
+
+    return _w(action)
