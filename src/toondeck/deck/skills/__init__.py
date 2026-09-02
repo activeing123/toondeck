@@ -54,6 +54,12 @@ def _not_impl(name: str):
     return _f
 
 
-sync_all = _not_impl("sync_all")
+def sync_all() -> list[dict]:
+    """Reconcile every agent view with the source. Per-agent isolation in results."""
+    from .internal import reconcile
+
+    return reconcile.run()
+
+
 remove_skill = _not_impl("remove_skill")
 doctor = _not_impl("doctor")
