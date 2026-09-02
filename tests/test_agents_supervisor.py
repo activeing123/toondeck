@@ -141,7 +141,7 @@ def test_launch_handles_windows_cmd_wrapper(fake_adapters, tmp_path, monkeypatch
 
 
 def test_launch_extra_args_are_passed_through(fake_adapters):
-    from toondeck.deck.agents import launch, status, stop
+    from toondeck.deck.agents import launch, status
 
     r = launch("quitter", args=["--flag"])
     assert r["ok"] is True, r
