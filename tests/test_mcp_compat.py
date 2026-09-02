@@ -91,3 +91,16 @@ def test_real_exe_paths_unaffected_by_shim(shim_env, tmp_path, monkeypatch):
     r = check_server("pyserver", timeout=10)
     assert r["status"] == "ok", r
     assert r["tools"] >= 0
+
+
+def test_dead_process_write_is_classified_not_errno22(shim_env, tmp_path):
+    """A server that dies instantly must yield honest error, never EINVAL 22."""
+    from mcptoon import config as mcptoon_config
+    from mcptoon.health import check_server
+
+    die = tmp_path / "dier.py"
+    die.write_text("import sys; sys.exit(3)\n", encoding="utf-8")
+    mcptoon_config.save_config({"dier": {"command": sys.executable, "args": [str(die)]}})
+    r = check_server("dier", timeout=10)
+    assert "Invalid argument" not in str(r.get("error")), r
+    assert r.get("error"), r
