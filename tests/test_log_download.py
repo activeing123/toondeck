@@ -81,4 +81,3 @@ def test_api_download_route_headers(home):
     assert "attachment" in r.headers["content-disposition"]
     assert "toondeck-codex-log.md" in r.headers["content-disposition"]
     assert r.text.startswith("# ToonDeck agent log report")
-    body = json.loads("{}") if False else None  # noqa: F841 — markdown body, not JSON
