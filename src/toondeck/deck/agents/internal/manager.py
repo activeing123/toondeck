@@ -87,7 +87,15 @@ class AgentProcess:
                     try:
                         q.put_nowait(line)
                     except queue.Full:
-                        pass
+                        # Backpressure policy: drop rather than block the pump —
+                        # but NEVER silently. Trade the oldest queued line for a
+                        # visible marker so the UI transcript shows the gap
+                        # instead of pretending the log is complete (R19).
+                        try:
+                            q.get_nowait()
+                            q.put_nowait("⚠ log line skipped — consumer too slow (full transcript in the ring / download)")
+                        except (queue.Empty, queue.Full):
+                            pass
         finally:
             try:
                 stream.close()
