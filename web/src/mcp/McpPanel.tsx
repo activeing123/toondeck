@@ -1,5 +1,6 @@
 import { useState } from "react";
 import DiscoverPanel from "./DiscoverPanel";
+import FleetDashboard from "./FleetDashboard";
 import ToolsBrowser from "./ToolsBrowser";
 import {
   checkHealth,
@@ -121,6 +122,8 @@ export default function McpPanel() {
           </button>
         </div>
       </div>
+
+      <FleetDashboard />
 
       <TokenCard ts={state.token_savings} />
 

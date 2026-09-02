@@ -44,6 +44,35 @@ function mockFetch(postResponses: Record<string, unknown> = {}) {
     if (url === "/api/mcp/state") {
       return Promise.resolve({ json: () => Promise.resolve(state) });
     }
+    if (url === "/api/fleet/overview") {
+      return Promise.resolve({
+        json: () =>
+          Promise.resolve({
+            mcptoon: {
+              servers_total: 2,
+              tools_cached: 0,
+              disabled_tools: 1,
+              discovered_total: 0,
+              sources_scanned: 7,
+              sources_breakdown: {},
+              config_path: "x",
+            },
+            agents: { total: 7, installed: 7, cli_capable: 6 },
+            skills: { total: 0, valid: 0, views_ok: 0, views_total: 6 },
+          }),
+      });
+    }
+    if (url === "/api/health") {
+      return Promise.resolve({
+        json: () =>
+          Promise.resolve({
+            ok: true,
+            service: "toondeck",
+            version: "0.1.0",
+            engine: { available: true, version: "0.7.1" },
+          }),
+      });
+    }
     if (url === "/api/mcp/toggle" || url === "/api/mcp/sync" || url === "/api/mcp/health") {
       const key = new URL(url, "http://x").pathname;
       return Promise.resolve({

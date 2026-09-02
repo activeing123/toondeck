@@ -8,6 +8,7 @@ const DICT: Record<string, { en: string; zh: string }> = {
   "nav.mcp": { en: "mcp", zh: "MCP" },
   "nav.skills": { en: "skills", zh: "技能" },
   "nav.agents": { en: "agents", zh: "代理" },
+  "nav.logs": { en: "logs", zh: "日志" },
   "nav.vault": { en: "vault", zh: "保险库" },
   "nav.design": { en: "design", zh: "设计" },
   "common.refresh": { en: "refresh", zh: "刷新" },

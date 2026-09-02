@@ -195,6 +195,16 @@ def create_app() -> FastAPI:
     def agents_discover() -> dict:
         return agentdiscover.discover_all()
 
+    @app.get("/api/fleet/overview")
+    def fleet_overview() -> dict:
+        from .. import fleet
+
+        return fleet.overview()
+
+    @app.get("/api/agents/providers")
+    def agent_providers() -> dict:
+        return {"providers": agents.provider_catalog()}
+
     @app.post("/api/agents/adopt")
     def agents_adopt(payload: AdoptIn) -> dict:
         return agentdiscover.adopt(payload.label, payload.launch_command)

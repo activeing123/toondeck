@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import AgentsPanel from "./agents/AgentsPanel";
 import DesignSheet from "./design/DesignSheet";
 import { I18nProvider, useI18n, type Lang } from "./i18n";
+import LogsPanel from "./logs/LogsPanel";
 import McpPanel from "./mcp/McpPanel";
 import SkillsPanel from "./skills/SkillsPanel";
 import VaultPanel from "./vault/VaultPanel";
@@ -70,6 +71,7 @@ const NAV = [
   { hash: "#/mcp", key: "nav.mcp", icon: "🔌" },
   { hash: "#/skills", key: "nav.skills", icon: "🧩" },
   { hash: "#/agents", key: "nav.agents", icon: "🤖" },
+  { hash: "#/logs", key: "nav.logs", icon: "📜" },
   { hash: "#/vault", key: "nav.vault", icon: "🔐" },
   { hash: "#/design", key: "nav.design", icon: "🎨" },
 ];
@@ -260,6 +262,13 @@ function Routed() {
     return (
       <Shell>
         <AgentsPanel />
+      </Shell>
+    );
+  }
+  if (route.startsWith("#/logs")) {
+    return (
+      <Shell>
+        <LogsPanel />
       </Shell>
     );
   }

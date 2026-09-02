@@ -34,6 +34,11 @@ export default function AgentsPanel() {
   const [models, setModels] = useState<Record<string, string>>({});
   const [sources, setSources] = useState<Record<string, string>>({});
   const [profiles, setProfiles] = useState<Record<string, { base_url?: string }>>({});
+  const [providers, setProviders] = useState<
+    { id: string; display_name: string; base_url: string; models: string[]; keyless: boolean; configured: boolean }[]
+  >([]);
+  const [keyFor, setKeyFor] = useState<string | null>(null);
+  const [keyInput, setKeyInput] = useState("");
   const [newProfile, setNewProfile] = useState("");
   const [newUrl, setNewUrl] = useState("");
   const [newKey, setNewKey] = useState("");
@@ -42,17 +47,19 @@ export default function AgentsPanel() {
   const [flash, setFlash] = useState<Record<string, string>>({});
 
   const load = useCallback(async () => {
-    const [a, s, m, p] = await Promise.all([
+    const [a, s, m, p, pr] = await Promise.all([
       fetch("/api/agents").then((r) => r.json()),
       fetch("/api/agents/status").then((r) => r.json()),
       fetch("/api/agents/models").then((r) => r.json()),
       fetch("/api/agents/profiles").then((r) => r.json()),
+      fetch("/api/agents/providers").then((r) => r.json()),
     ]);
     setAgents(a.agents);
     setStatuses(s);
     setModels(m.models ?? {});
     setSources(m.sources ?? {});
     setProfiles(p.profiles ?? {});
+    setProviders(pr.providers ?? []);
   }, []);
   useEffect(() => {
     load();
@@ -95,6 +102,23 @@ export default function AgentsPanel() {
 
   const removeProfile = async (name: string) => {
     await fetch(`/api/agents/profiles/${name}`, { method: "DELETE" });
+    await load();
+  };
+
+  const enableProvider = async (id: string, keyless: boolean) => {
+    const p = providers.find((x) => x.id === id);
+    if (!p) return;
+    await fetch("/api/agents/profiles", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: id,
+        base_url: p.base_url,
+        api_key: keyless ? null : keyInput || null,
+      }),
+    });
+    setKeyFor(null);
+    setKeyInput("");
     await load();
   };
 
@@ -143,48 +167,88 @@ export default function AgentsPanel() {
 
       <details className="glass rounded-deck p-4 text-sm">
         <summary className="cursor-pointer font-semibold">
-          🔌 API 模型源 ({Object.keys(profiles).length})
+          🔌 模型提供商（{providers.filter((p) => p.configured).length}/{providers.length} 已启用）
         </summary>
         <div className="mt-3 space-y-2">
-          {Object.entries(profiles).map(([name, p]) => (
-            <div key={name} className="flex items-center gap-2 text-xs">
-              <b className="font-mono">{name}</b>
-              {p.base_url && <span className="text-deck-muted font-mono">{p.base_url}</span>}
-              <button
-                onClick={() => removeProfile(name)}
-                className="ml-auto text-deck-muted hover:text-led-err"
-              >
-                delete
-              </button>
+          {providers.map((p) => (
+            <div key={p.id} className="flex flex-wrap items-center gap-2 text-xs border border-deck-line rounded-deck px-3 py-2">
+              <b>{p.display_name}</b>
+              <span className="text-deck-muted font-mono">{p.base_url}</span>
+              <span className="text-deck-muted">({p.models.length} 模型)</span>
+              {p.configured ? (
+                <>
+                  <span className="text-led-ok">✓ 已启用</span>
+                  <button onClick={() => removeProfile(p.id)} className="ml-auto text-deck-muted hover:text-led-err">
+                    停用
+                  </button>
+                </>
+              ) : p.keyless ? (
+                <button
+                  onClick={() => enableProvider(p.id, true)}
+                  className="ml-auto rounded-deck bg-deck-accent px-2.5 py-1 font-semibold text-deck-bg"
+                >
+                  一键启用（本地免 Key）
+                </button>
+              ) : (
+                <>
+                  <button
+                    onClick={() => setKeyFor(keyFor === p.id ? null : p.id)}
+                    className="ml-auto rounded-deck border border-deck-line px-2.5 py-1 hover:bg-deck-panel2"
+                  >
+                    {keyFor === p.id ? "取消" : "启用"}
+                  </button>
+                  {keyFor === p.id && (
+                    <>
+                      <input
+                        type="password"
+                        value={keyInput}
+                        onChange={(e) => setKeyInput(e.target.value)}
+                        placeholder="API Key（进系统钥匙串）"
+                        className="rounded-deck border border-deck-line bg-deck-panel px-2 py-1 w-52"
+                      />
+                      <button
+                        onClick={() => enableProvider(p.id, false)}
+                        className="rounded-deck bg-deck-accent px-2.5 py-1 font-semibold text-deck-bg"
+                      >
+                        保存
+                      </button>
+                    </>
+                  )}
+                </>
+              )}
             </div>
           ))}
-          <div className="flex flex-wrap gap-2 pt-2 border-t border-deck-line">
-            <input
-              value={newProfile}
-              onChange={(e) => setNewProfile(e.target.value)}
-              placeholder="名称 (如 my-proxy)"
-              className="rounded-deck border border-deck-line bg-deck-panel px-2 py-1 text-xs w-40"
-            />
-            <input
-              value={newUrl}
-              onChange={(e) => setNewUrl(e.target.value)}
-              placeholder="Base URL (https://…/v1)"
-              className="rounded-deck border border-deck-line bg-deck-panel px-2 py-1 text-xs w-56"
-            />
-            <input
-              value={newKey}
-              onChange={(e) => setNewKey(e.target.value)}
-              placeholder="API Key（进系统钥匙串）"
-              type="password"
-              className="rounded-deck border border-deck-line bg-deck-panel px-2 py-1 text-xs w-48"
-            />
-            <button
-              onClick={addProfile}
-              className="rounded-deck bg-deck-accent px-3 py-1 text-xs font-semibold text-deck-bg"
-            >
-              保存
-            </button>
-          </div>
+
+          <details className="pt-2 border-t border-deck-line">
+            <summary className="cursor-pointer text-deck-muted text-xs">＋ 自定义源（任意 OpenAI 兼容网关）</summary>
+            <div className="flex flex-wrap gap-2 pt-2">
+              <input
+                value={newProfile}
+                onChange={(e) => setNewProfile(e.target.value)}
+                placeholder="名称 (如 my-proxy)"
+                className="rounded-deck border border-deck-line bg-deck-panel px-2 py-1 text-xs w-40"
+              />
+              <input
+                value={newUrl}
+                onChange={(e) => setNewUrl(e.target.value)}
+                placeholder="Base URL (https://…/v1)"
+                className="rounded-deck border border-deck-line bg-deck-panel px-2 py-1 text-xs w-56"
+              />
+              <input
+                value={newKey}
+                onChange={(e) => setNewKey(e.target.value)}
+                placeholder="API Key（进系统钥匙串）"
+                type="password"
+                className="rounded-deck border border-deck-line bg-deck-panel px-2 py-1 text-xs w-48"
+              />
+              <button
+                onClick={addProfile}
+                className="rounded-deck bg-deck-accent px-3 py-1 text-xs font-semibold text-deck-bg"
+              >
+                保存
+              </button>
+            </div>
+          </details>
         </div>
       </details>
 

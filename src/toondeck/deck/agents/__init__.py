@@ -267,6 +267,68 @@ def profile_launch_env(name: str) -> dict[str, str]:
     return env
 
 
+# ── provider catalog (T-069): the mature-product UX — curated sources, prefill everything ──
+
+PROVIDER_CATALOG: list[dict] = [
+    {
+        "id": "anthropic",
+        "display_name": "Anthropic",
+        "base_url": "https://api.anthropic.com",
+        "models": ["claude-sonnet-4-5", "claude-opus-4-6", "claude-haiku-4-5"],
+        "keyless": False,
+    },
+    {
+        "id": "openai",
+        "display_name": "OpenAI",
+        "base_url": "https://api.openai.com/v1",
+        "models": ["gpt-5.2", "gpt-5.2-codex", "o4-mini"],
+        "keyless": False,
+    },
+    {
+        "id": "deepseek",
+        "display_name": "DeepSeek",
+        "base_url": "https://api.deepseek.com",
+        "models": ["deepseek-chat", "deepseek-reasoner"],
+        "keyless": False,
+    },
+    {
+        "id": "dashscope",
+        "display_name": "DashScope / Qwen",
+        "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+        "models": ["qwen-max", "qwen3-coder-plus", "glm-4.7", "kimi-k2"],
+        "keyless": False,
+    },
+    {
+        "id": "openrouter",
+        "display_name": "OpenRouter",
+        "base_url": "https://openrouter.ai/api/v1",
+        "models": [
+            "anthropic/claude-sonnet-4.5",
+            "openai/gpt-5.2",
+            "deepseek/deepseek-chat-v3.2",
+            "z-ai/glm-4.7",
+        ],
+        "keyless": False,
+    },
+    {
+        "id": "ollama",
+        "display_name": "Ollama (local)",
+        "base_url": "http://localhost:11434/v1",
+        "models": ["qwen3:32b", "llama4", "glm-4.7-air"],
+        "keyless": True,
+    },
+]
+
+
+def provider_catalog() -> list[dict]:
+    """Curated providers + whether each is already configured (profile saved)."""
+    profiles = _load_profiles()
+    out = []
+    for p in PROVIDER_CATALOG:
+        out.append({**p, "configured": p["id"] in profiles})
+    return out
+
+
 def set_model(agent_id: str, model: str | None) -> dict:
     """Persist (or clear with None) the preferred model for one agent."""
     models = _load_models()
