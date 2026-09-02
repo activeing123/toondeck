@@ -28,6 +28,27 @@ _REFRESH_EXECUTOR = ThreadPoolExecutor(max_workers=1, thread_name_prefix="inv-re
 _REFRESH_SINGLE_LOCK = threading.Lock()
 _REFRESH_INFLIGHT: dict[str, Any] = {}
 
+# same treatment for health checks: the frontend's 35s-abort retries can stack
+# N identical sweeps; distinct clamped timeouts queue on the single worker,
+# which also caps cross-timeout storms
+_HEALTH_EXECUTOR = ThreadPoolExecutor(max_workers=1, thread_name_prefix="mcp-health")
+_HEALTH_LOCK = threading.Lock()
+_HEALTH_INFLIGHT: dict[float, Any] = {}
+
+
+def _health_singleflight(timeout: float) -> dict:
+    with _HEALTH_LOCK:
+        fut = _HEALTH_INFLIGHT.get(timeout)
+        if fut is None:
+            fut = _HEALTH_EXECUTOR.submit(engine.check_health, timeout=timeout)
+            _HEALTH_INFLIGHT[timeout] = fut
+    try:
+        return fut.result(timeout=timeout + 90.0)
+    finally:
+        with _HEALTH_LOCK:
+            if _HEALTH_INFLIGHT.get(timeout) is fut:
+                del _HEALTH_INFLIGHT[timeout]
+
 
 def _inventory_singleflight() -> dict:
     """Concurrent refresh=1 calls share ONE probe sweep (hardening: N callers
@@ -140,7 +161,7 @@ def create_app() -> FastAPI:
         # Hardening: query params are untrusted — clamp to [1, 30] so no
         # caller can out-wait the frontend's 35s abort fuse.
         clamped = min(30.0, max(1.0, float(timeout)))
-        out = engine.check_health(timeout=clamped)
+        out = dict(_health_singleflight(clamped))
         out["timeout_s"] = clamped
         return out
 

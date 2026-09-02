@@ -68,3 +68,30 @@ def test_tools_refresh_singleflight(client, monkeypatch):
         f"5 concurrent refreshes produced {probe_calls['n']} full probe sweeps "
         "— singleflight missing"
     )
+
+
+def test_health_concurrent_singleflight(client, monkeypatch):
+    """Same hardening as the inventory sweep, for /api/mcp/health: N identical
+    concurrent calls must share ONE probe sweep (35s-abort retries can stack)."""
+    import toondeck.deck.engine as eng
+
+    calls = {"n": 0}
+    real = eng.check_health
+
+    def counting(timeout):
+        calls["n"] += 1
+        import time as _t
+
+        _t.sleep(0.4)  # wide overlap window
+        return real(timeout=timeout)
+
+    monkeypatch.setattr(eng, "check_health", counting)
+
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        results = list(
+            pool.map(lambda _: client.get("/api/mcp/health").json(), range(4))
+        )
+    assert all(r["timeout_s"] == 10.0 for r in results)
+    assert calls["n"] == 1, (
+        f"4 concurrent health calls produced {calls['n']} sweeps — singleflight missing"
+    )
