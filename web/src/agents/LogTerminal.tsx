@@ -1,14 +1,23 @@
 import { useEffect, useRef } from "react";
 import type { Terminal } from "@xterm/xterm";
+import { createLogStream } from "./logStream";
 
-/** Read-only xterm wired to an agent's log WebSocket. No input ever sent. */
+const STATUS_LINE: Record<string, string> = {
+  connecting: "⏺ streaming logs",
+  open: "⏺ streaming logs",
+  reconnecting: "⟳ connection dropped — reconnecting…",
+  "unknown-agent": "⏹ agent unknown (not launched yet?) — not retrying",
+  closed: "⏹ stream closed",
+};
+
+/** Read-only xterm wired to an agent's log WebSocket (self-healing stream). */
 export default function LogTerminal({ agentId }: { agentId: string }) {
   const hostRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     let disposed = false;
-    let ws: WebSocket | null = null;
     let term: Terminal | null = null;
+    let stream: { close: () => void } | null = null;
 
     (async () => {
       const [{ Terminal: XTerm }, css] = await Promise.all([
@@ -25,22 +34,19 @@ export default function LogTerminal({ agentId }: { agentId: string }) {
       });
       term.open(hostRef.current);
       term.writeln(`⏺ streaming logs: ${agentId}`);
-      const proto = location.protocol === "https:" ? "wss" : "ws";
-      ws = new WebSocket(`${proto}://${location.host}/api/agents/${agentId}/logs`);
-      ws.onmessage = (ev) => {
-        try {
-          const data = JSON.parse(ev.data);
-          term?.writeln(typeof data === "string" ? data : JSON.stringify(data));
-        } catch {
-          term?.writeln(String(ev.data));
-        }
-      };
-      ws.onclose = () => term?.writeln("⏹ stream closed");
+      stream = createLogStream(agentId, {
+        onLine: (line) => term?.writeln(line),
+        onStatus: (status) => {
+          if (status !== "open" && status !== "connecting") {
+            term?.writeln(STATUS_LINE[status] ?? status);
+          }
+        },
+      });
     })();
 
     return () => {
       disposed = true;
-      ws?.close();
+      stream?.close();
       term?.dispose();
     };
   }, [agentId]);
