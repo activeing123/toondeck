@@ -8,7 +8,7 @@ from __future__ import annotations
 from importlib import metadata
 
 from fastapi import FastAPI, WebSocket
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, Response
 from pydantic import BaseModel
 
 from .. import agentdiscover
@@ -202,6 +202,17 @@ def create_app() -> FastAPI:
     @app.get("/api/agents/status")
     def agents_status() -> dict:
         return agents.status_all()
+
+    @app.get("/api/agents/{agent_id}/logs/download")
+    def agent_log_download(agent_id: str) -> Response:
+        r = agents.log_download(agent_id)
+        return Response(
+            content=r["content"],
+            media_type="text/markdown; charset=utf-8",
+            headers={
+                "Content-Disposition": f'attachment; filename="toondeck-{agent_id}-log.md"'
+            },
+        )
 
     @app.get("/api/agents/{agent_id}/status")
     def agent_status(agent_id: str) -> dict:

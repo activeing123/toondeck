@@ -31,6 +31,7 @@ const DICT: Record<string, { en: string; zh: string }> = {
   "agents.running": { en: "running", zh: "运行中" },
   "agents.exited": { en: "exited", zh: "已退出" },
   "agents.windowLaunched": { en: "window opened on your desktop", zh: "已在桌面打开终端窗口" },
+  "agents.downloadLog": { en: "download log report (agent-ready)", zh: "下载日志报告（可直接丢给 agent 分析修复）" },
   "mcp.tools": { en: "tool inventory", zh: "工具清单" },
   "mcp.browse": { en: "browse tools", zh: "浏览工具" },
   "agents.discover": { en: "discover agents", zh: "发现 agent" },

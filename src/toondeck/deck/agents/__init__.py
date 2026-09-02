@@ -90,6 +90,58 @@ def log_unsubscribe(agent_id: str, q: "object") -> None:
         proc.unsubscribe(q)
 
 
+def log_download(agent_id: str) -> dict:
+    """Full log dump as a downloadable agent-ready report (T-068).
+
+    Markdown envelope: context (agent, adapter, state, exit code, timestamps)
+    + the complete ring buffer. Logs are already redacted at capture time,
+    so the file is safe to hand to any AI agent for self-repair analysis.
+    """
+    import time as _time
+
+    from . import internal
+    from .internal import manager
+
+    adapters = internal.load_all()
+    adapter = adapters.get(agent_id) or {}
+    proc = manager.get_manager().procs.get(agent_id)
+    st = status(agent_id)
+    lines = st.get("logs", [])
+    started = (
+        _time.strftime("%Y-%m-%d %H:%M:%S", _time.localtime(st["started_at"]))
+        if st.get("started_at")
+        else "n/a"
+    )
+    header = [
+        "# ToonDeck agent log report",
+        "",
+        f"- agent: {agent_id} ({adapter.get('display_name', '?')})",
+        f"- state: {st.get('state', 'never')} · exit_code: {st.get('exit_code')}",
+        f"- launched_at: {started}",
+        f"- launch_command: {' '.join(adapter.get('launch_command', [])) or 'n/a'}",
+        f"- model: {get_model(agent_id) or '(agent default)'}",
+        f"- exported_at: {_time.strftime('%Y-%m-%d %H:%M:%S')}",
+        f"- lines: {len(lines)}",
+        "",
+        "## Task for the analyzing agent",
+        "",
+        "Diagnose why this agent failed or misbehaved from the log below.",
+        "Answer with: (1) root cause, (2) evidence lines, (3) concrete fix",
+        "(config edit / command / reinstall), (4) how to verify the fix.",
+        "",
+        "## Full log",
+        "",
+        "```",
+    ]
+    body = header + list(lines) + ["```", ""]
+    return {
+        "agent_id": agent_id,
+        "content": "\n".join(body),
+        "lines": len(lines),
+        "has_process": proc is not None,
+    }
+
+
 # ---- per-agent model preference (T-061) --------------------------------
 
 

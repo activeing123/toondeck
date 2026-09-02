@@ -257,6 +257,16 @@ export default function AgentsPanel() {
                 >
                   {openLogs === a.id ? t("agents.hideLogs") : t("agents.logs")}
                 </button>
+                {st.state !== "never" && (
+                  <a
+                    href={`/api/agents/${a.id}/logs/download`}
+                    download
+                    title={t("agents.downloadLog")}
+                    className="rounded-deck border border-deck-line px-2.5 py-1.5 text-sm hover:bg-deck-panel2"
+                  >
+                    ⬇ md
+                  </a>
+                )}
                 {canLaunch && (
                   <>
                     <datalist id={`model-opts-${a.id}`}>
