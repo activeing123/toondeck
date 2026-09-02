@@ -11,6 +11,7 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
 
+from .. import agents
 from .. import engine
 from .. import skills
 from . import static
@@ -95,6 +96,10 @@ def create_app() -> FastAPI:
     @app.get("/api/skills/watcher")
     def skills_watcher_get() -> dict:
         return skills.watcher("status")
+
+    @app.get("/api/agents")
+    def agents_detect() -> dict:
+        return agents.detect_all()
 
     # ── SPA hosting (catch-all, last) ──
     @app.get("/{path:path}")
