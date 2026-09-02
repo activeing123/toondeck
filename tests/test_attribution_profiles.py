@@ -27,12 +27,16 @@ def test_engine_state_carries_sources(home, monkeypatch):
     """get_state() decorates each server with its agent-config sources."""
     from toondeck.deck import engine
 
+    # redirect mcptoon config so the test never touches the user's real one
+    cfg_file = home / "mcptoon-config.json"
+    monkeypatch.setenv("MCPTOON_CONFIG_FILE", str(cfg_file))
+    import mcptoon.config as mcfg
+
+    monkeypatch.setattr(mcfg, "CONFIG_FILE", cfg_file)
     monkeypatch.setattr(
         "toondeck.deck.mcpdiscover.attributions",
         lambda home=None: {"echo": ["cursor"]},
     )
-    import mcptoon.config as mcfg
-
     mcfg.save_config({"echo": {"command": "x", "args": []}, "solo": {"command": "y"}})
     st = engine.get_state()
     by = {s["name"]: s for s in st["servers"]}
