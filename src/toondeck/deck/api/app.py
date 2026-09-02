@@ -59,6 +59,10 @@ def create_app() -> FastAPI:
     def mcp_sync() -> dict:
         return {"results": engine.request_sync()}
 
+    @app.get("/api/mcp/health")
+    def mcp_health(timeout: float = 10.0) -> dict:
+        return engine.check_health(timeout=timeout)
+
     # ── SPA hosting (catch-all, last) ──
     @app.get("/{path:path}")
     def spa(path: str):

@@ -4,6 +4,7 @@ Operations (frozen contract):
 - get_state()    → full server/tool view read from the mcptoon engine
 - toggle()       → flip one tool's enabled flag
 - request_sync() → push the single source of truth to every agent config
+- check_health() → live probe all servers (explicit, never implicit)
 
 Secrecy guarantee: server env/header VALUES never appear in state — key names only.
 """
@@ -26,6 +27,7 @@ def get_state() -> dict:
     out = []
     for name in sorted(servers):
         cfg = servers[name]
+        tool_total, cache_age = _internal.cache_meta(name)
         out.append(
             {
                 "name": name,
@@ -34,6 +36,8 @@ def get_state() -> dict:
                 "env_keys": _internal.key_names(cfg.get("env")),
                 "header_keys": _internal.key_names(cfg.get("headers")),
                 "disabled_tools": sorted(per_server_disabled.get(name, [])),
+                "tool_total": tool_total,
+                "cache_age_s": cache_age,
             }
         )
     return {
@@ -41,6 +45,7 @@ def get_state() -> dict:
         "server_total": len(out),
         "disabled_total": sum(len(v) for v in per_server_disabled.values()),
         "config_path": str(mcfg._config_file()),
+        "token_savings": _internal.token_savings(),
     }
 
 
@@ -53,3 +58,9 @@ def toggle(server: str, tool: str) -> bool:
 def request_sync() -> list[dict]:
     """Push the single source of truth to every detected agent config."""
     return _internal.sync_to_all()
+
+
+def check_health(timeout: float = 10.0) -> dict:
+    """Live probe every configured server. Explicit action, costs real connections."""
+    results = _internal.check_all(timeout=timeout)
+    return {"checked": len(results), "results": results}

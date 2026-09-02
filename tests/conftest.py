@@ -27,7 +27,9 @@ def engine_env(tmp_path, monkeypatch):
     monkeypatch.setenv("MCPTOON_CONFIG_FILE", str(cfg_file))
     monkeypatch.setenv("MCPTOON_CONFIG_FILE_TOML", str(tmp_path / "nope.toml"))
     monkeypatch.chdir(tmp_path)
+    import mcptoon.cache as mcache
     import mcptoon.config as mcfg
 
     monkeypatch.setattr(mcfg, "TOGGLE_FILE", tmp_path / "toggles.json")
+    monkeypatch.setattr(mcache, "_CACHE_FILE", tmp_path / "schema_cache.json")
     return tmp_path

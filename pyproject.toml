@@ -31,7 +31,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8", "httpx>=0.27", "ruff>=0.5"]
+dev = ["pytest>=8", "pytest-timeout>=2.3", "httpx>=0.27", "ruff>=0.5"]
 
 [project.scripts]
 toondeck = "toondeck.cli:main"
@@ -46,7 +46,7 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-q"
+addopts = "-q --timeout=60"
 
 [tool.ruff]
 line-length = 100

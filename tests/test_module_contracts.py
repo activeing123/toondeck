@@ -8,9 +8,9 @@ import toondeck.deck.skills as skills
 import toondeck.deck.vault as vault
 
 
-def test_engine_exports_exactly_three_operations():
+def test_engine_exports_exactly_four_operations():
     public = [n for n in dir(engine) if not n.startswith("_")]
-    assert set(["get_state", "toggle", "request_sync"]) <= set(public)
+    assert set(["get_state", "toggle", "request_sync", "check_health"]) <= set(public)
 
 
 def test_skills_exports_exactly_three_operations():
