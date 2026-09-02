@@ -47,13 +47,6 @@ def get_state() -> dict:
     }
 
 
-def _not_impl(name: str):
-    def _f(*args, **kwargs):
-        raise NotImplementedError(f"deck.skills.{name} lands in M2")
-
-    return _f
-
-
 def sync_all() -> list[dict]:
     """Reconcile every agent view with the source. Per-agent isolation in results."""
     from .internal import reconcile
@@ -61,5 +54,15 @@ def sync_all() -> list[dict]:
     return reconcile.run()
 
 
-remove_skill = _not_impl("remove_skill")
-doctor = _not_impl("doctor")
+def remove_skill(name: str) -> dict:
+    """The ONLY deletion entry: archive to graveyard + tear down all views."""
+    from .internal import maintenance
+
+    return maintenance.remove_skill(name)
+
+
+def doctor() -> dict:
+    """Consistency exam: source lint + all six views + graveyard census."""
+    from .internal import maintenance
+
+    return maintenance.doctor()
