@@ -45,6 +45,16 @@ def test_resolve_env_skips_missing_providers(vault_env):
     assert resolve_env([]) == {}
 
 
+def test_alias_env_maps_provider_secret_to_target_var(vault_env):
+    """{target_var: provider_id} -> {target_var: secret}; secret never leaves backend."""
+    from toondeck.deck.vault import alias_env, set_key
+
+    set_key("deepseek", "sk-ALIASMAPTEST000000")
+    env = alias_env({"ANTHROPIC_AUTH_TOKEN": "deepseek"})
+    assert env == {"ANTHROPIC_AUTH_TOKEN": "sk-ALIASMAPTEST000000"}
+    assert alias_env({"X": "nope"}) == {}
+
+
 def test_delete_key_removes_secret(vault_env):
     from toondeck.deck.vault import delete_key, get_state, set_key
 

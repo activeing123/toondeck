@@ -106,3 +106,17 @@ def resolve_env(providers: list[str] | None = None) -> dict:
     for pid in providers:
         env.update(store.provider_env(pid))
     return env
+
+
+def alias_env(aliases: dict[str, str]) -> dict:
+    """{target_env_var: provider_id} -> {target_env_var: secret}.
+
+    Lets agents that read non-catalog env names (e.g. ANTHROPIC_AUTH_TOKEN)
+    be fed from a stored provider without the secret crossing the browser.
+    """
+    env: dict[str, str] = {}
+    for target_var, provider in (aliases or {}).items():
+        secret = store.get_secret(provider)
+        if secret is not None:
+            env[target_var] = secret
+    return env

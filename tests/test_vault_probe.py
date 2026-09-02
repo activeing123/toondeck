@@ -1,6 +1,7 @@
 """T-042: connectivity probe (mocked + real) + vault API routes."""
 
 import json
+import sys
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
@@ -124,6 +125,46 @@ def test_vault_api_rejects_unknown_provider(vault_env):
     c = TestClient(__import__("toondeck.deck.api.app", fromlist=["create_app"]).create_app())
     r = c.post("/api/vault/keys", json={"provider": "ghost", "secret": "x"})
     assert r.json()["ok"] is False
+
+
+def test_launch_route_aliases_and_plain_env(vault_env, monkeypatch):
+    """POST /launch with aliases: secret from keyring lands in child env only."""
+    import time as _t
+
+    from toondeck.deck.agents import internal as agents_internal
+    from toondeck.deck.vault import set_key
+
+    set_key("deepseek", "sk-ROUTEDALIAS000000")
+    echo_cmd = [
+        sys.executable,
+        "-c",
+        "import os, time; print('tok=' + os.environ.get('ANTHROPIC_AUTH_TOKEN', 'MISSING'), flush=True); time.sleep(30)",
+    ]
+    adapters = {
+        "envy": {"id": "envy", "display_name": "Envy",
+                 "launch_command": echo_cmd, "env_config_support": True},
+    }
+    monkeypatch.setattr(agents_internal, "load_all", lambda: adapters)
+
+    c = TestClient(__import__("toondeck.deck.api.app", fromlist=["create_app"]).create_app())
+    r = c.post(
+        "/api/agents/envy/launch",
+        json={"aliases": {"ANTHROPIC_AUTH_TOKEN": "deepseek"},
+              "plain_env": {"ANTHROPIC_BASE_URL": "https://api.deepseek.com/anthropic"}},
+    )
+    assert r.json()["ok"] is True, r.json()
+    try:
+        deadline = _t.time() + 10
+        body = None
+        while _t.time() < deadline:
+            body = c.get("/api/agents/envy/status").json()["logs"]
+            if any("tok=" in x for x in body):
+                break
+            _t.sleep(0.2)
+        assert any("tok=" in x for x in body), body
+        assert not any("sk-ROUTEDALIAS" in x for x in body), body
+    finally:
+        c.post("/api/agents/envy/stop")
 
 
 def test_vault_test_route_mocked(vault_env, local_probe_server, monkeypatch):

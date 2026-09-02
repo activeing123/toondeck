@@ -48,6 +48,8 @@ class LaunchIn(BaseModel):
     args: list[str] | None = None
     cwd: str | None = None
     use_vault: bool = False
+    aliases: dict[str, str] | None = None  # target_env_var -> provider_id (secret stays backend)
+    plain_env: dict[str, str] | None = None  # non-secret env passthrough
 
 
 class VaultKeyIn(BaseModel):
@@ -139,12 +141,18 @@ def create_app() -> FastAPI:
 
     @app.post("/api/agents/{agent_id}/launch")
     def agent_launch(agent_id: str, payload: LaunchIn | None = None) -> dict:
-        env_extra = vault.resolve_env() if (payload and payload.use_vault) else None
+        env_extra: dict[str, str] = {}
+        if payload and payload.use_vault:
+            env_extra.update(vault.resolve_env())
+        if payload and payload.aliases:
+            env_extra.update(vault.alias_env(payload.aliases))
+        if payload and payload.plain_env:
+            env_extra.update(payload.plain_env)
         return agents.launch(
             agent_id,
             cwd=payload.cwd if payload else None,
             args=payload.args if payload else None,
-            env_extra=env_extra,
+            env_extra=env_extra or None,
         )
 
     @app.post("/api/agents/{agent_id}/stop")
