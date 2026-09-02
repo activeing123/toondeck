@@ -57,17 +57,22 @@ def check_all_legacy(timeout: float = 10.0) -> list[dict]:
     deadline. A thread that misses the deadline gets a forced
     status="timeout" verdict and its child process is killed (the blocked
     readline drains on EOF) — one dead server can never hang the fleet.
+    Subprocess concurrency is capped by ProbeSlots (R17): npx cold starts
+    fork node trees, and 50 simultaneous children would starve healthy probes.
     """
     import mcptoon.config as mcfg
 
     from .. import mcpcompat  # noqa: F401 — Windows stdio shim must be active
+    from ..probeslots import ProbeSlots
 
     names = sorted(mcfg.list_servers())
     results: dict[str, dict] = {}
     threads: list[tuple[str, threading.Thread]] = []
+    slots = ProbeSlots()
+    slots.begin_sweep(timeout)
 
     for name in names:
-        t = threading.Thread(target=_probe_one_legacy, args=(name, timeout, results),
+        t = threading.Thread(target=_probe_one_legacy, args=(name, timeout, results, slots),
                              daemon=True)
         threads.append((name, t))
 
@@ -91,7 +96,7 @@ def check_all_legacy(timeout: float = 10.0) -> list[dict]:
     return [results[name] for name in names]
 
 
-def _probe_one_legacy(name: str, timeout: float, results: dict) -> None:
+def _probe_one_legacy(name: str, timeout: float, results: dict, slots) -> None:
     """Probe one server via the legacy handshake; always writes a verdict.
 
     Runs in a daemon thread; every failure becomes a status, never an
@@ -99,10 +104,19 @@ def _probe_one_legacy(name: str, timeout: float, results: dict) -> None:
     Lifecycle is managed manually (initialize → list_tools → close) so the
     child proc can be registered for the joiner's deadline kill right
     after the handshake — the observed hang site is list_tools.
+    A probe child slot is held for the whole probe; if none frees up before
+    the sweep deadline, an honest timeout verdict is written instead.
     """
     import mcptoon.config as mcfg
     from mcptoon.client import MCPClient, MCPError
 
+    if not slots.acquire(timeout):
+        results.setdefault(name, {
+            "server": name, "transport": "?", "status": "timeout",
+            "tools": 0, "latency_ms": int(timeout * 1000),
+            "error": f"probe slot unavailable within {timeout}s (fleet cap)",
+        })
+        return
     start = time.time()
     client: MCPClient | None = None
     try:
@@ -149,6 +163,7 @@ def _probe_one_legacy(name: str, timeout: float, results: dict) -> None:
         })
     finally:
         _ACTIVE_PROCS.pop(name, None)
+        slots.release()
         if client is not None:
             try:
                 client.close()

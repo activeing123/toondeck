@@ -190,15 +190,22 @@ def _bust_inventory_cache() -> None:
     _CACHE["data"] = None
 
 
-def _probe_one(name: str, cfg: dict, timeout: float, results: dict) -> None:
+def _probe_one(name: str, cfg: dict, timeout: float, results: dict, slots) -> None:
     """Legacy-handshake probe of one server; always writes a verdict.
 
     Daemon-thread body: every failure becomes a status, never an exception.
     Lifecycle managed manually so the child proc can be registered for the
     deadline kill right after initialize — the hang site is list_tools.
+    A probe child slot is held for the whole probe (R17 fleet cap).
     """
     from mcptoon.client import MCPClient, MCPError
 
+    if not slots.acquire(timeout):
+        results.setdefault(name, {
+            "server": name, "status": "timeout", "tools": [],
+            "error": f"probe slot unavailable within {timeout}s (fleet cap)",
+        })
+        return
     start = _time.time()
     client: MCPClient | None = None
     try:
@@ -237,6 +244,7 @@ def _probe_one(name: str, cfg: dict, timeout: float, results: dict) -> None:
         })
     finally:
         _ACTIVE_PROCS.pop(name, None)
+        slots.release()
         if client is not None:
             try:
                 client.close()
@@ -260,14 +268,19 @@ def _run_probes(jobs: list[tuple[str, dict]], timeout: float) -> list[dict]:
     """Probe (name, cfg) pairs in parallel under one overall deadline.
 
     Wall time ≈ slowest probe, not the sum (UX-A2); a server that goes
-    quiet becomes status="timeout" — never a hang.
+    quiet becomes status="timeout" — never a hang. Probe children are
+    capped by ProbeSlots (R17) so a big fleet cannot spawn an npx bomb.
     """
     import threading
 
+    from ..probeslots import ProbeSlots
+
     results: dict[str, dict] = {}
     threads = []
+    slots = ProbeSlots()
+    slots.begin_sweep(timeout)
     for name, cfg in jobs:
-        t = threading.Thread(target=_probe_one, args=(name, cfg, timeout, results),
+        t = threading.Thread(target=_probe_one, args=(name, cfg, timeout, results, slots),
                              daemon=True)
         threads.append((name, t))
     for _, t in threads:
