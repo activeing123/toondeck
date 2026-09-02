@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import LogTerminal from "./LogTerminal";
+import AdoptPanel from "./AdoptPanel";
 import { useI18n } from "../i18n";
 
 function useI18nSafe() {
@@ -173,6 +174,8 @@ export default function AgentsPanel() {
           );
         })}
       </div>
+
+      <AdoptPanel onAdopted={load} />
     </div>
   );
 }
