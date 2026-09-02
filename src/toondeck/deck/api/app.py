@@ -13,6 +13,7 @@ from pydantic import BaseModel
 
 from .. import agents
 from .. import engine
+from .. import mcpdiscover
 from .. import skills
 from .. import vault
 from . import static
@@ -55,6 +56,10 @@ class LaunchIn(BaseModel):
 class VaultKeyIn(BaseModel):
     provider: str
     secret: str
+
+
+class McpImportIn(BaseModel):
+    names: list[str]
 
 
 def create_app() -> FastAPI:
@@ -130,6 +135,14 @@ def create_app() -> FastAPI:
     @app.post("/api/vault/test/{provider}")
     def vault_test(provider: str) -> dict:
         return vault.test(provider)
+
+    @app.get("/api/mcp/discover")
+    def mcp_discover() -> dict:
+        return mcpdiscover.discover()
+
+    @app.post("/api/mcp/import")
+    def mcp_import(payload: McpImportIn) -> dict:
+        return mcpdiscover.import_selected(payload.names)
 
     @app.get("/api/agents/status")
     def agents_status() -> dict:
