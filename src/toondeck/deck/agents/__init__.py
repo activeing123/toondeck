@@ -24,7 +24,10 @@ def detect_all() -> dict:
     }
 
 
-def launch(agent_id: str, cwd: str | None = None, args: list[str] | None = None) -> dict:
+def launch(
+    agent_id: str, cwd: str | None = None, args: list[str] | None = None,
+    env_extra: dict[str, str] | None = None,
+) -> dict:
     """Spawn the agent process; logs stream into the console ring buffer."""
     from . import internal
     from .internal import manager
@@ -34,7 +37,7 @@ def launch(agent_id: str, cwd: str | None = None, args: list[str] | None = None)
     if adapter is None:
         return {"ok": False, "error": f"unknown agent: {agent_id}"}
     return manager.get_manager().launch(
-        agent_id, adapter, Path(cwd) if cwd else None, args
+        agent_id, adapter, Path(cwd) if cwd else None, args, env_extra
     )
 
 

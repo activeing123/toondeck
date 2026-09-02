@@ -14,6 +14,7 @@ from pydantic import BaseModel
 from .. import agents
 from .. import engine
 from .. import skills
+from .. import vault
 from . import static
 
 
@@ -46,6 +47,11 @@ class WatcherIn(BaseModel):
 class LaunchIn(BaseModel):
     args: list[str] | None = None
     cwd: str | None = None
+
+
+class VaultKeyIn(BaseModel):
+    provider: str
+    secret: str
 
 
 def create_app() -> FastAPI:
@@ -105,6 +111,22 @@ def create_app() -> FastAPI:
     @app.get("/api/agents")
     def agents_detect() -> dict:
         return agents.detect_all()
+
+    @app.get("/api/vault/state")
+    def vault_state() -> dict:
+        return vault.get_state()
+
+    @app.post("/api/vault/keys")
+    def vault_set_key(payload: VaultKeyIn) -> dict:
+        return vault.set_key(payload.provider, payload.secret)
+
+    @app.delete("/api/vault/keys/{provider}")
+    def vault_del_key(provider: str) -> dict:
+        return vault.delete_key(provider)
+
+    @app.post("/api/vault/test/{provider}")
+    def vault_test(provider: str) -> dict:
+        return vault.test(provider)
 
     @app.get("/api/agents/status")
     def agents_status() -> dict:

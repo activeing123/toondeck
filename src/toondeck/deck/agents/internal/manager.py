@@ -139,7 +139,12 @@ class Manager:
         self.procs: dict[str, AgentProcess] = {}
 
     def launch(
-        self, agent_id: str, adapter: dict, cwd: Path | None = None, args: list[str] | None = None
+        self,
+        agent_id: str,
+        adapter: dict,
+        cwd: Path | None = None,
+        args: list[str] | None = None,
+        env_extra: dict[str, str] | None = None,
     ) -> dict:
         cmd = adapter.get("launch_command")
         if not cmd:
@@ -150,6 +155,12 @@ class Manager:
         if old is not None and old.running():
             return {"ok": False, "error": f"{agent_id} is already running (pid {old.process.pid})"}
         try:
+            child_env = None
+            if env_extra:
+                import os as _os
+
+                child_env = dict(_os.environ)
+                child_env.update(env_extra)
             proc = subprocess.Popen(
                 _resolve_windows_cmd(cmd),
                 stdout=subprocess.PIPE,
@@ -158,6 +169,7 @@ class Manager:
                 encoding="utf-8",
                 errors="replace",
                 cwd=str(cwd) if cwd else None,
+                env=child_env,
             )
         except OSError as e:
             return {"ok": False, "error": f"spawn failed: {e}"}

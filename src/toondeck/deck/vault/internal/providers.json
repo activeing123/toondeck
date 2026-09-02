@@ -1,0 +1,74 @@
+{
+  "openai": {
+    "id": "openai",
+    "display_name": "OpenAI",
+    "env_var": "OPENAI_API_KEY",
+    "base_url": "https://api.openai.com/v1",
+    "test_url": "https://api.openai.com/v1/models",
+    "auth_style": "bearer",
+    "local": false
+  },
+  "anthropic": {
+    "id": "anthropic",
+    "display_name": "Anthropic",
+    "env_var": "ANTHROPIC_API_KEY",
+    "base_url": "https://api.anthropic.com/v1",
+    "test_url": "https://api.anthropic.com/v1/models",
+    "auth_style": "x-api-key",
+    "local": false
+  },
+  "openrouter": {
+    "id": "openrouter",
+    "display_name": "OpenRouter",
+    "env_var": "OPENROUTER_API_KEY",
+    "base_url": "https://openrouter.ai/api/v1",
+    "test_url": "https://openrouter.ai/api/v1/models",
+    "auth_style": "bearer",
+    "local": false
+  },
+  "gemini": {
+    "id": "gemini",
+    "display_name": "Google Gemini",
+    "env_var": "GEMINI_API_KEY",
+    "base_url": "https://generativelanguage.googleapis.com/v1beta",
+    "test_url": "https://generativelanguage.googleapis.com/v1beta/models",
+    "auth_style": "query",
+    "local": false
+  },
+  "deepseek": {
+    "id": "deepseek",
+    "display_name": "DeepSeek",
+    "env_var": "DEEPSEEK_API_KEY",
+    "base_url": "https://api.deepseek.com/v1",
+    "test_url": "https://api.deepseek.com/v1/models",
+    "auth_style": "bearer",
+    "local": false
+  },
+  "groq": {
+    "id": "groq",
+    "display_name": "Groq",
+    "env_var": "GROQ_API_KEY",
+    "base_url": "https://api.groq.com/openai/v1",
+    "test_url": "https://api.groq.com/openai/v1/models",
+    "auth_style": "bearer",
+    "local": false
+  },
+  "mistral": {
+    "id": "mistral",
+    "display_name": "Mistral",
+    "env_var": "MISTRAL_API_KEY",
+    "base_url": "https://api.mistral.ai/v1",
+    "test_url": "https://api.mistral.ai/v1/models",
+    "auth_style": "bearer",
+    "local": false
+  },
+  "ollama": {
+    "id": "ollama",
+    "display_name": "Ollama (local)",
+    "env_var": "OLLAMA_HOST",
+    "base_url": "http://127.0.0.1:11434",
+    "test_url": "http://127.0.0.1:11434/api/tags",
+    "auth_style": "none",
+    "local": true
+  }
+}
