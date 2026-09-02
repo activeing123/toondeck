@@ -60,7 +60,6 @@ def test_launch_injects_vault_env_and_logs_redact_it(tmp_path, monkeypatch):
     """End-to-end: keyring → child env → stdout echo → REDACTED in logs."""
     from toondeck.deck.agents import internal as agents_internal
     from toondeck.deck.agents import launch, status, stop
-    from toondeck.deck.agents.internal import manager
     from toondeck.deck.vault import set_key
     from toondeck.deck.vault.internal import store as store_mod
 

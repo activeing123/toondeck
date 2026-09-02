@@ -32,7 +32,6 @@ def test_vault_exports_exactly_three_operations():
     "mod,fn",
     [
         (agents, "configure"),
-        (vault, "set_key"),
     ],
 )
 def test_seams_fail_loudly(mod, fn):

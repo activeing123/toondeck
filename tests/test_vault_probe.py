@@ -1,7 +1,6 @@
 """T-042: connectivity probe (mocked + real) + vault API routes."""
 
 import json
-import sys
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
@@ -58,7 +57,6 @@ def local_probe_server():
 
 def test_probe_ok_and_unauthorized(vault_env, local_probe_server, monkeypatch):
     from toondeck.deck.vault import test
-    from toondeck.deck.vault.internal import meta
 
     srv, good_key = local_probe_server
     url = f"http://127.0.0.1:{srv.server_address[1]}/models"
