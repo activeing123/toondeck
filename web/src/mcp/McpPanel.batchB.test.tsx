@@ -149,7 +149,9 @@ describe("B2: merge probe button into refresh", () => {
     await screen.findByText("fetch");
     const probeBtn = screen.queryByRole("button", { name: /重新全量探测/ });
     expect(probeBtn).toBeNull(); // B2: gone — merged into the top refresh
-    const refreshBtn = screen.getByRole("button", { name: /^refresh$/i });
+    // R26: raw keys now resolve to real English, so the DiscoverPanel's own
+    // "refresh" also matches — click the header's refresh (the first one)
+    const refreshBtn = screen.getAllByRole("button", { name: /^refresh$/i })[0];
     fireEvent.click(refreshBtn);
     await waitFor(() => {
       expect(fetchMock.mock.calls.filter(([u]) => String(u).includes("/api/mcp/tools")).length).toBeGreaterThan(0);
@@ -166,12 +168,14 @@ describe("B4: sync confirm", () => {
   it("sync asks for confirmation and aborts cleanly on cancel", async () => {
     const fetchMock = baseMock();
     vi.stubGlobal("fetch", fetchMock);
-    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(false);
     render(<McpPanel />);
     await screen.findByText("fetch");
-    await userEvent.click(screen.getByRole("button", { name: /sync all agents/ }));
-    expect(confirmSpy).toHaveBeenCalledOnce();
+    await userEvent.click(screen.getAllByRole("button", { name: /sync all agents/i })[0]);
+    // R26: the blast-radius dialog is in-app now, not window.confirm
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: /cancel/i }));
     expect(fetchMock.mock.calls.some(([u]) => u === "/api/mcp/sync")).toBe(false);
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 
   it("sync proceeds and renders per-agent results on confirm", async () => {
@@ -179,10 +183,14 @@ describe("B4: sync confirm", () => {
       "/api/mcp/sync": { results: [{ agent: "claude-code", ok: true }] },
     });
     vi.stubGlobal("fetch", fetchMock);
-    vi.spyOn(window, "confirm").mockReturnValue(true);
     render(<McpPanel />);
     await screen.findByText("fetch");
-    await userEvent.click(screen.getByRole("button", { name: /sync all agents/ }));
+    await userEvent.click(screen.getAllByRole("button", { name: /sync all agents/i })[0]);
+    await screen.findByRole("dialog");
+    // DEBUG
+    console.log("BUTTONS:", screen.queryAllByRole("button").map((b) => JSON.stringify(b.textContent)).join(" | "));
+    console.log("DIALOG HTML:", document.querySelector('[role="dialog"]')?.innerHTML?.slice(0, 400));
+    await userEvent.click(screen.getByRole("button", { name: /overwrite & sync now/i }));
     expect(await screen.findByText("claude-code")).toBeInTheDocument();
   });
 });

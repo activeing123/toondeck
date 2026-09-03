@@ -113,11 +113,14 @@ describe("McpPanel", () => {
   });
 
   it("sync button posts to the sync endpoint", async () => {
-    vi.spyOn(window, "confirm").mockReturnValue(true); // UX-B4: sync now confirms
     const fetchMock = mockFetch({ "/api/mcp/sync": { results: [{ agent: "claude-code", ok: true }] } });
     vi.stubGlobal("fetch", fetchMock);
     render(<McpPanel />);
+    // R26: confirm lives in the in-app dialog; the dialog's danger button
+    // names the consequence ("overwrite & sync now"), not the trigger's name
     await userEvent.click(await screen.findByRole("button", { name: /sync all agents/ }));
+    await screen.findByRole("dialog");
+    await userEvent.click(screen.getByRole("button", { name: /overwrite & sync now/i }));
     expect(await screen.findByText("claude-code")).toBeInTheDocument();
   });
 

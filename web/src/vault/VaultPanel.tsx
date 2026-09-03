@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useI18n } from "../i18n";
+import { toast } from "../ui/Toast";
+import { ConfirmDialog } from "../ui/ConfirmDialog";
 
 type ProviderRow = {
   id: string;
@@ -16,6 +18,7 @@ export default function VaultPanel() {
   const [providers, setProviders] = useState<ProviderRow[] | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const s = await fetch("/api/vault/state").then((r) => r.json());
@@ -35,7 +38,7 @@ export default function VaultPanel() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ provider: id, secret }),
       }).then((r2) => r2.json());
-      if (!r.ok) window.alert(r.error);
+      if (!r.ok) toast.error(r.error ?? "store failed");
       setDrafts((d) => ({ ...d, [id]: "" }));
       await load();
     } finally {
@@ -44,7 +47,10 @@ export default function VaultPanel() {
   };
 
   const del = async (id: string) => {
-    if (!window.confirm(t("vault.deleteConfirm", { id }))) return;
+    setConfirmDelete(id);
+  };
+
+  const doDelete = async (id: string) => {
     setBusy(id);
     try {
       await fetch(`/api/vault/keys/${id}`, { method: "DELETE" });
@@ -58,7 +64,8 @@ export default function VaultPanel() {
     setBusy(id);
     try {
       const r = await fetch(`/api/vault/test/${id}`, { method: "POST" }).then((r2) => r2.json());
-      if (!r.ok && r.error) window.alert(`probe failed: ${r.error}`);
+      if (!r.ok && r.error) toast.error(`probe failed: ${r.error}`);
+      else if (r.ok) toast.ok(t("vault.stored"));
       await load();
     } finally {
       setBusy(null);
@@ -148,6 +155,19 @@ export default function VaultPanel() {
           </section>
         ))}
       </div>
+      {confirmDelete && (
+        <ConfirmDialog
+          messageKey="vault.deleteConfirm"
+          messageVars={{ id: confirmDelete }}
+          confirmLabel={t("vault.delete")}
+          onConfirm={() => {
+            const id = confirmDelete;
+            setConfirmDelete(null);
+            void doDelete(id);
+          }}
+          onCancel={() => setConfirmDelete(null)}
+        />
+      )}
     </div>
   );
 }

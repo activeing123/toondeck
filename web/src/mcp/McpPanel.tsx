@@ -3,6 +3,7 @@ import DiscoverPanel from "./DiscoverPanel";
 import FleetDashboard from "./FleetDashboard";
 import ToolsBrowser from "./ToolsBrowser";
 import { useI18n } from "../i18n";
+import { ConfirmDialog } from "../ui/ConfirmDialog";
 import {
   checkHealth,
   requestSync,
@@ -61,14 +62,12 @@ export default function McpPanel() {
   const [checking, setChecking] = useState(false);
   const { t } = useI18n();
   const [invReload, setInvReload] = useState(0);
+  const [confirmSync, setConfirmSync] = useState(false);
 
   const onSync = () => {
-    // UX-B4: name the blast radius before overwriting every agent's MCP list
-    if (!window.confirm(t("mcp.syncWarn"))) return;
-    setSyncing(true);
-    requestSync()
-      .then(setSyncResults)
-      .finally(() => setSyncing(false));
+    // UX-B4 + R26: name the blast radius in an in-app dialog (native confirm
+    // is unstyled chrome); sync only proceeds on explicit confirm.
+    setConfirmSync(true);
   };
 
   const onHealth = () => {
@@ -265,6 +264,20 @@ export default function McpPanel() {
           );
         })}
       </div>
+      {confirmSync && (
+        <ConfirmDialog
+          messageKey="mcp.syncWarn"
+          confirmLabel={t("mcp.syncConfirm")}
+          onConfirm={() => {
+            setConfirmSync(false);
+            setSyncing(true);
+            requestSync()
+              .then(setSyncResults)
+              .finally(() => setSyncing(false));
+          }}
+          onCancel={() => setConfirmSync(false)}
+        />
+      )}
     </div>
   );
 }

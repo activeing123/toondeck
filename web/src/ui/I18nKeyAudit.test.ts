@@ -41,12 +41,19 @@ function dictKeysFromSource(): Set<string> {
 
 function usedKeys(): Map<string, string[]> {
   const used = new Map<string, string[]>();
-  const re = /\bt\(\s*["'`]([^"'`]+)["'`]/g;
+  // t("key") literals AND messageKey="key" props (ConfirmDialog receives its
+  // i18n key as a prop — R26 blind spot, caught by the audit itself)
+  const patterns = [
+    /\bt\(\s*["'`]([^"'`]+)["'`]/g,
+    /\bmessageKey=["'`]([^"'`]+)["'`]/g,
+  ];
   for (const file of SRC_FILES) {
     const text = readFileSync(file, "utf-8");
-    for (const m of text.matchAll(re)) {
-      const key = m[1];
-      used.set(key, [...(used.get(key) ?? []), file]);
+    for (const re of patterns) {
+      for (const m of text.matchAll(re)) {
+        const key = m[1];
+        used.set(key, [...(used.get(key) ?? []), file]);
+      }
     }
   }
   return used;

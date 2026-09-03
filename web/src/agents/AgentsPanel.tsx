@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import LogTerminal from "./LogTerminal";
 import AdoptPanel from "./AdoptPanel";
 import { useI18n } from "../i18n";
+import { toast } from "../ui/Toast";
 
 function useI18nSafe() {
   try {
@@ -161,7 +162,7 @@ export default function AgentsPanel() {
     try {
       const r = await fetch(`/api/agents/${id}/${action}`, { method: "POST" }).then((r2) => r2.json());
       if (!r.ok) {
-        window.alert(`${id}: ${r.error ?? "action failed"}`);
+        toast.error(`${id}: ${r.error ?? "action failed"}`);
       } else if (action === "launch") {
         setFlash((f) => ({
           ...f,

@@ -61,6 +61,8 @@ const DICT: Record<string, { en: string; zh: string }> = {
   "vault.stored": { en: "● key stored in keychain", zh: "● 密钥已存入钥匙串" },
   "vault.local": { en: "local provider — no key required", zh: "本地 provider——无需密钥" },
   "vault.lastProbe": { en: "last probe: {result}", zh: "上次探测：{result}" },
+  "confirm.cancel": { en: "cancel", zh: "取消" },
+  "mcp.syncConfirm": { en: "overwrite & sync now", zh: "覆盖并立即同步" },
   "agents.noUnknown": { en: "no unknown agents — all known ✓", zh: "无陌生 agent——全部在册 ✓" },
   "status.engine": { en: "engine", zh: "引擎" },
   "status.offline": { en: "offline", zh: "离线" },
@@ -151,22 +153,32 @@ type I18nCtx = {
   t: (k: string, vars?: Record<string, string | number>) => string;
 };
 
-const Ctx = createContext<I18nCtx>({ lang: "en", setLang: () => {}, t: (k) => k });
+function resolve(lang: Lang, k: string, vars?: Record<string, string | number>) {
+  let s: string = DICT[k]?.[lang] ?? k;
+  if (vars) {
+    for (const [name, value] of Object.entries(vars)) {
+      s = s.replaceAll(`{${name}}`, String(value));
+    }
+  }
+  return s;
+}
+
+// R26: components rendered outside a provider (tests, future portals) used to
+// get an identity t() that leaked raw keys into the UI ("mcp.syncWarn" as
+// visible text). The default context now resolves real English — same strings
+// the en UI shows.
+const Ctx = createContext<I18nCtx>({
+  lang: "en",
+  setLang: () => {},
+  t: (k, vars) => resolve("en", k, vars),
+});
 
 export function I18nProvider({ children }: { children: ReactNode }) {
   const [lang, setLang] = useState<Lang>(() => {
     const saved = localStorage.getItem("toondeck.lang");
     return saved === "zh" || saved === "en" ? saved : "en";
   });
-  const t = (k: string, vars?: Record<string, string | number>) => {
-    let s: string = DICT[k]?.[lang] ?? k;
-    if (vars) {
-      for (const [name, value] of Object.entries(vars)) {
-        s = s.replaceAll(`{${name}}`, String(value));
-      }
-    }
-    return s;
-  };
+  const t = (k: string, vars?: Record<string, string | number>) => resolve(lang, k, vars);
   const wrap = (l: Lang) => {
     localStorage.setItem("toondeck.lang", l);
     setLang(l);
