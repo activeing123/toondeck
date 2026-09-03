@@ -20,6 +20,7 @@ export default function VaultPanel() {
   const [busy, setBusy] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [reStore, setReStore] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const s = await fetch("/api/vault/state").then((r) => r.json());
@@ -40,6 +41,7 @@ export default function VaultPanel() {
         body: JSON.stringify({ provider: id, secret }),
       }).then((r2) => r2.json());
       if (!r.ok) toast.error(r.error ?? "store failed");
+      else setReStore(null); // recovery complete: collapse the re-store input
       setDrafts((d) => ({ ...d, [id]: "" }));
       await load();
     } finally {
@@ -113,6 +115,28 @@ export default function VaultPanel() {
                 {p.last_test.detail ? ` — ${p.last_test.detail}` : ""} · {p.last_test.at}
               </p>
             )}
+            {!p.local && p.stored && p.last_test && !p.last_test.ok && (
+              <p className="mt-1 text-xs text-led-err">{t("vault.failedHint")}</p>
+            )}
+            {reStore === p.id && (
+              <div className="mt-3 flex gap-2">
+                <input
+                  type="password"
+                  placeholder={`${p.env_var}…`}
+                  value={drafts[p.id] ?? ""}
+                  onChange={(e) => setDrafts((d) => ({ ...d, [p.id]: e.target.value }))}
+                  className="flex-1 rounded-deck bg-deck-panel2 px-3 py-1.5 text-sm"
+                />
+                <button
+                  data-testid={`restore-submit-${p.id}`}
+                  onClick={() => save(p.id)}
+                  disabled={busy === p.id || !(drafts[p.id] ?? "").trim()}
+                  className="rounded-deck bg-deck-accent px-3 py-1.5 text-sm font-semibold text-deck-bg disabled:opacity-40"
+                >
+                  {busy === p.id ? "…" : t("vault.reStore")}
+                </button>
+              </div>
+            )}
             {!p.local && !p.stored && (
               <div className="mt-3 flex gap-2">
                 <input
@@ -137,13 +161,25 @@ export default function VaultPanel() {
                   {t("vault.stored")}
                   {p.set_at ? ` · ${p.set_at}` : ""}
                 </span>
-                <button
-                  onClick={() => probe(p.id)}
-                  disabled={busy === p.id}
-                  className="ml-auto rounded-deck border border-deck-line px-3 py-1.5 text-sm disabled:opacity-40"
-                >
-                  {t("vault.test")}
-                </button>
+                {!p.last_test || p.last_test.ok ? (
+                  <>
+                    <button
+                      onClick={() => probe(p.id)}
+                      disabled={busy === p.id}
+                      className="ml-auto rounded-deck border border-deck-line px-3 py-1.5 text-sm disabled:opacity-40"
+                    >
+                      {t("vault.test")}
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => setReStore(reStore === p.id ? null : p.id)}
+                    disabled={busy === p.id}
+                    className="ml-auto rounded-deck border border-led-err/50 px-3 py-1.5 text-sm text-led-err disabled:opacity-40"
+                  >
+                    {t("vault.reStore")}
+                  </button>
+                )}
                 <button
                   onClick={() => del(p.id)}
                   disabled={busy === p.id}

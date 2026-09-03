@@ -66,6 +66,11 @@ const DICT: Record<string, { en: string; zh: string }> = {
   "vault.stored": { en: "● key stored in keychain", zh: "● 密钥已存入钥匙串" },
   "vault.local": { en: "local provider — no key required", zh: "本地 provider——无需密钥" },
   "vault.lastProbe": { en: "last probe: {result}", zh: "上次探测：{result}" },
+  "vault.failedHint": {
+    en: "probe failed — re-store a corrected key, delete it, or switch to another model in Agents.",
+    zh: "探测失败——重存一把修正后的 key、删除它，或去 Agents 页换其他模型。",
+  },
+  "vault.reStore": { en: "re-store", zh: "重存" },
   "confirm.cancel": { en: "cancel", zh: "取消" },
   "mcp.syncConfirm": { en: "overwrite & sync now", zh: "覆盖并立即同步" },
   "agents.noUnknown": { en: "no unrecognized agents — all accounted for ✓", zh: "无陌生 agent——全部在册 ✓" },
