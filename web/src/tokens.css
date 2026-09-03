@@ -30,3 +30,47 @@
   backdrop-filter: blur(14px);
   border: 1px solid var(--color-deck-line);
 }
+
+/* R34 — focus is a visual contract: keyboard users must always see where
+   they are. One global ring, deck-gold, instead of per-component guesses. */
+:where(button, a, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-deck-accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-deck);
+}
+
+/* R34 — micro-motion, once, at the right moments. Toasts land (they used to
+   just pop into existence); dialogs rise slightly. Both respect the OS
+   reduce-motion preference — motion is garnish, not information. */
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.animate-toast-in {
+  animation: toast-in 0.18s ease-out;
+}
+.animate-dialog-in {
+  animation: dialog-in 0.16s ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-toast-in,
+  .animate-dialog-in {
+    animation: none;
+  }
+}

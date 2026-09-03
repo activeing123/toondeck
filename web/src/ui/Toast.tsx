@@ -101,7 +101,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             key={t.id}
             data-kind={t.kind}
             onClick={() => dismiss(t.id)}
-            className={`text-left rounded-deck border px-4 py-3 text-sm shadow-lg ${
+            className={`animate-toast-in text-left rounded-deck border px-4 py-3 text-sm shadow-lg ${
               t.kind === "error"
                 ? "border-led-err/50 bg-deck-panel text-led-err"
                 : "border-led-ok/50 bg-deck-panel text-led-ok"
