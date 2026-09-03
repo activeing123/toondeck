@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import AgentsPanel from "./agents/AgentsPanel";
 import DesignSheet from "./design/DesignSheet";
 import { I18nProvider, useI18n, type Lang } from "./i18n";
@@ -15,6 +15,39 @@ function useHashRoute(): string {
     return () => window.removeEventListener("hashchange", onChange);
   }, []);
   return hash;
+}
+
+// R29: single-key nav. Digits 1..7 jump to the matching sidebar tab, Gmail
+// style — but never while the user is typing in an input/textarea/select or
+// inside a contenteditable.
+function isTypingTarget(el: EventTarget | null): boolean {
+  if (!(el instanceof HTMLElement)) return false;
+  const tag = el.tagName;
+  return (
+    tag === "INPUT" ||
+    tag === "TEXTAREA" ||
+    tag === "SELECT" ||
+    el.isContentEditable
+  );
+}
+
+function useDigitNav() {
+  const route = useHashRoute();
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const idx = Number(e.key);
+      if (!Number.isInteger(idx) || idx < 1 || idx > NAV.length) return;
+      if (isTypingTarget(e.target)) return;
+      const target = NAV[idx - 1];
+      if (target && window.location.hash !== target.hash) {
+        window.location.hash = target.hash;
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+  return route;
 }
 
 type Health = {
@@ -102,6 +135,7 @@ function Sidebar({ route }: { route: string }) {
           <a
             key={n.hash}
             href={n.hash}
+            aria-current={active ? "page" : undefined}
             className={`flex items-center gap-2.5 rounded-deck px-3 py-2 text-sm ${
               active ? "bg-deck-panel2 text-deck-ink font-semibold" : "text-deck-muted hover:text-deck-ink"
             }`}
@@ -229,11 +263,13 @@ function Console() {
 
   return (
     <main className="min-h-screen bg-deck-bg text-deck-ink flex flex-col items-center justify-center gap-6">
-      <h1 className="text-4xl font-bold tracking-tight">
-        Toon<span className="text-deck-accent">Deck</span>
-      </h1>
-      <ConsoleTagline />
-      <ConsoleOnboarding inv={inv} />
+      <PageFocus routeKey="console">
+        <h1 className="text-4xl font-bold tracking-tight">
+          Toon<span className="text-deck-accent">Deck</span>
+        </h1>
+        <ConsoleTagline />
+        <ConsoleOnboarding inv={inv} />
+      </PageFocus>
       {health ? (
         <div className="glass rounded-deck px-6 py-4 text-sm shadow-glow-gold space-y-1">
           <div>
@@ -258,17 +294,38 @@ function Console() {
   );
 }
 
+/** R29: keyboard users land at the top of new content after a route change. */
+function PageFocus({ routeKey, children }: { routeKey: string; children: React.ReactNode }) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    ref.current?.focus({ preventScroll: false });
+  }, [routeKey]);
+  return (
+    <div
+      ref={ref}
+      data-route-focus="true"
+      tabIndex={-1}
+      className="outline-none"
+    >
+      {children}
+    </div>
+  );
+}
+
 function Shell({ children }: { children: React.ReactNode }) {
   const route = useHashRoute();
   return (
     <div className="min-h-screen bg-deck-bg text-deck-ink flex">
       <Sidebar route={route} />
-      <main className="flex-1 p-8 max-w-6xl">{children}</main>
+      <main className="flex-1 p-8 max-w-6xl">
+        <PageFocus routeKey={route}>{children}</PageFocus>
+      </main>
     </div>
   );
 }
 
 export default function App() {
+  useDigitNav();
   return (
     <I18nProvider>
       <Routed />
