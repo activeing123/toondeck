@@ -57,7 +57,11 @@ export function requestSync(): Promise<SyncResult[]> {
     .then((b) => b.results);
 }
 
-export function checkHealth(): Promise<{ checked: number; results: HealthResult[] }> {
+export function checkHealth(): Promise<{
+  checked: number;
+  timeout_s?: number;
+  results: HealthResult[];
+}> {
   // UX-A3: the browser never spins forever either — 35s hard cap (backend
   // deadline is ~timeout+2s; this is the safety net for dead/crashed engine)
   return fetchWithTimeout("/api/mcp/health", 35_000).then((r) => r.json());

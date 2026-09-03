@@ -2,6 +2,7 @@ import { useState } from "react";
 import DiscoverPanel from "./DiscoverPanel";
 import FleetDashboard from "./FleetDashboard";
 import ToolsBrowser from "./ToolsBrowser";
+import { HealthVerdict } from "./HealthVerdict";
 import { useI18n } from "../i18n";
 import { ConfirmDialog } from "../ui/ConfirmDialog";
 import {
@@ -58,6 +59,7 @@ export default function McpPanel() {
   const [syncResults, setSyncResults] = useState<SyncResult[] | null>(null);
   const [syncing, setSyncing] = useState(false);
   const [health, setHealth] = useState<HealthResult[] | null>(null);
+  const [healthMeta, setHealthMeta] = useState<{ wallMs: number; timeoutS: number | null } | null>(null);
   const [healthErr, setHealthErr] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
   const { t } = useI18n();
@@ -74,8 +76,12 @@ export default function McpPanel() {
     setChecking(true);
     setHealth(null);
     setHealthErr(null);
+    const t0 = performance.now();
     checkHealth()
-      .then((b) => setHealth(b.results))
+      .then((b) => {
+        setHealth(b.results);
+        setHealthMeta({ wallMs: performance.now() - t0, timeoutS: b.timeout_s ?? null });
+      })
       .catch(() => setHealthErr(t("mcp.healthFailed")))
       .finally(() => setChecking(false));
   };
@@ -163,26 +169,13 @@ export default function McpPanel() {
         </div>
       )}
 
-      {health && (
-        <div className="glass rounded-deck p-3 text-sm">
-          <p className="text-xs text-deck-muted mb-1">
-            probed statuses below — live connections, just ran ·{" "}
-            {health.filter((h) => h.status === "ok").length} ok ·{" "}
-            {health.filter((h) => h.status === "timeout").length} timeout ·{" "}
-            {health.filter((h) => h.status === "error").length} error
-          </p>
-          {health.map((h) => (
-            <div key={h.server} className="flex items-center gap-2">
-              <span className={`inline-block h-2.5 w-2.5 rounded-full ${statusLed(h.status)}`} />
-              <span className="font-medium">{h.server}</span>
-              <span className="text-deck-muted">{h.status}</span>
-              <span className="ml-auto font-mono text-xs text-deck-muted">
-                {h.tools} tools · {h.latency_ms}ms
-              </span>
-              {h.error && <span className="text-led-err text-xs">{h.error}</span>}
-            </div>
-          ))}
-        </div>
+      {health && healthMeta && (
+        <HealthVerdict
+          results={health}
+          wallMs={healthMeta.wallMs}
+          timeoutS={healthMeta.timeoutS}
+          onRerun={onHealth}
+        />
       )}
 
       {syncResults && (

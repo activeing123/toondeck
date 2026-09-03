@@ -134,7 +134,10 @@ describe("UX-A3: probe resilience", () => {
       </I18nProvider>,
     );
     await userEvent.click(await screen.findByRole("button", { name: /run health check/ }));
-    expect(await screen.findByText(/1 ok · 1 timeout · 1 error/)).toBeInTheDocument();
+    // R28 verdict card: ok/total up front, timeout and error called out after
+    expect(await screen.findByText(/1\/3 ok/)).toBeInTheDocument();
+    expect(screen.getByText(/· 1 timeout/)).toBeInTheDocument();
+    expect(screen.getByText(/· 1 error/)).toBeInTheDocument();
   });
 });
 

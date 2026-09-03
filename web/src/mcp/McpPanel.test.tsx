@@ -137,7 +137,8 @@ describe("McpPanel", () => {
     vi.stubGlobal("fetch", fetchMock);
     render(<McpPanel />);
     await userEvent.click(await screen.findByRole("button", { name: /run health check/ }));
-    expect(await screen.findByText(/probed statuses below/)).toBeInTheDocument();
+    // R28: the verdict card leads with ok/total + per-server rows
+    expect(await screen.findByText(/1\/2 ok/)).toBeInTheDocument();
     expect(screen.getAllByText("timeout").length).toBeGreaterThanOrEqual(1);
   });
 
