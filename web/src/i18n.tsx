@@ -2,7 +2,9 @@ import { createContext, useContext, useState, type ReactNode } from "react";
 
 export type Lang = "en" | "zh";
 
-const DICT: Record<string, { en: string; zh: string }> = {
+// R42: exported (readonly by convention) so CjkLiteralGate can hold the DICT
+// itself to the same discipline as the chrome — en values must stay CJK-free.
+export const DICT: Record<string, { en: string; zh: string }> = {
   "brand.tagline": { en: "One deck for every agent", zh: "一张牌桌，统御所有 agent" },
   "nav.deck": { en: "deck", zh: "甲板" },
   "nav.mcp": { en: "mcp", zh: "MCP" },
