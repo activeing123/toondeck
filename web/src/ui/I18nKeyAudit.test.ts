@@ -66,7 +66,10 @@ describe("R24: i18n key-space audit", () => {
 
   // keys reached through dynamic t(variable) calls — the static regex cannot
   // see them, so they are pinned here with the call site as justification:
-  // nav.* — App.tsx L110 `t(n.key)` over the NAV_TABS table (L70-76)
+  // nav.* — App.tsx `t(n.key)` over the NAV_TABS table
+  // led.* — R44 LED labels, called as t(cond ? "led.x" : "led.y") ternaries
+  // at every call site (Led label= props across panels; static regex needs a
+  // quote directly after `t(` so expression-shaped calls are invisible to it)
   const DYNAMIC_KEYS = new Set([
     "nav.deck",
     "nav.mcp",
@@ -75,6 +78,18 @@ describe("R24: i18n key-space audit", () => {
     "nav.logs",
     "nav.vault",
     "nav.design",
+    "led.ok",
+    "led.warn",
+    "led.err",
+    "led.off",
+    "led.installed",
+    "led.notInstalled",
+    "led.running",
+    "led.exited",
+    "led.keyStored",
+    "led.noKey",
+    "led.local",
+    "led.timeout",
   ]);
 
   it("has no dead keys (DICT entries no t() call references)", () => {

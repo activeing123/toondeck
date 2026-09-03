@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import LogTerminal from "../agents/LogTerminal";
 import { useI18n } from "../i18n";
+import { Led } from "../ui/Led";
 
 type StatusRow = { state: string; exit_code: number | null; pid?: number };
 type AgentRow = { id: string; display_name: string; installed: boolean };
@@ -42,12 +43,9 @@ export default function LogsPanel() {
             return (
               <section key={a.id} className="glass rounded-deck p-4">
                 <div className="flex items-center gap-2">
-                  <span
-                    className={`inline-block h-2.5 w-2.5 rounded-full ${
-                      st.state === "running"
-                        ? "bg-led-ok shadow-glow-ok"
-                        : "bg-led-err shadow-glow-err"
-                    }`}
+                  <Led
+                    tone={st.state === "running" ? "ok" : "err"}
+                    label={`${a.display_name}: ${t(st.state === "running" ? "led.running" : "led.exited")}`}
                   />
                   <h2 className="font-semibold">{a.display_name}</h2>
                   <span className="text-xs text-deck-muted">

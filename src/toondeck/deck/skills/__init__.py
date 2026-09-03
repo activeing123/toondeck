@@ -10,6 +10,8 @@ Operations (frozen contract):
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from .internal import frontmatter
 
 
@@ -42,8 +44,14 @@ def get_state() -> dict:
                 "description": meta.get("description"),
                 "errors": errors,
             })
+    # R44: human-friendly source path — home dirs collapse to ~ (the raw
+    # absolute path stays in `source` for anyone who needs it; additive key).
+    source = str(src)
+    home = str(Path.home())
+    source_display = source.replace(home, "~", 1) if source.startswith(home) else source
     return {
-        "source": str(src),
+        "source": source,
+        "source_display": source_display,
         "exists": src.is_dir(),
         "skills": skills,
         "counts": {

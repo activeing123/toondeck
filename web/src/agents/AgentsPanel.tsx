@@ -4,6 +4,7 @@ import AdoptPanel from "./AdoptPanel";
 import { useI18n } from "../i18n";
 import { toast } from "../ui/Toast";
 import { ZeroState } from "../ui/ZeroState";
+import { Led } from "../ui/Led";
 
 function useI18nSafe() {
   try {
@@ -305,16 +306,12 @@ export default function AgentsPanel() {
           return (
             <section key={a.id} className="glass rounded-deck p-4">
               <div className="flex items-center gap-2">
-                <span
-                  className={`inline-block h-2.5 w-2.5 rounded-full ${
-                    st.state === "running"
-                      ? "bg-led-ok shadow-glow-ok"
-                      : st.state === "exited"
-                        ? "bg-led-err shadow-glow-err"
-                        : a.installed
-                          ? "bg-deck-muted"
-                          : "bg-deck-muted opacity-40"
-                  }`}
+                <Led
+                  tone={st.state === "running" ? "ok" : st.state === "exited" ? "err" : "off"}
+                  size="md"
+                  label={`${a.display_name}: ${t(
+                    st.state === "running" ? "led.running" : st.state === "exited" ? "led.exited" : a.installed ? "led.installed" : "led.notInstalled",
+                  )}`}
                 />
                 <h2 className="font-semibold">{a.display_name}</h2>
                 <span className="ml-auto text-xs text-deck-muted">

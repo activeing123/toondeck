@@ -8,6 +8,8 @@ export type SkillEntry = {
 
 export type SkillsState = {
   source: string;
+  /** R44: human form of source (home collapsed to ~); falls back to source. */
+  source_display?: string;
   exists: boolean;
   skills: SkillEntry[];
   counts: { total: number; valid: number };

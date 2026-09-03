@@ -209,6 +209,19 @@ export const DICT: Record<string, { en: string; zh: string }> = {
     en: "Your agents' skill shelves are empty. Point ToonDeck at a skills folder and sync — every agent view picks it up.",
     zh: "各 agent 的技能架还是空的。把技能文件夹指给 ToonDeck 并同步——所有 agent 视图自动生效。",
   },
+  // R44: LED state labels (screen readers; the dot is the only state signal)
+  "led.ok": { en: "ok", zh: "正常" },
+  "led.warn": { en: "degraded", zh: "有恙" },
+  "led.err": { en: "error", zh: "异常" },
+  "led.off": { en: "off", zh: "未启" },
+  "led.installed": { en: "installed", zh: "已安装" },
+  "led.notInstalled": { en: "not installed", zh: "未安装" },
+  "led.running": { en: "running", zh: "运行中" },
+  "led.exited": { en: "exited", zh: "已退出" },
+  "led.keyStored": { en: "key stored", zh: "密钥已存" },
+  "led.noKey": { en: "no key", zh: "无密钥" },
+  "led.local": { en: "local provider", zh: "本地 provider" },
+  "led.timeout": { en: "timed out", zh: "超时" },
 };
 
 type I18nCtx = {

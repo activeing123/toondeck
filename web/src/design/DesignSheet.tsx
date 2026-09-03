@@ -26,9 +26,9 @@ export default function DesignSheet() {
                   className="h-4 w-4 rounded-full"
                   style={{ background: "var(--deck-accent)" }}
                 />
-                <span className="h-4 w-4 rounded-full bg-led-ok" />
-                <span className="h-4 w-4 rounded-full bg-led-warn" />
-                <span className="h-4 w-4 rounded-full bg-led-err" />
+                <span className="h-4 w-4 rounded-full bg-led-ok" aria-hidden="true" />
+                <span className="h-4 w-4 rounded-full bg-led-warn" aria-hidden="true" />
+                <span className="h-4 w-4 rounded-full bg-led-err" aria-hidden="true" />
               </div>
             </div>
             <h2 className="font-semibold">

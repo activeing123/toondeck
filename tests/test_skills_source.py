@@ -135,3 +135,36 @@ def test_state_never_contains_skill_file_bodies(source_env):
     _skill(source_env, "good-skill", GOOD + "SECRET-LOOKING-BODY")
     blob = json.dumps(get_state())
     assert "SECRET-LOOKING-BODY" not in blob
+
+
+def test_get_state_collapses_home_to_tilde(tmp_path, monkeypatch):
+    """R44: source_display is the human form of source — a home-prefixed
+    path collapses to ~. The raw absolute path stays verbatim in `source`
+    (additive key, nothing removed)."""
+    import pathlib
+    from toondeck.deck.skills import get_state
+
+    fake_home = tmp_path / "home"
+    src = fake_home / ".toondeck" / "skills"
+    src.mkdir(parents=True)
+    monkeypatch.setenv("TOONDECK_SKILLS_DIR", str(src))
+    monkeypatch.setattr(pathlib.Path, "home", classmethod(lambda cls: fake_home))
+
+    st = get_state()
+    assert st["source"] == str(src), "raw path must be preserved verbatim"
+    assert st["source_display"] == "~" + str(src)[len(str(fake_home)):], (
+        "home prefix must collapse to ~"
+    )
+
+
+def test_get_state_source_display_passthrough_non_home(tmp_path, monkeypatch):
+    """A source OUTSIDE the home dir passes through unchanged. tmp_path is
+    NOT usable here — on Windows it literally lives under the real home
+    (C:\\Users\\<user>\\AppData\\...) so a fake drive root is the honest
+    non-home fixture."""
+    from toondeck.deck.skills import get_state
+
+    monkeypatch.setenv("TOONDECK_SKILLS_DIR", "Q:\\elsewhere\\skills")
+    st = get_state()
+    assert st["source"] == "Q:\\elsewhere\\skills"
+    assert st["source_display"] == "Q:\\elsewhere\\skills"

@@ -10,6 +10,7 @@ error/timeout verdicts keep their own colors.
 */
 
 import { useI18n } from "../i18n";
+import { Led } from "../ui/Led";
 import type { HealthResult } from "./api";
 
 function gradeLatency(ms: number, status: string, capS: number): string {
@@ -62,14 +63,9 @@ export function HealthVerdict({
       </div>
       {results.map((h) => (
         <div key={h.server} className="flex items-center gap-2">
-          <span
-            className={`inline-block h-2.5 w-2.5 rounded-full ${
-              h.status === "ok"
-                ? "bg-led-ok shadow-glow-ok"
-                : h.status === "timeout"
-                  ? "bg-led-warn"
-                  : "bg-led-err"
-            }`}
+          <Led
+            tone={h.status === "ok" ? "ok" : h.status === "timeout" ? "warn" : "err"}
+            label={`${h.server}: ${t(h.status === "ok" ? "led.ok" : h.status === "timeout" ? "led.timeout" : "led.err")}`}
           />
           <span className="font-medium">{h.server}</span>
           <span className="text-deck-muted">{h.status}</span>

@@ -3,6 +3,7 @@ import { useI18n } from "../i18n";
 import { toast } from "../ui/Toast";
 import { ConfirmDialog } from "../ui/ConfirmDialog";
 import { ZeroState } from "../ui/ZeroState";
+import { Led } from "../ui/Led";
 
 type ProviderRow = {
   id: string;
@@ -98,10 +99,9 @@ export default function VaultPanel() {
           {providers.map((p) => (
           <section key={p.id} className="glass rounded-deck p-4">
             <div className="flex items-center gap-2">
-              <span
-                className={`inline-block h-2.5 w-2.5 rounded-full ${
-                  p.local ? "bg-led-ok" : p.stored ? "bg-led-ok shadow-glow-ok" : "bg-deck-muted"
-                }`}
+              <Led
+                tone={p.local || p.stored ? "ok" : "off"}
+                label={`${p.display_name}: ${t(p.local ? "led.local" : p.stored ? "led.keyStored" : "led.noKey")}`}
               />
               <h2 className="font-semibold">{p.display_name}</h2>
               <span className="ml-auto font-mono text-xs text-deck-muted">{p.env_var}</span>

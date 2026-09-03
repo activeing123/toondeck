@@ -4,6 +4,7 @@ import FleetDashboard from "./FleetDashboard";
 import ToolsBrowser from "./ToolsBrowser";
 import { HealthVerdict } from "./HealthVerdict";
 import { useI18n } from "../i18n";
+import { Led as SharedLed } from "../ui/Led";
 import { ConfirmDialog } from "../ui/ConfirmDialog";
 import { ZeroState } from "../ui/ZeroState";
 import {
@@ -15,20 +16,8 @@ import {
   type SyncResult,
 } from "./api";
 
-function Led({ on }: { on: boolean }) {
-  return (
-    <span
-      className={`inline-block h-2.5 w-2.5 rounded-full ${
-        on ? "bg-led-ok shadow-glow-ok" : "bg-deck-muted"
-      }`}
-    />
-  );
-}
-
-function statusLed(status: string) {
-  if (status === "ok") return "bg-led-ok shadow-glow-ok";
-  if (status === "timeout") return "bg-led-warn";
-  return "bg-led-err shadow-glow-err";
+function Led({ on, label }: { on: boolean; label?: string }) {
+  return <SharedLed tone={on ? "ok" : "off"} label={label} size="md" />;
 }
 
 function TokenCard({ ts }: { ts: { method: string; tool_total: number; full_json_tokens: number; slim_tokens: number; saved_pct: number } }) {
@@ -183,7 +172,7 @@ export default function McpPanel() {
         <div className="glass rounded-deck p-3 text-sm">
           {syncResults.map((r) => (
             <div key={r.agent} className="flex items-center gap-2">
-              <Led on={r.ok} /> {r.agent}
+              <Led on={r.ok} label={`${r.agent}: ${t(r.ok ? "led.ok" : "led.err")}`} /> {r.agent}
               {r.error && <span className="text-led-err">{r.error}</span>}
             </div>
           ))}
@@ -196,11 +185,11 @@ export default function McpPanel() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {state.servers.map((s) => {
           const h = healthBy[s.name];
-          const led = h ? statusLed(h.status) : "bg-deck-muted";
+          const tone = h ? (h.status === "ok" ? "ok" : h.status === "timeout" ? "warn" : "err") : "off";
           return (
             <section key={s.name} className="glass rounded-deck p-4">
               <div className="flex items-center gap-2">
-                <span className={`inline-block h-2.5 w-2.5 rounded-full ${led}`} />
+                <SharedLed tone={tone} label={`${s.name}: ${h ? t(h.status === "ok" ? "led.ok" : h.status === "timeout" ? "led.timeout" : "led.err") : t("led.off")}`} size="md" />
                 <h2 className="font-semibold">{s.name}</h2>
                 {s.tool_total > 0 && (
                   <span className="text-xs text-deck-muted">{s.tool_total} tools</span>

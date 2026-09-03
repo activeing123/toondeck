@@ -11,6 +11,7 @@ import {
 } from "./api";
 import CategoryPills from "./CategoryPills";
 import ViewMatrix from "./ViewMatrix";
+import { Led } from "../ui/Led";
 
 export default function SkillsPanel() {
   const [state, setState] = useState<SkillsState | null>(null);
@@ -58,7 +59,7 @@ export default function SkillsPanel() {
         <h1 className="text-2xl font-bold">
           Skills <span className="text-deck-accent">{state.counts.total}</span>
           <span className="text-sm text-deck-muted ml-3">
-            {state.counts.valid} valid · source: {state.source}
+            {state.counts.valid} valid · source: {state.source_display ?? state.source}
           </span>
         </h1>
         <div className="flex gap-2 flex-wrap">
@@ -105,11 +106,7 @@ export default function SkillsPanel() {
 
       {doctor && (
         <div className="flex items-center gap-3 text-sm">
-          <span
-            className={`inline-block h-2.5 w-2.5 rounded-full ${
-              doctor.summary === "ok" ? "bg-led-ok shadow-glow-ok" : "bg-led-warn"
-            }`}
-          />
+          <Led tone={doctor.summary === "ok" ? "ok" : "warn"} label={`doctor: ${doctor.summary}`} />
           <span>
             doctor: <b>{doctor.summary}</b> · graveyard {doctor.graveyard.removed} removed
           </span>

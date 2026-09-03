@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import AgentsPanel from "./agents/AgentsPanel";
 import DesignSheet from "./design/DesignSheet";
 import { I18nProvider, useI18n, type Lang } from "./i18n";
+import { Led } from "./ui/Led";
 import LogsPanel from "./logs/LogsPanel";
 import McpPanel from "./mcp/McpPanel";
 import SkillsPanel from "./skills/SkillsPanel";
@@ -66,6 +67,7 @@ type AgentRow = {
 };
 
 function AgentGrid({ agents }: { agents: AgentRow[] | null }) {
+  const { t } = useI18n();
   if (!agents) return null;
   return (
     <div className="glass rounded-deck px-5 py-3 text-sm w-full max-w-md">
@@ -75,11 +77,7 @@ function AgentGrid({ agents }: { agents: AgentRow[] | null }) {
       <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
         {agents.map((a) => (
           <div key={a.id} className="flex items-center gap-2">
-            <span
-              className={`inline-block h-2 w-2 rounded-full ${
-                a.installed ? "bg-led-ok shadow-glow-ok" : "bg-deck-muted"
-              }`}
-            />
+            <Led tone={a.installed ? "ok" : "off"} label={`${a.display_name}: ${t(a.installed ? "led.installed" : "led.notInstalled")}`} />
             <span className={a.installed ? "" : "text-deck-muted"}>{a.display_name}</span>
           </div>
         ))}
@@ -175,11 +173,7 @@ function Sidebar({ route }: { route: string }) {
         {health ? (
           <>
             <div className="flex items-center gap-1.5">
-              <span
-                className={`inline-block h-2 w-2 rounded-full ${
-                  health.engine?.available ? "bg-led-ok shadow-glow-ok" : "bg-led-err"
-                }`}
-              />
+              <Led tone={health.engine?.available ? "ok" : "err"} />
               {t("status.engine")} mcptoon{" "}
               {health.engine?.available ? health.engine.version : t("status.offline")}
             </div>
@@ -187,7 +181,7 @@ function Sidebar({ route }: { route: string }) {
           </>
         ) : (
           <div className="flex items-center gap-1.5">
-            <span className="inline-block h-2 w-2 rounded-full bg-led-warn" />
+            <Led tone="warn" />
             {t("status.offline")}
           </div>
         )}
@@ -343,11 +337,7 @@ function Console() {
             <span className="font-mono">127.0.0.1:8721</span>
           </div>
           <div className="flex items-center gap-2">
-            <span
-              className={`inline-block h-2 w-2 rounded-full ${
-                health.engine.available ? "bg-led-ok shadow-glow-ok" : "bg-led-err shadow-glow-err"
-              }`}
-            />
+            <Led tone={health.engine.available ? "ok" : "err"} />
             mcptoon engine {health.engine.available ? health.engine.version : "unavailable"}
           </div>
           <ConsoleMcpSummary inv={inv} />

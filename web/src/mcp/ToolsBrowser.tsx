@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useI18n } from "../i18n";
+import { Led } from "../ui/Led";
 
 type ToolRow = { server: string; status: string; latency_ms: number; error: string | null; tools: { name: string; description: string }[] };
 
@@ -7,10 +8,10 @@ export function fetchTools(): Promise<{ checked: number; servers: ToolRow[] }> {
   return fetch("/api/mcp/tools").then((r) => r.json());
 }
 
-function statusLed(status: string) {
-  if (status === "ok") return "bg-led-ok shadow-glow-ok";
-  if (status === "timeout") return "bg-led-warn";
-  return "bg-led-err shadow-glow-err";
+function statusTone(status: string): "ok" | "warn" | "err" {
+  if (status === "ok") return "ok";
+  if (status === "timeout") return "warn";
+  return "err";
 }
 
 /** Live tool inventory per server — the mcptoon engine's muscle, on display. */
@@ -53,7 +54,7 @@ export default function ToolsBrowser() {
                 onClick={() => setOpen(open === s.server ? null : s.server)}
                 className="flex w-full items-center gap-2 text-left"
               >
-                <span className={`inline-block h-2.5 w-2.5 rounded-full ${statusLed(s.status)}`} />
+                <Led tone={statusTone(s.status)} label={`${s.server}: ${t(s.status === "ok" ? "led.ok" : s.status === "timeout" ? "led.timeout" : "led.err")}`} />
                 <span className="font-mono font-medium">{s.server}</span>
                 <span className="ml-auto font-mono text-xs text-deck-muted">
                   {s.tools.length} tools · {s.latency_ms}ms
