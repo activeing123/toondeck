@@ -124,6 +124,10 @@ const DICT: Record<string, { en: string; zh: string }> = {
   "logs.downloadMd": { en: "⬇ md report", zh: "⬇ 下载 md 报告" },
   "logs.collapse": { en: "collapse", zh: "收起" },
   "logs.live": { en: "live log", zh: "实时日志" },
+  "logs.filterPlaceholder": { en: "🔍 filter lines…", zh: "🔍 过滤日志行…" },
+  "logs.filterCount": { en: "{n} matching lines", zh: "{n} 行匹配" },
+  "logs.filterCapped": { en: "showing first {shown} of {total} matches", zh: "仅显示前 {shown} / {total} 条" },
+  "logs.noMatch": { en: "no lines match", zh: "无匹配行" },
   "logs.never": {
     en: "never launched: {names} — start them on the Agents page and their logs will appear here.",
     zh: "未启动过的 agent：{names} — 去 Agents 页一键启动后，日志会出现在这里。",

@@ -71,7 +71,8 @@ export default function LogsPanel() {
                 </div>
                 {open === a.id && (
                   <div className="mt-3 border border-deck-line rounded-deck p-2 bg-black/40">
-                    <LogTerminal agentId={a.id} />
+                    {/* R32: the Logs center opts into the filter view */}
+                    <LogTerminal agentId={a.id} filterable />
                   </div>
                 )}
               </section>
