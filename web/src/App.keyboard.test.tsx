@@ -68,9 +68,12 @@ describe("R29: keyboard navigation", () => {
   it("marks the active nav link with aria-current=page", async () => {
     window.location.hash = "#/mcp"; // Shell routes carry the sidebar
     render(<App />);
-    await waitFor(() =>
-      expect(screen.getByRole("link", { name: /mcp/i })).toHaveAttribute("aria-current", "page"),
-    );
+    await waitFor(() => {
+      // R31: both the desktop sidebar and the mobile tab bar render the link
+      const links = screen.getAllByRole("link", { name: /mcp/i });
+      expect(links.length).toBeGreaterThanOrEqual(1);
+      for (const link of links) expect(link).toHaveAttribute("aria-current", "page");
+    });
   });
 
   it("digit keys jump to the matching tab", async () => {
@@ -78,15 +81,16 @@ describe("R29: keyboard navigation", () => {
     await screen.findByText(/step 1|next step/i); // landing rendered
     fireEvent.keyDown(window, { key: "2" });
     await waitFor(() => expect(window.location.hash).toBe("#/mcp"));
-    await waitFor(() =>
-      expect(screen.getByRole("link", { name: /mcp/i })).toHaveAttribute("aria-current", "page"),
-    );
+    await waitFor(() => {
+      for (const link of screen.getAllByRole("link", { name: /mcp/i }))
+        expect(link).toHaveAttribute("aria-current", "page");
+    });
   });
 
   it("digit keys are ignored while typing in an input", async () => {
     render(<App />);
     window.location.hash = "#/vault";
-    await screen.findByRole("link", { name: /vault/i });
+    await screen.findAllByRole("link", { name: /vault/i }); // desktop + mobile copies
     const input = document.createElement("input");
     document.body.appendChild(input);
     input.focus();

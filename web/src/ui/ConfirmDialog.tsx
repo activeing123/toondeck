@@ -40,7 +40,7 @@ export function ConfirmDialog({
         if (e.key === "Escape") onCancel();
       }}
     >
-      <div className="glass rounded-deck border border-led-err/40 p-6 max-w-md space-y-4">
+      <div className="glass rounded-deck border border-led-err/40 p-4 sm:p-6 max-w-md mx-4 space-y-4">
         <p className="text-sm">{t(messageKey, messageVars)}</p>
         <div className="flex justify-end gap-2">
           <button

@@ -125,7 +125,7 @@ function Sidebar({ route }: { route: string }) {
       .catch(() => setHealth(null));
   }, []);
   return (
-    <aside className="w-56 shrink-0 border-r border-deck-line flex flex-col p-4 gap-1 min-h-screen">
+    <aside className="hidden md:flex w-56 shrink-0 border-r border-deck-line flex-col p-4 gap-1 min-h-screen">
       <a href="#/" className="text-xl font-bold mb-6">
         Toon<span className="text-deck-accent">Deck</span>
       </a>
@@ -317,10 +317,38 @@ function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-deck-bg text-deck-ink flex">
       <Sidebar route={route} />
-      <main className="flex-1 p-8 max-w-6xl">
-        <PageFocus routeKey={route}>{children}</PageFocus>
-      </main>
+      <div className="flex-1 min-w-0">
+        {/* R31: below md the sidebar is gone — this horizontal tab bar is the nav */}
+        <nav
+          aria-label="tabs"
+          className="md:hidden flex gap-1 overflow-x-auto border-b border-deck-line px-3 py-2"
+        >
+          {NAV.map((n) => {
+            const active = n.hash === "#/" ? route === "#/" || route === "#" : route.startsWith(n.hash);
+            return <MobileTab key={n.hash} n={n} active={active} />;
+          })}
+        </nav>
+        <main className="flex-1 p-4 md:p-8 max-w-6xl">
+          <PageFocus routeKey={route}>{children}</PageFocus>
+        </main>
+      </div>
     </div>
+  );
+}
+
+function MobileTab({ n, active }: { n: { hash: string; key: string; icon: string }; active: boolean }) {
+  const { t } = useI18n();
+  return (
+    <a
+      href={n.hash}
+      aria-current={active ? "page" : undefined}
+      className={`flex items-center gap-1.5 whitespace-nowrap rounded-deck px-3 py-1.5 text-sm ${
+        active ? "bg-deck-panel2 text-deck-ink font-semibold" : "text-deck-muted"
+      }`}
+    >
+      <span>{n.icon}</span>
+      {t(n.key)}
+    </a>
   );
 }
 
