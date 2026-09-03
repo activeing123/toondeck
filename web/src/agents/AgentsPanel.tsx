@@ -45,7 +45,7 @@ export default function AgentsPanel() {
   const [newUrl, setNewUrl] = useState("");
   const [newKey, setNewKey] = useState("");
   const [openLogs, setOpenLogs] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [pending, setPending] = useState<{ id: string; action: "launch" | "stop" } | null>(null);
   const [flash, setFlash] = useState<Record<string, string>>({});
   const [cmdFor, setCmdFor] = useState<string | null>(null);
   const [cmdInput, setCmdInput] = useState("");
@@ -157,7 +157,10 @@ export default function AgentsPanel() {
   };
 
   const act = async (id: string, action: "launch" | "stop") => {
-    setBusy(true);
+    // R27: per-agent pending state — the acting button shows a spinner and
+    // this agent's buttons lock; OTHER agents stay fully usable (the backend
+    // Manager lock serializes launch/stop, so cross-agent clicks are safe).
+    setPending({ id, action });
     setFlash((f) => ({ ...f, [id]: "" }));
     try {
       const r = await fetch(`/api/agents/${id}/${action}`, { method: "POST" }).then((r2) => r2.json());
@@ -183,7 +186,7 @@ export default function AgentsPanel() {
       }
       await load();
     } finally {
-      setBusy(false);
+      setPending(null);
     }
   };
 
@@ -340,18 +343,38 @@ export default function AgentsPanel() {
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <button
                   onClick={() => act(a.id, "launch")}
-                  disabled={busy || !canLaunch || st.state === "running"}
+                  disabled={!canLaunch || st.state === "running" || pending?.id === a.id}
                   className="rounded-deck bg-deck-accent px-3 py-1.5 text-sm font-semibold text-deck-bg disabled:opacity-40"
                   title={a.launch_command ? a.launch_command.join(" ") : "GUI-only agent"}
                 >
-                  {t("agents.launch")}
+                  {pending?.id === a.id && pending.action === "launch" ? (
+                    <>
+                      <span
+                        className="mr-1.5 inline-block h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent align-[-2px]"
+                        aria-hidden
+                      />
+                      {t("agents.starting")}
+                    </>
+                  ) : (
+                    t("agents.launch")
+                  )}
                 </button>
                 <button
                   onClick={() => act(a.id, "stop")}
-                  disabled={busy || st.state !== "running"}
+                  disabled={st.state !== "running" || pending?.id === a.id}
                   className="rounded-deck border border-deck-line px-3 py-1.5 text-sm disabled:opacity-40"
                 >
-                  {t("agents.stop")}
+                  {pending?.id === a.id && pending.action === "stop" ? (
+                    <>
+                      <span
+                        className="mr-1.5 inline-block h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent align-[-2px]"
+                        aria-hidden
+                      />
+                      {t("agents.stopping")}
+                    </>
+                  ) : (
+                    t("agents.stop")
+                  )}
                 </button>
                 <button
                   onClick={() => setOpenLogs(openLogs === a.id ? null : a.id)}

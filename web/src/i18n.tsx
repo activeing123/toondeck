@@ -24,6 +24,8 @@ const DICT: Record<string, { en: string; zh: string }> = {
   },
   "agents.launch": { en: "launch", zh: "启动" },
   "agents.stop": { en: "stop", zh: "停止" },
+  "agents.starting": { en: "starting…", zh: "启动中…" },
+  "agents.stopping": { en: "stopping…", zh: "停止中…" },
   "agents.logs": { en: "logs", zh: "日志" },
   "agents.hideLogs": { en: "hide logs", zh: "收起日志" },
   "agents.model": { en: "model…", zh: "模型…" },
