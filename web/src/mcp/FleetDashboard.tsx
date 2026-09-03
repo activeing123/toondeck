@@ -25,14 +25,47 @@ type Overview = {
   skills: { total: number; valid: number; views_ok: number; views_total: number };
 };
 
-function Big({ n, label, sub, accent }: { n: number | string; label: string; sub?: string; accent?: boolean }) {
-  return (
-    <div className="glass rounded-deck p-4 min-w-36">
+/** R41: a stat you can see is a stat you want to manage — optional href
+ * (route jump) or onClick (in-page scroll) turns the number into the entry
+ * point of the panel that owns it. */
+function Big({
+  n,
+  label,
+  sub,
+  accent,
+  href,
+  onClick,
+}: {
+  n: number | string;
+  label: string;
+  sub?: string;
+  accent?: boolean;
+  href?: string;
+  onClick?: () => void;
+}) {
+  const body = (
+    <>
       <div className={`text-3xl font-mono font-bold ${accent ? "text-deck-accent" : "text-deck-accent"}`}>{n}</div>
       <div className="mt-1 text-sm">{label}</div>
       {sub && <div className="text-xs text-deck-muted">{sub}</div>}
-    </div>
+    </>
   );
+  const cls = "glass rounded-deck p-4 min-w-36 text-left";
+  if (href) {
+    return (
+      <a href={href} className={`${cls} hover:border-deck-accent/50 transition`}>
+        {body}
+      </a>
+    );
+  }
+  if (onClick) {
+    return (
+      <button type="button" onClick={onClick} className={`${cls} hover:border-deck-accent/50 transition`}>
+        {body}
+      </button>
+    );
+  }
+  return <div className={cls}>{body}</div>;
 }
 
 /** MCP 页旗舰仪表盘：mcptoon 管理了什么、从哪来、通不通。 */
@@ -123,16 +156,19 @@ export default function FleetDashboard({ reloadSignal = 0 }: { reloadSignal?: nu
               : t("fleet.firstScan")
           }
           accent
+          onClick={() => document.getElementById("tools-browser")?.scrollIntoView({ behavior: "smooth" })}
         />
         <Big
           n={`${o.skills.valid}`}
           label={t("fleet.skills")}
           sub={t("fleet.skillsSub", { total: o.skills.total, ok: o.skills.views_ok, views: o.skills.views_total })}
+          href="#/skills"
         />
         <Big
           n={`${o.agents.installed}/${o.agents.total}`}
           label="CLI agents"
           sub={t("fleet.launchable", { n: o.agents.cli_capable })}
+          href="#/agents"
         />
       </div>
 

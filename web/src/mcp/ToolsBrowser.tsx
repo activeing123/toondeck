@@ -28,7 +28,7 @@ export default function ToolsBrowser() {
   };
 
   return (
-    <section className="glass rounded-deck p-4">
+    <section id="tools-browser" className="glass rounded-deck p-4">
       <div className="flex items-center gap-3">
         <h2 className="font-semibold">🧰 {t("mcp.tools")}</h2>
         <button
