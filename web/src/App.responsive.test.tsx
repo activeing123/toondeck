@@ -10,7 +10,7 @@ lost 224px permanently and the panels squeezed into the rest. Contract:
 */
 
 import { render, screen, within } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
 
 const health = {
@@ -51,7 +51,13 @@ function baseFetch() {
 describe("R31: responsive shell", () => {
   beforeEach(() => {
     window.location.hash = "#/mcp";
+    // R37: the responsive contract counts the DEV-inclusive nav (7 tabs)
+    localStorage.setItem("toondeck.dev", "1");
     vi.stubGlobal("fetch", baseFetch());
+  });
+
+  afterEach(() => {
+    localStorage.removeItem("toondeck.dev");
   });
 
   it("renders a mobile tab bar with all 7 tabs", async () => {

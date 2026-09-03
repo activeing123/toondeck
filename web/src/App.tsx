@@ -37,9 +37,10 @@ function useDigitNav() {
     const onKey = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       const idx = Number(e.key);
-      if (!Number.isInteger(idx) || idx < 1 || idx > NAV.length) return;
+      const nav = prodNav();
+      if (!Number.isInteger(idx) || idx < 1 || idx > nav.length) return;
       if (isTypingTarget(e.target)) return;
-      const target = NAV[idx - 1];
+      const target = nav[idx - 1];
       if (target && window.location.hash !== target.hash) {
         window.location.hash = target.hash;
       }
@@ -99,15 +100,32 @@ function AgentGrid() {
   );
 }
 
-const NAV = [
+// R37: the design veto sheet is a dev tool — it never ships in the
+// production nav. NAV entries carry a `dev` flag; both navs filter through
+// prodNav(). The route stays deep-linkable for the development workflow.
+// The escape hatch is runtime, not build-time: localStorage "toondeck.dev=1"
+// re-reveals the dev tab (a console one-liner, no rebuild needed).
+type NavItem = { hash: string; key: string; icon: string; dev?: boolean };
+
+const NAV: NavItem[] = [
   { hash: "#/", key: "nav.deck", icon: "🃏" },
   { hash: "#/mcp", key: "nav.mcp", icon: "🔌" },
   { hash: "#/skills", key: "nav.skills", icon: "🧩" },
   { hash: "#/agents", key: "nav.agents", icon: "🤖" },
   { hash: "#/logs", key: "nav.logs", icon: "📜" },
   { hash: "#/vault", key: "nav.vault", icon: "🔐" },
-  { hash: "#/design", key: "nav.design", icon: "🎨" },
+  { hash: "#/design", key: "nav.design", icon: "🎨", dev: true },
 ];
+
+export function devMode(): boolean {
+  try {
+    return window.localStorage.getItem("toondeck.dev") === "1";
+  } catch {
+    return false;
+  }
+}
+
+const prodNav = (): NavItem[] => NAV.filter((n) => !n.dev || devMode());
 
 type StatusHealth = {
   ok: boolean;
@@ -125,26 +143,28 @@ function Sidebar({ route }: { route: string }) {
       .catch(() => setHealth(null));
   }, []);
   return (
-    <aside className="hidden md:flex w-56 shrink-0 border-r border-deck-line flex-col p-4 gap-1 min-h-screen">
+    <aside role="complementary" aria-label="deck nav" className="hidden md:flex w-56 shrink-0 border-r border-deck-line flex-col p-4 gap-1 min-h-screen">
       <a href="#/" className="text-xl font-bold mb-6">
         Toon<span className="text-deck-accent">Deck</span>
       </a>
-      {NAV.map((n) => {
-        const active = n.hash === "#/" ? route === "#/" || route === "#" : route.startsWith(n.hash);
-        return (
-          <a
-            key={n.hash}
-            href={n.hash}
-            aria-current={active ? "page" : undefined}
-            className={`flex items-center gap-2.5 rounded-deck px-3 py-2 text-sm ${
-              active ? "bg-deck-panel2 text-deck-ink font-semibold" : "text-deck-muted hover:text-deck-ink"
-            }`}
-          >
-            <span>{n.icon}</span>
-            {t(n.key)}
-          </a>
-        );
-      })}
+      <nav aria-label="sections" className="flex flex-col gap-1">
+        {prodNav().map((n) => {
+          const active = n.hash === "#/" ? route === "#/" || route === "#" : route.startsWith(n.hash);
+          return (
+            <a
+              key={n.hash}
+              href={n.hash}
+              aria-current={active ? "page" : undefined}
+              className={`flex items-center gap-2.5 rounded-deck px-3 py-2 text-sm ${
+                active ? "bg-deck-panel2 text-deck-ink font-semibold" : "text-deck-muted hover:text-deck-ink"
+              }`}
+            >
+              <span>{n.icon}</span>
+              {t(n.key)}
+            </a>
+          );
+        })}
+      </nav>
       <div className="mt-auto space-y-2 text-xs text-deck-muted">
         <div className="flex gap-1">
           {(["en", "zh"] as Lang[]).map((l) => (
@@ -323,7 +343,7 @@ function Shell({ children }: { children: React.ReactNode }) {
           aria-label="tabs"
           className="md:hidden flex gap-1 overflow-x-auto border-b border-deck-line px-3 py-2"
         >
-          {NAV.map((n) => {
+          {prodNav().map((n) => {
             const active = n.hash === "#/" ? route === "#/" || route === "#" : route.startsWith(n.hash);
             return <MobileTab key={n.hash} n={n} active={active} />;
           })}
