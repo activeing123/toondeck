@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ToonDeck — one deck for every agent</title>
+<meta name="description" content="ToonDeck is the control deck for your CLI agents: MCP fleet management, one-click launches, skills sync, and an API vault — powered by mcptoon." />
+<style>
+  :root {
+    --bg: #0d1117;
+    --panel: rgba(255, 255, 255, 0.04);
+    --line: rgba(255, 255, 255, 0.1);
+    --ink: #e6edf3;
+    --muted: #8b949e;
+    --gold: #d4a843;
+    --ok: #3fb950;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2.5rem;
+    padding: 3rem 1.5rem;
+  }
+  .glass {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    backdrop-filter: blur(8px);
+  }
+  .hero { text-align: center; max-width: 44rem; }
+  .hero h1 { font-size: 3rem; font-weight: 800; letter-spacing: -0.02em; }
+  .hero h1 .accent { color: var(--gold); }
+  .tagline { color: var(--muted); margin-top: 0.75rem; font-size: 1.05rem; }
+  .badge {
+    display: inline-block;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 0.2rem 0.8rem;
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-top: 1rem;
+  }
+  .cards { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; max-width: 60rem; }
+  .card { padding: 1.4rem 1.5rem; width: 17rem; text-align: left; }
+  .card .icon { font-size: 1.6rem; }
+  .card h3 { margin: 0.5rem 0 0.4rem; font-size: 1.02rem; }
+  .card p { color: var(--muted); font-size: 0.88rem; line-height: 1.5; }
+  .cta { display: flex; gap: 0.9rem; flex-wrap: wrap; justify-content: center; }
+  .btn {
+    border-radius: 10px;
+    padding: 0.7rem 1.5rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .btn-gold { background: var(--gold); color: #0d1117; }
+  .btn-ghost { border: 1px solid var(--line); color: var(--ink); }
+  .btn:hover { opacity: 0.9; }
+  footer { color: var(--muted); font-size: 0.82rem; text-align: center; line-height: 1.8; }
+  footer a { color: var(--gold); text-decoration: none; }
+  .divider { width: min(44rem, 80vw); border: 0; border-top: 1px solid var(--line); }
+  @media (prefers-reduced-motion: no-preference) {
+    .glass { transition: border-color 0.18s ease; }
+    .glass:hover { border-color: rgba(212, 168, 67, 0.5); }
+  }
+</style>
+</head>
+<body>
+  <section class="hero">
+    <h1>Toon<span class="accent">Deck</span></h1>
+    <p class="tagline">One deck for every agent — MCP fleet, one-click launches, skills sync, and an API vault.</p>
+    <span class="badge">powered by mcptoon</span>
+  </section>
+
+  <section class="cards">
+    <div class="glass card">
+      <span class="icon">🔌</span>
+      <h3>MCP fleet, managed</h3>
+      <p>Discover servers from every agent config, adopt them in one click, and probe their health — 240s hangs become 1.8s verdicts.</p>
+    </div>
+    <div class="glass card">
+      <span class="icon">🚀</span>
+      <h3>Launch without terminals</h3>
+      <p>Start, stop, and watch your CLI agents from the deck. Logs stream in, exit codes are honest, and reports are one click away.</p>
+    </div>
+    <div class="glass card">
+      <span class="icon">🧩</span>
+      <h3>Skills everywhere at once</h3>
+      <p>One skills folder, every agent view. Junctions on Windows, symlinks elsewhere, drift archived — nothing ever silently lost.</p>
+    </div>
+  </section>
+
+  <hr class="divider" />
+
+  <section class="cta">
+    <a class="btn btn-gold" href="https://pypi.org/project/toondeck/">pip install toondeck</a>
+    <a class="btn btn-ghost" href="https://github.com/activeing123/toondeck">view source</a>
+  </section>
+
+  <footer>
+    <div>一个牌桌 · 统御所有 agent — keys live in your OS keychain, never in plaintext.</div>
+    <div><a href="https://github.com/activeing123/toondeck">GitHub</a> · <a href="https://pypi.org/project/toondeck/">PyPI</a> · Apache-2.0</div>
+  </footer>
+</body>
+</html>

@@ -353,6 +353,15 @@ def create_app() -> FastAPI:
         finally:
             agents.log_unsubscribe(agent_id, q)
 
+    # ── R43: product landing page — a real document, NOT the SPA shell.
+    # Registered before the catch-all so the SPA fallback can never swallow it.
+    @app.get("/landing")
+    def landing():
+        target = static.landing_page()
+        if target is None:
+            return JSONResponse({"error": "not_found"}, status_code=404)
+        return FileResponse(target, media_type="text/html")
+
     # ── SPA hosting (catch-all, last) ──
     @app.get("/{path:path}")
     def spa(path: str):

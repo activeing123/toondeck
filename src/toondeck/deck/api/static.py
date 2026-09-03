@@ -16,6 +16,16 @@ from pathlib import Path
 _INDEX = "index.html"
 
 
+def landing_page() -> Path | None:
+    """R43: the durable landing asset (web/landing/index.html). Static file,
+    no build step — the daemon serves it at /landing and any static host can
+    serve the same file when toondeck.dev goes live."""
+    env = os.environ.get("TOONDECK_WEB_DIST")
+    root = Path(env).resolve() if env else Path(__file__).resolve().parents[4] / "web"
+    p = root / "landing" / _INDEX
+    return p if p.is_file() else None
+
+
 def _dist_root() -> Path:
     """Locate the frontend dist. Env override first, then repo-relative default."""
     env = os.environ.get("TOONDECK_WEB_DIST")
