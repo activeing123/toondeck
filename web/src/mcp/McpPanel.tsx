@@ -5,6 +5,7 @@ import ToolsBrowser from "./ToolsBrowser";
 import { HealthVerdict } from "./HealthVerdict";
 import { useI18n } from "../i18n";
 import { ConfirmDialog } from "../ui/ConfirmDialog";
+import { ZeroState } from "../ui/ZeroState";
 import {
   checkHealth,
   requestSync,
@@ -189,8 +190,11 @@ export default function McpPanel() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {state.servers.map((s) => {
+      {state.servers.length === 0 ? (
+        <ZeroState icon="🔌" titleKey="mcp.emptyTitle" hintKey="mcp.emptyHint" />
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {state.servers.map((s) => {
           const h = healthBy[s.name];
           const led = h ? statusLed(h.status) : "bg-deck-muted";
           return (
@@ -256,7 +260,8 @@ export default function McpPanel() {
             </section>
           );
         })}
-      </div>
+        </div>
+      )}
       {confirmSync && (
         <ConfirmDialog
           messageKey="mcp.syncWarn"

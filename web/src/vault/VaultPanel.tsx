@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useI18n } from "../i18n";
 import { toast } from "../ui/Toast";
 import { ConfirmDialog } from "../ui/ConfirmDialog";
+import { ZeroState } from "../ui/ZeroState";
 
 type ProviderRow = {
   id: string;
@@ -88,8 +89,11 @@ export default function VaultPanel() {
         {t("vault.relation")}
       </p>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {providers.map((p) => (
+      {providers.length === 0 ? (
+        <ZeroState icon="🔐" titleKey="vault.emptyTitle" hintKey="vault.emptyHint" />
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {providers.map((p) => (
           <section key={p.id} className="glass rounded-deck p-4">
             <div className="flex items-center gap-2">
               <span
@@ -154,7 +158,8 @@ export default function VaultPanel() {
             )}
           </section>
         ))}
-      </div>
+        </div>
+      )}
       {confirmDelete && (
         <ConfirmDialog
           messageKey="vault.deleteConfirm"

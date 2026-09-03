@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useI18n } from "../i18n";
+import { ZeroState } from "../ui/ZeroState";
 import { CATEGORY_RULES, categoryOf, OTHER, type SkillLike as SkillRow } from "./categories";
 
 /** 分类 pill 导航：一排看全分类数，点击过滤，搜索框置顶。 */
@@ -73,13 +74,20 @@ export default function CategoryPills({
           </button>
         ))}
       </div>
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-        {shown.map((s) => (
-          <SkillCard key={s.dirname} s={s} />
-        ))}
-      </div>
-      {shown.length === 0 && (
-        <p className="text-sm text-deck-muted">{t("skills.noMatch")}</p>
+      {skills.length === 0 ? (
+        // R33: zero skills is a different story from "no search hits"
+        <ZeroState icon="🧩" titleKey="skills.emptyTitle" hintKey="skills.emptyHint" />
+      ) : (
+        <>
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {shown.map((s) => (
+              <SkillCard key={s.dirname} s={s} />
+            ))}
+          </div>
+          {shown.length === 0 && (
+            <p className="text-sm text-deck-muted">{t("skills.noMatch")}</p>
+          )}
+        </>
       )}
     </div>
   );

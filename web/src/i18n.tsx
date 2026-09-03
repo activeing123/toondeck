@@ -140,6 +140,27 @@ const DICT: Record<string, { en: string; zh: string }> = {
   "skills.searchPlaceholder": { en: "🔍 search skill names or descriptions…", zh: "🔍 搜索技能名或描述…" },
   "skills.all": { en: "📚 all {n}", zh: "📚 全部 {n}" },
   "skills.noMatch": { en: "no matching skills — try another category or search term.", zh: "没有匹配的技能 — 换个分类或搜索词。" },
+  // R33: empty states
+  "agents.emptyTitle": { en: "no agents detected yet", zh: "尚未发现任何 agent" },
+  "agents.emptyHint": {
+    en: "Install a supported CLI agent and it appears here automatically.",
+    zh: "安装受支持的 CLI agent 后会自动出现在这里。",
+  },
+  "mcp.emptyTitle": { en: "no MCP servers under management", zh: "还没有被接管的 MCP server" },
+  "mcp.emptyHint": {
+    en: "Run a discovery from your agent configs and adopt the servers you trust.",
+    zh: "从各 agent 配置里跑一次发现，把你信任的 server 一键收编。",
+  },
+  "vault.emptyTitle": { en: "no providers detected", zh: "未发现任何 provider" },
+  "vault.emptyHint": {
+    en: "Provider profiles ship with the CLI agents you install — they land here.",
+    zh: "provider 随 CLI agent 安装自带——装好就会出现在这里。",
+  },
+  "skills.emptyTitle": { en: "no skills yet", zh: "还没有技能" },
+  "skills.emptyHint": {
+    en: "Skills register themselves as agents sync them — hit refresh after a sync.",
+    zh: "agent 同步时会自动注册技能——同步完点刷新。",
+  },
   // UX-D1: console onboarding
   "onboard.step1": { en: "step 1 — bring your MCP fleet on deck", zh: "第 1 步 —— 接管你的 MCP 舰队" },
   "onboard.step1Body": {

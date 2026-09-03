@@ -263,7 +263,7 @@ function Console() {
 
   return (
     <main className="min-h-screen bg-deck-bg text-deck-ink flex flex-col items-center justify-center gap-6">
-      <PageFocus routeKey="console">
+      <PageFocus viewTag="console">
         <h1 className="text-4xl font-bold tracking-tight">
           Toon<span className="text-deck-accent">Deck</span>
         </h1>
@@ -295,11 +295,11 @@ function Console() {
 }
 
 /** R29: keyboard users land at the top of new content after a route change. */
-function PageFocus({ routeKey, children }: { routeKey: string; children: React.ReactNode }) {
+function PageFocus({ viewTag, children }: { viewTag: string; children: React.ReactNode }) {
   const ref = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     ref.current?.focus({ preventScroll: false });
-  }, [routeKey]);
+  }, [viewTag]);
   return (
     <div
       ref={ref}
@@ -329,7 +329,7 @@ function Shell({ children }: { children: React.ReactNode }) {
           })}
         </nav>
         <main className="flex-1 p-4 md:p-8 max-w-6xl">
-          <PageFocus routeKey={route}>{children}</PageFocus>
+          <PageFocus viewTag={route}>{children}</PageFocus>
         </main>
       </div>
     </div>

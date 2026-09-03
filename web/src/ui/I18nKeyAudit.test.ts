@@ -41,11 +41,12 @@ function dictKeysFromSource(): Set<string> {
 
 function usedKeys(): Map<string, string[]> {
   const used = new Map<string, string[]>();
-  // t("key") literals AND messageKey="key" props (ConfirmDialog receives its
-  // i18n key as a prop — R26 blind spot, caught by the audit itself)
+  // t("key") literals AND any `*Key="key"` prop (ConfirmDialog's messageKey,
+  // ZeroState's titleKey/hintKey/ctaLabelKey — R33 generalized the R26 rule:
+  // any prop whose name ends in Key is an i18n key by convention)
   const patterns = [
     /\bt\(\s*["'`]([^"'`]+)["'`]/g,
-    /\bmessageKey=["'`]([^"'`]+)["'`]/g,
+    /\b[A-Za-z]+Key=["'`]([^"'`]+)["'`]/g,
   ];
   for (const file of SRC_FILES) {
     const text = readFileSync(file, "utf-8");

@@ -3,6 +3,7 @@ import LogTerminal from "./LogTerminal";
 import AdoptPanel from "./AdoptPanel";
 import { useI18n } from "../i18n";
 import { toast } from "../ui/Toast";
+import { ZeroState } from "../ui/ZeroState";
 
 function useI18nSafe() {
   try {
@@ -294,8 +295,11 @@ export default function AgentsPanel() {
         </div>
       </details>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {agents.map((a) => {
+      {agents.length === 0 ? (
+        <ZeroState icon="🤖" titleKey="agents.emptyTitle" hintKey="agents.emptyHint" />
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {agents.map((a) => {
           const st = statuses[a.id] ?? { state: "never", exit_code: null, logs: [] };
           const canLaunch = a.installed && a.launch_command != null;
           return (
@@ -463,7 +467,8 @@ export default function AgentsPanel() {
             </section>
           );
         })}
-      </div>
+        </div>
+      )}
 
       <AdoptPanel onAdopted={load} />
     </div>
