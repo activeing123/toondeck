@@ -21,7 +21,13 @@ const health = {
   engine: { available: true, version: "0.7.1" },
 };
 
-function mockFor(adoptedTotal: number, toolTotal: number) {
+function mockFor(
+  adoptedTotal: number,
+  toolTotal: number,
+  opts?: { agents?: AgentRowLite[]; skillsTotal?: number; skillsFail?: boolean },
+) {
+  const agents: AgentRowLite[] =
+    opts?.agents ?? [{ id: "codex", display_name: "Codex CLI", installed: true, evidence: {} }];
   return vi.fn((url: string) => {
     if (url === "/api/health")
       return Promise.resolve({ json: () => Promise.resolve(health) });
@@ -35,17 +41,30 @@ function mockFor(adoptedTotal: number, toolTotal: number) {
           }),
       });
     if (url === "/api/agents")
+      return Promise.resolve({ json: () => Promise.resolve({ agents }) });
+    if (url === "/api/skills/state") {
+      if (opts?.skillsFail) return Promise.reject(new Error("skills fetch failed"));
+      const total = opts?.skillsTotal ?? 12;
       return Promise.resolve({
         json: () =>
           Promise.resolve({
-            agents: [
-              { id: "codex", display_name: "Codex CLI", installed: true, evidence: {} },
-            ],
+            source: "C:/x/.toondeck/skills",
+            exists: true,
+            skills: [],
+            counts: { total, valid: total },
           }),
       });
+    }
     return Promise.resolve({ json: () => Promise.resolve({}) });
   });
 }
+
+type AgentRowLite = {
+  id: string;
+  display_name: string;
+  installed: boolean;
+  evidence: Record<string, boolean>;
+};
 
 describe("D1: console onboarding card", () => {
   beforeEach(() => {
@@ -70,5 +89,35 @@ describe("D1: console onboarding card", () => {
     expect(screen.queryByText(/undefined/i)).toBeNull();
     const link = screen.getByRole("link", { name: /agents/i });
     expect(link).toHaveAttribute("href", "#/agents");
+  });
+
+  it("servers but no installed agent → launch guidance takes over (R40)", async () => {
+    vi.stubGlobal(
+      "fetch",
+      mockFor(3, 40, { agents: [{ id: "codex", display_name: "Codex CLI", installed: false, evidence: {} }] }),
+    );
+    render(<App />);
+    expect(await screen.findByText(/put an agent on the deck/i)).toBeInTheDocument();
+    // launch path beats the skills path in the decision tree
+    expect(screen.queryByText(/no skills on deck yet/i)).toBeNull();
+    const link = screen.getByRole("link", { name: /agents/i });
+    expect(link).toHaveAttribute("href", "#/agents");
+  });
+
+  it("fleet + agent but zero skills → skills import guidance (R40)", async () => {
+    vi.stubGlobal("fetch", mockFor(3, 40, { skillsTotal: 0 }));
+    render(<App />);
+    expect(await screen.findByText(/no skills on deck yet/i)).toBeInTheDocument();
+    const link = screen.getByRole("link", { name: /skills page/i });
+    expect(link).toHaveAttribute("href", "#/skills");
+    expect(screen.queryByText(/undefined/i)).toBeNull();
+  });
+
+  it("skills API failing hides the skills branch instead of guessing (R40)", async () => {
+    vi.stubGlobal("fetch", mockFor(3, 40, { skillsFail: true }));
+    render(<App />);
+    // fleet is healthy → falls through to the fleet-numbers step-2 card
+    expect(await screen.findByText(/3 MCP servers and 40 tools/)).toBeInTheDocument();
+    expect(screen.queryByText(/no skills on deck yet/i)).toBeNull();
   });
 });

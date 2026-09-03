@@ -196,6 +196,17 @@ const DICT: Record<string, { en: string; zh: string }> = {
   },
   "onboard.goMcp": { en: "discover servers on the MCP page →", zh: "去 MCP 页发现收编 →" },
   "onboard.goAgents": { en: "launch an agent on the Agents page →", zh: "去 Agents 页启动 →" },
+  // R40: multi-path console onboarding
+  "onboard.goSkills": { en: "import skills on the Skills page →", zh: "去 Skills 页导入技能 →" },
+  "onboard.noAgentBody": {
+    en: "MCP servers are managed, but no CLI agent on this machine is installed yet. Install one (or fix its PATH) and launch it from the Agents page.",
+    zh: "MCP server 已接管，但本机还没有已安装的 CLI agent。装一个（或修好它的 PATH），去 Agents 页启动。",
+  },
+  "onboard.noSkills": { en: "no skills on deck yet", zh: "牌桌上还没有技能" },
+  "onboard.noSkillsBody": {
+    en: "Your agents' skill shelves are empty. Point ToonDeck at a skills folder and sync — every agent view picks it up.",
+    zh: "各 agent 的技能架还是空的。把技能文件夹指给 ToonDeck 并同步——所有 agent 视图自动生效。",
+  },
 };
 
 type I18nCtx = {

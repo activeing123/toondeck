@@ -65,14 +65,7 @@ type AgentRow = {
   evidence: Record<string, boolean>;
 };
 
-function AgentGrid() {
-  const [agents, setAgents] = useState<AgentRow[] | null>(null);
-  useEffect(() => {
-    fetch("/api/agents")
-      .then((r) => r.json())
-      .then((b) => setAgents(b.agents))
-      .catch(() => setAgents(null));
-  }, []);
+function AgentGrid({ agents }: { agents: AgentRow[] | null }) {
   if (!agents) return null;
   return (
     <div className="glass rounded-deck px-5 py-3 text-sm w-full max-w-md">
@@ -224,8 +217,25 @@ function ConsoleMcpSummary({ inv }: { inv: { adopted_total: number; tools_total:
   );
 }
 
-/** UX-D1: first-screen onboarding — tell the user what to do FIRST. */
-function ConsoleOnboarding({ inv }: { inv: { adopted_total: number; tools_total: number } | null }) {
+/**
+ * UX-D1 + R40: first-screen onboarding — tell the user what to do FIRST.
+ * Decision tree, most-blocking problem wins, one honest card at a time:
+ * 1. MCP inventory not loaded yet          → wait (no guessing)
+ * 2. 0 MCP servers adopted                 → MCP discovery
+ * 3. agents known but none installed       → install/launch guidance
+ * 4. skills shelf empty (total === 0)      → skills import guidance
+ * 5. fleet healthy                         → step-2 numbers card
+ * Failed side-fetches (agents/skills) hide their branch instead of guessing.
+ */
+function ConsoleOnboarding({
+  inv,
+  agents,
+  skillsTotal,
+}: {
+  inv: { adopted_total: number; tools_total: number } | null;
+  agents: AgentRow[] | null;
+  skillsTotal: number | null;
+}) {
   const { t } = useI18n();
   if (!inv) return null; // still loading — the card waits for honest data
   if (inv.adopted_total === 0) {
@@ -235,6 +245,28 @@ function ConsoleOnboarding({ inv }: { inv: { adopted_total: number; tools_total:
         <p className="text-deck-muted">{t("onboard.step1Body")}</p>
         <a href="#/mcp" className="inline-block text-deck-accent hover:underline">
           {t("onboard.goMcp")}
+        </a>
+      </div>
+    );
+  }
+  if (agents && agents.length > 0 && agents.every((a) => !a.installed)) {
+    return (
+      <div className="glass rounded-deck px-6 py-4 text-sm space-y-2 max-w-md border border-deck-accent/40">
+        <div className="font-semibold">{t("onboard.step2")}</div>
+        <p className="text-deck-muted">{t("onboard.noAgentBody")}</p>
+        <a href="#/agents" className="inline-block text-deck-accent hover:underline">
+          {t("onboard.goAgents")}
+        </a>
+      </div>
+    );
+  }
+  if (skillsTotal === 0) {
+    return (
+      <div className="glass rounded-deck px-6 py-4 text-sm space-y-2 max-w-md border border-deck-accent/40">
+        <div className="font-semibold">{t("onboard.noSkills")}</div>
+        <p className="text-deck-muted">{t("onboard.noSkillsBody")}</p>
+        <a href="#/skills" className="inline-block text-deck-accent hover:underline">
+          {t("onboard.goSkills")}
         </a>
       </div>
     );
@@ -260,6 +292,10 @@ function Console() {
   // MCP page's cache). Shape-guarded: a malformed payload hides the card
   // instead of faking zeros.
   const [inv, setInv] = useState<{ adopted_total: number; tools_total: number } | null>(null);
+  // R40: shared state for onboarding decisions + the agent grid — one fetch
+  // per endpoint, no duplicate requests.
+  const [agents, setAgents] = useState<AgentRow[] | null>(null);
+  const [skillsTotal, setSkillsTotal] = useState<number | null>(null);
 
   useEffect(() => {
     fetch("/api/health")
@@ -279,6 +315,16 @@ function Console() {
         }
       })
       .catch(() => setInv(null));
+    fetch("/api/agents")
+      .then((r) => r.json())
+      .then((b) => setAgents(Array.isArray(b?.agents) ? b.agents : null))
+      .catch(() => setAgents(null));
+    fetch("/api/skills/state")
+      .then((r) => r.json())
+      .then((b) =>
+        setSkillsTotal(typeof b?.counts?.total === "number" ? b.counts.total : null),
+      )
+      .catch(() => setSkillsTotal(null));
   }, []);
 
   return (
@@ -288,7 +334,7 @@ function Console() {
           Toon<span className="text-deck-accent">Deck</span>
         </h1>
         <ConsoleTagline />
-        <ConsoleOnboarding inv={inv} />
+        <ConsoleOnboarding inv={inv} agents={agents} skillsTotal={skillsTotal} />
       </PageFocus>
       {health ? (
         <div className="glass rounded-deck px-6 py-4 text-sm shadow-glow-gold space-y-1">
@@ -309,7 +355,7 @@ function Console() {
       ) : (
         <div className="text-deck-muted">connecting…</div>
       )}
-      <AgentGrid />
+      <AgentGrid agents={agents} />
     </main>
   );
 }
