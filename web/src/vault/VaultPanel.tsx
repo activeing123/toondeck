@@ -44,7 +44,7 @@ export default function VaultPanel() {
   };
 
   const del = async (id: string) => {
-    if (!window.confirm(`Delete stored key for ${id}? (OS keychain entry removed)`)) return;
+    if (!window.confirm(t("vault.deleteConfirm", { id }))) return;
     setBusy(id);
     try {
       await fetch(`/api/vault/keys/${id}`, { method: "DELETE" });
@@ -65,7 +65,7 @@ export default function VaultPanel() {
     }
   };
 
-  if (!providers) return <p className="text-deck-muted">loading deck…</p>;
+  if (!providers) return <p className="text-deck-muted">{t("common.loading")}</p>;
   const stored = providers.filter((p) => p.stored).length;
 
   return (
@@ -73,7 +73,7 @@ export default function VaultPanel() {
       <h1 className="text-2xl font-bold">
         Vault <span className="text-deck-accent">{stored}</span>
         <span className="ml-3 text-sm text-deck-muted">
-          of {providers.length} providers · keys live in your OS keychain, never on disk
+          {t("vault.providers", { n: providers.length })}
         </span>
       </h1>
 
@@ -96,7 +96,9 @@ export default function VaultPanel() {
 
             {p.last_test && (
               <p className={`mt-2 text-xs ${p.last_test.ok ? "text-led-ok" : "text-led-err"}`}>
-                last probe: {p.last_test.ok ? "ok" : "failed"} ({p.last_test.status})
+                {t("vault.lastProbe", {
+                  result: `${p.last_test.ok ? "ok" : "failed"} (${p.last_test.status})`,
+                })}
                 {p.last_test.detail ? ` — ${p.last_test.detail}` : ""} · {p.last_test.at}
               </p>
             )}
@@ -114,31 +116,34 @@ export default function VaultPanel() {
                   disabled={busy === p.id || !(drafts[p.id] ?? "").trim()}
                   className="rounded-deck bg-deck-accent px-3 py-1.5 text-sm font-semibold text-deck-bg disabled:opacity-40"
                 >
-                  {busy === p.id ? "…" : "store"}
+                  {busy === p.id ? "…" : t("vault.store")}
                 </button>
               </div>
             )}
             {!p.local && p.stored && (
               <div className="mt-3 flex gap-2">
-                <span className="text-sm text-led-ok">● key stored in keychain{p.set_at ? ` · ${p.set_at}` : ""}</span>
+                <span className="text-sm text-led-ok">
+                  {t("vault.stored")}
+                  {p.set_at ? ` · ${p.set_at}` : ""}
+                </span>
                 <button
                   onClick={() => probe(p.id)}
                   disabled={busy === p.id}
                   className="ml-auto rounded-deck border border-deck-line px-3 py-1.5 text-sm disabled:opacity-40"
                 >
-                  test
+                  {t("vault.test")}
                 </button>
                 <button
                   onClick={() => del(p.id)}
                   disabled={busy === p.id}
                   className="rounded-deck border border-deck-line px-3 py-1.5 text-sm text-deck-muted hover:text-led-err disabled:opacity-40"
                 >
-                  delete
+                  {t("vault.delete")}
                 </button>
               </div>
             )}
             {p.local && (
-              <p className="mt-3 text-sm text-deck-muted">local provider — no key required</p>
+              <p className="mt-3 text-sm text-deck-muted">{t("vault.local")}</p>
             )}
           </section>
         ))}

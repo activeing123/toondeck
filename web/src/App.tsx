@@ -161,20 +161,20 @@ function ConsoleTagline() {
   );
 }
 
-function ConsoleMcpSummary({ mcp }: { mcp: { server_total: number; tool_total: number } | null }) {
-  if (!mcp) return null;
+function ConsoleMcpSummary({ inv }: { inv: { adopted_total: number; tools_total: number } | null }) {
+  if (!inv) return null;
   return (
     <div className="text-sm text-deck-muted">
-      🔌 {mcp.server_total} MCP servers · {mcp.tool_total ?? "…"} tools
+      🔌 {inv.adopted_total} MCP servers · {inv.tools_total} tools
     </div>
   );
 }
 
 /** UX-D1: first-screen onboarding — tell the user what to do FIRST. */
-function ConsoleOnboarding({ mcp }: { mcp: { server_total: number; tool_total: number } | null }) {
+function ConsoleOnboarding({ inv }: { inv: { adopted_total: number; tools_total: number } | null }) {
   const { t } = useI18n();
-  if (!mcp) return null; // still loading — the card waits for honest data
-  if (mcp.server_total === 0) {
+  if (!inv) return null; // still loading — the card waits for honest data
+  if (inv.adopted_total === 0) {
     return (
       <div className="glass rounded-deck px-6 py-4 text-sm space-y-2 max-w-md border border-deck-accent/40">
         <div className="font-semibold">{t("onboard.step1")}</div>
@@ -189,7 +189,7 @@ function ConsoleOnboarding({ mcp }: { mcp: { server_total: number; tool_total: n
     <div className="glass rounded-deck px-6 py-4 text-sm space-y-2 max-w-md">
       <div className="font-semibold">{t("onboard.step2")}</div>
       <p className="text-deck-muted">
-        {t("onboard.step2Body", { servers: mcp.server_total, tools: mcp.tool_total })}
+        {t("onboard.step2Body", { servers: inv.adopted_total, tools: inv.tools_total })}
       </p>
       <a href="#/agents" className="inline-block text-deck-accent hover:underline">
         {t("onboard.goAgents")}
@@ -200,7 +200,12 @@ function ConsoleOnboarding({ mcp }: { mcp: { server_total: number; tool_total: n
 
 function Console() {
   const [health, setHealth] = useState<Health | null>(null);
-  const [mcp, setMcp] = useState<{ server_total: number; tool_total: number } | null>(null);
+  // R25 bugfix: the card used to read /api/mcp/state, which has no top-level
+  // tool count — the landing page literally interpolated "undefined tools".
+  // The honest source is /api/mcp/tools (cached inventory, also warms the
+  // MCP page's cache). Shape-guarded: a malformed payload hides the card
+  // instead of faking zeros.
+  const [inv, setInv] = useState<{ adopted_total: number; tools_total: number } | null>(null);
 
   useEffect(() => {
     fetch("/api/health")
@@ -210,10 +215,16 @@ function Console() {
   }, []);
 
   useEffect(() => {
-    fetch("/api/mcp/state")
+    fetch("/api/mcp/tools")
       .then((r) => r.json())
-      .then(setMcp)
-      .catch(() => setMcp(null));
+      .then((b) => {
+        if (typeof b?.adopted_total === "number" && typeof b?.tools_total === "number") {
+          setInv({ adopted_total: b.adopted_total, tools_total: b.tools_total });
+        } else {
+          setInv(null); // never guess — no honest numbers, no card
+        }
+      })
+      .catch(() => setInv(null));
   }, []);
 
   return (
@@ -222,7 +233,7 @@ function Console() {
         Toon<span className="text-deck-accent">Deck</span>
       </h1>
       <ConsoleTagline />
-      <ConsoleOnboarding mcp={mcp} />
+      <ConsoleOnboarding inv={inv} />
       {health ? (
         <div className="glass rounded-deck px-6 py-4 text-sm shadow-glow-gold space-y-1">
           <div>
@@ -237,7 +248,7 @@ function Console() {
             />
             mcptoon engine {health.engine.available ? health.engine.version : "unavailable"}
           </div>
-          <ConsoleMcpSummary mcp={mcp} />
+          <ConsoleMcpSummary inv={inv} />
         </div>
       ) : (
         <div className="text-deck-muted">connecting…</div>
