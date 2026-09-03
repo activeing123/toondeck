@@ -49,7 +49,9 @@ def _archive_dir(agent: str, p: Path, reason: str, src: Path, actions: list[str]
     ledger.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
 
 
-def _reconcile_whole(agent: str, src: Path, actions: list[str]) -> None:
+def _reconcile_whole(agent: str, src: Path, actions: list[str], only: str | None = None) -> None:
+    # whole-dir views are all-or-nothing links; `only` is a no-op for them
+    del only
     view = view_path(agent)
     kind = links.link_kind(view)
     if kind == "missing":
@@ -67,10 +69,35 @@ def _reconcile_whole(agent: str, src: Path, actions: list[str]) -> None:
     actions.append(f"relink after drift {agent}")
 
 
-def _reconcile_farm(agent: str, src: Path, actions: list[str]) -> None:
+def _scoped_farm_one(agent: str, farm: Path, src: Path, name: str, d: Path, actions: list[str]) -> None:
+    """Scoped farm reconciliation for ONE canon skill — same laws as the
+    unscoped loop, applied to a single entry. Never touches siblings."""
+    entry = farm / name
+    kind = links.link_kind(entry)
+    if kind in ("junction", "symlink"):
+        if links.is_dangling(entry):
+            links.remove_link(entry)
+            links.make_link(entry, d)
+            actions.append(f"heal farm/{name}")
+        return
+    if kind == "missing":
+        links.make_link(entry, d)
+        actions.append(f"link farm/{name}")
+        return
+    # real directory where a link belongs: source wins (archive is reversible)
+    _archive_dir(agent, entry, "stray", src, actions)
+    links.make_link(entry, d)
+    actions.append(f"relink farm/{name} (source wins)")
+
+
+def _reconcile_farm(agent: str, src: Path, actions: list[str], only: str | None = None) -> None:
     farm = view_path(agent)
     farm.mkdir(parents=True, exist_ok=True)
     canon = {d.name: d for d in canon_skills(src)}
+    if only is not None:
+        if only in canon:
+            _scoped_farm_one(agent, farm, src, only, canon[only], actions)
+        return
     for entry in sorted(farm.iterdir()):
         name = entry.name
         if name in KEEP_LOCAL or name.startswith("."):
@@ -98,30 +125,48 @@ def _reconcile_farm(agent: str, src: Path, actions: list[str]) -> None:
             actions.append(f"link farm/{name}")
 
 
-def _reconcile_flat(agent: str, src: Path, actions: list[str]) -> None:
+def _derive_flat_skill(agent: str, out: Path, name: str, d: Path, actions: list[str]) -> bool:
+    """Derive ONE valid canon skill into a flat view (md + sibling .py files).
+    Shared by scoped and unscoped modes — identical write logic, zero dup.
+    Returns True only when frontmatter is valid (only valid skills own files)."""
+    md = d / "SKILL.md"
+    if not md.is_file():
+        return False  # doctor reports these
+    _, errs = parse_frontmatter(md.read_text(encoding="utf-8", errors="replace"))
+    if errs:
+        return False  # broken frontmatter: never derived, doctor owns the report
+    text = md.read_text(encoding="utf-8", errors="replace")
+    dest = out / f"{name}.md"
+    if not dest.is_file() or dest.read_text(encoding="utf-8", errors="replace") != text:
+        dest.write_text(text, encoding="utf-8")
+        actions.append(f"write {name}.md")
+    for item in sorted(d.iterdir()):
+        if item.is_file() and item.suffix == ".py" and item.name != "SKILL.md":
+            target = out / f"{name}_{item.name}"
+            if not target.is_file() or links.dir_fingerprint(item) != links.dir_fingerprint(target):
+                shutil.copy2(item, target)
+                actions.append(f"copy {name}_{item.name}")
+    return True
+
+
+def _reconcile_flat(agent: str, src: Path, actions: list[str], only: str | None = None) -> None:
     out = view_path(agent)
     out.mkdir(parents=True, exist_ok=True)
     canon = {d.name: d for d in canon_skills(src)}
     valid: set[str] = set()
+    if only is not None:
+        # Scoped mode = NARROW WRITES ONLY. A single-skill re-derivation
+        # must not run the global stale sweep: with `only` skill X and a
+        # pre-existing beta.md on disk, X's sweep would unlink beta.md
+        # even though it is perfectly up to date. Deleting other skills'
+        # files is sync_all's business, never sync_one's.
+        d = canon.get(only)
+        if d is not None:
+            _derive_flat_skill(agent, out, only, d, actions)
+        return
     for name, d in canon.items():
-        md = d / "SKILL.md"
-        if not md.is_file():
-            continue  # doctor reports these
-        _, errs = parse_frontmatter(md.read_text(encoding="utf-8", errors="replace"))
-        if errs:
-            continue  # broken frontmatter: never derived, doctor owns the report
-        valid.add(name)
-        text = md.read_text(encoding="utf-8", errors="replace")
-        dest = out / f"{name}.md"
-        if not dest.is_file() or dest.read_text(encoding="utf-8", errors="replace") != text:
-            dest.write_text(text, encoding="utf-8")
-            actions.append(f"write {name}.md")
-        for item in sorted(d.iterdir()):
-            if item.is_file() and item.suffix == ".py" and item.name != "SKILL.md":
-                target = out / f"{name}_{item.name}"
-                if not target.is_file() or links.dir_fingerprint(item) != links.dir_fingerprint(target):
-                    shutil.copy2(item, target)
-                    actions.append(f"copy {name}_{item.name}")
+        if _derive_flat_skill(agent, out, name, d, actions):
+            valid.add(name)
     for f in sorted(out.iterdir()):
         if f.suffix not in (".md", ".py"):
             continue
@@ -135,7 +180,9 @@ def _reconcile_flat(agent: str, src: Path, actions: list[str]) -> None:
             actions.append(f"remove stale {f.name}")
 
 
-def run() -> list[dict]:
+def run(only: str | None = None) -> list[dict]:
+    """Reconcile every agent view with the source. With `only`, scope the
+    reconciliation to a single canon skill (narrow writes, no stale sweep)."""
     from . import source_dir
 
     src = source_dir()
@@ -144,11 +191,11 @@ def run() -> list[dict]:
         actions: list[str] = []
         try:
             if agent in WHOLE:
-                _reconcile_whole(agent, src, actions)
+                _reconcile_whole(agent, src, actions, only)
             elif agent in FARM:
-                _reconcile_farm(agent, src, actions)
+                _reconcile_farm(agent, src, actions, only)
             elif agent in FLAT:
-                _reconcile_flat(agent, src, actions)
+                _reconcile_flat(agent, src, actions, only)
             results.append({"agent": agent, "ok": True, "actions": actions})
         except Exception as e:  # noqa: BLE001 — per-agent isolation, reported not raised
             results.append({"agent": agent, "ok": False, "actions": actions, "error": str(e)})

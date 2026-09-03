@@ -18,6 +18,7 @@ export type SkillLike = {
   name: string | null;
   description: string | null;
   valid: boolean;
+  errors?: string[];
 };
 
 export function categoryOf(s: SkillLike): string {

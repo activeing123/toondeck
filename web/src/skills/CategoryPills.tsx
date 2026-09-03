@@ -1,6 +1,9 @@
 import { useMemo, useState } from "react";
 import { useI18n } from "../i18n";
+import { ConfirmDialog } from "../ui/ConfirmDialog";
 import { ZeroState } from "../ui/ZeroState";
+import { toast } from "../ui/Toast";
+import { removeSkill, syncSkill } from "./api";
 import { CATEGORY_RULES, categoryOf, OTHER, type SkillLike as SkillRow } from "./categories";
 
 /** 分类 pill 导航：一排看全分类数，点击过滤，搜索框置顶。 */
@@ -8,10 +11,12 @@ export default function CategoryPills({
   skills,
   query,
   onQuery,
+  onChanged,
 }: {
   skills: SkillRow[];
   query: string;
   onQuery: (q: string) => void;
+  onChanged: () => void;
 }) {
   const { t } = useI18n();
   const [active, setActive] = useState<string>("__all__");
@@ -81,7 +86,7 @@ export default function CategoryPills({
         <>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
             {shown.map((s) => (
-              <SkillCard key={s.dirname} s={s} />
+              <SkillCard key={s.dirname} s={s} onChanged={onChanged} />
             ))}
           </div>
           {shown.length === 0 && (
@@ -93,15 +98,96 @@ export default function CategoryPills({
   );
 }
 
-function SkillCard({ s }: { s: SkillRow }) {
+function SkillCard({ s, onChanged }: { s: SkillRow; onChanged: () => void }) {
+  const { t } = useI18n();
+  const [busy, setBusy] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+  const [open, setOpen] = useState(false);
+  const displayName = s.name ?? s.dirname;
+
+  const onSync = () => {
+    setBusy(true);
+    syncSkill(s.dirname)
+      .then((r) => {
+        if (r.ok) toast.ok(t("skills.syncOneDone", { name: displayName }));
+        else toast.error(t("skills.syncOneFail", { name: displayName }));
+        onChanged();
+      })
+      .finally(() => setBusy(false));
+  };
+
+  const onRemove = () => {
+    setBusy(true);
+    removeSkill(s.dirname)
+      .then((r) => {
+        if (r.ok) toast.ok(t("skills.removeDone", { name: displayName }));
+        else toast.error(t("skills.removeFail", { name: displayName }));
+        onChanged();
+      })
+      .finally(() => setBusy(false));
+  };
+
   return (
     <div className="glass rounded-deck p-3">
       <div className="flex items-center gap-2">
-        <span className="truncate font-mono text-sm font-semibold">{s.name ?? s.dirname}</span>
-        {!s.valid && <span className="ml-auto text-xs text-led-err">invalid</span>}
+        <span className="truncate font-mono text-sm font-semibold">{displayName}</span>
+        {!s.valid && (
+          <span className="ml-auto text-xs text-led-err">{t("skills.invalidBadge")}</span>
+        )}
       </div>
       {s.description && (
         <p className="mt-1 line-clamp-2 text-xs text-deck-muted">{s.description}</p>
+      )}
+      <div className="mt-2 flex gap-2 text-xs">
+        <button
+          data-testid={`skill-sync-${s.dirname}`}
+          onClick={onSync}
+          disabled={busy}
+          className="rounded-deck border border-deck-line px-2 py-1 hover:bg-deck-panel2 disabled:opacity-50"
+        >
+          {busy ? t("skills.cardSyncing") : t("skills.cardSync")}
+        </button>
+        <button
+          data-testid={`skill-details-${s.dirname}`}
+          onClick={() => setOpen((v) => !v)}
+          className="rounded-deck border border-deck-line px-2 py-1 hover:bg-deck-panel2"
+        >
+          {t("skills.cardDetails")}
+        </button>
+        <button
+          data-testid={`skill-remove-${s.dirname}`}
+          onClick={() => setConfirming(true)}
+          disabled={busy}
+          className="ml-auto rounded-deck border border-led-err/40 px-2 py-1 text-led-err hover:bg-led-err/10 disabled:opacity-50"
+        >
+          {t("skills.cardRemove")}
+        </button>
+      </div>
+      {open && (
+        <div className="mt-2 border-t border-deck-line pt-2 text-xs text-deck-muted">
+          <div>
+            <span className="font-semibold">{t("skills.cardFolder")}:</span>{" "}
+            <code>{s.dirname}</code>
+          </div>
+          {s.errors && s.errors.length > 0 && (
+            <div className="mt-1">
+              <span className="font-semibold text-led-err">{t("skills.cardErrors")}</span>{" "}
+              {s.errors.join("; ")}
+            </div>
+          )}
+        </div>
+      )}
+      {confirming && (
+        <ConfirmDialog
+          messageKey="skills.removeWarn"
+          messageVars={{ name: displayName }}
+          confirmLabel={t("skills.removeConfirm")}
+          onConfirm={() => {
+            setConfirming(false);
+            onRemove();
+          }}
+          onCancel={() => setConfirming(false)}
+        />
       )}
     </div>
   );

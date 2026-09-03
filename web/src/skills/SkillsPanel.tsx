@@ -126,7 +126,12 @@ export default function SkillsPanel() {
         </div>
       )}
 
-      <CategoryPills skills={state.skills} query={query} onQuery={setQuery} />
+      <CategoryPills
+        skills={state.skills}
+        query={query}
+        onQuery={setQuery}
+        onChanged={load}
+      />
     </div>
   );
 }

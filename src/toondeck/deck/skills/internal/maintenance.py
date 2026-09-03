@@ -138,7 +138,11 @@ def doctor() -> dict:
     lint: dict[str, list[str]] = {}
     total = 0
     if src.is_dir():
-        dirs = [d for d in sorted(src.iterdir()) if d.is_dir() and not d.name.startswith(".")]
+        dirs = [
+            d
+            for d in sorted(src.iterdir())
+            if d.is_dir() and not d.name.startswith(".") and d.name not in SKIP_SOURCE
+        ]
         total = len(dirs)
         for d in dirs:
             md = d / "SKILL.md"

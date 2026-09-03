@@ -43,6 +43,13 @@ export function requestSkillsSync(): Promise<SyncAgentResult[]> {
     .then((b) => b.results);
 }
 
+// UX-017: single-skill sync — unknown name → 200 ok:false (deck-level contract)
+export function syncSkill(name: string): Promise<{ ok: boolean; error?: string }> {
+  return fetch(`/api/skills/sync/${encodeURIComponent(name)}`, { method: "POST" }).then((r) =>
+    r.json(),
+  );
+}
+
 export function fetchDoctor(): Promise<DoctorReport> {
   return fetch("/api/skills/doctor").then((r) => r.json());
 }

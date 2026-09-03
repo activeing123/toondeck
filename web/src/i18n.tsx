@@ -166,6 +166,23 @@ const DICT: Record<string, { en: string; zh: string }> = {
     en: "Skills register themselves as agents sync them — hit refresh after a sync.",
     zh: "agent 同步时会自动注册技能——同步完点刷新。",
   },
+  // UX-017: per-card actions
+  "skills.cardSync": { en: "sync", zh: "同步" },
+  "skills.cardSyncing": { en: "syncing…", zh: "同步中…" },
+  "skills.cardRemove": { en: "remove", zh: "移除" },
+  "skills.cardDetails": { en: "details", zh: "详情" },
+  "skills.cardFolder": { en: "folder", zh: "目录" },
+  "skills.cardErrors": { en: "problems:", zh: "问题：" },
+  "skills.syncOneDone": { en: "synced \"{name}\" to all agent views", zh: "已将「{name}」同步到全部 agent 视图" },
+  "skills.syncOneFail": { en: "sync failed for \"{name}\"", zh: "「{name}」同步失败" },
+  "skills.removeDone": { en: "removed \"{name}\" — recoverable from the graveyard", zh: "已移除「{name}」——可在 graveyard 找回" },
+  "skills.removeFail": { en: "remove failed for \"{name}\"", zh: "「{name}」移除失败" },
+  "skills.removeWarn": {
+    en: "Remove \"{name}\"? Its source folder moves to the graveyard and every agent view loses it. Recoverable by hand.",
+    zh: "移除「{name}」？其源目录将移入 graveyard，所有 agent 视图不再包含它。可手动找回。",
+  },
+  "skills.removeConfirm": { en: "remove skill", zh: "确认移除" },
+  "skills.invalidBadge": { en: "invalid", zh: "无效" },
   // UX-D1: console onboarding
   "onboard.step1": { en: "step 1 — bring your MCP fleet on deck", zh: "第 1 步 —— 接管你的 MCP 舰队" },
   "onboard.step1Body": {

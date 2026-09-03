@@ -173,6 +173,12 @@ def create_app() -> FastAPI:
     def skills_sync() -> dict:
         return {"results": skills.sync_all()}
 
+    @app.post("/api/skills/sync/{name}")
+    def skills_sync_one(name: str) -> dict:
+        # UX-017: single-skill sync. Unknown name → 200 ok:false, same
+        # deck-level error reporting contract as /api/skills/remove.
+        return skills.sync_one(name)
+
     @app.get("/api/skills/doctor")
     def skills_doctor() -> dict:
         return skills.doctor()

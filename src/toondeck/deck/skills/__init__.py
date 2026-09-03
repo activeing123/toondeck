@@ -3,6 +3,7 @@
 Operations (frozen contract):
 - get_state()   → lean metadata view of the source of truth (bodies never ship)
 - sync_all()    → derive the source to every agent view
+- sync_one()    → re-derive ONE skill to every agent view (scoped, UX-017)
 - remove_skill()→ the ONLY deletion entry (tombstone + graveyard)
 - doctor()      → consistency report across source and all views
 """
@@ -15,12 +16,17 @@ from .internal import frontmatter
 def get_state() -> dict:
     """Scan the source dir; return lean per-skill metadata. Missing dir is not fatal."""
     from .internal import source_dir
+    from .internal.reconcile import SKIP_SOURCE
 
     src = source_dir()
     skills = []
     if src.is_dir():
         for entry in sorted(src.iterdir()):
             if not entry.is_dir():
+                continue
+            # infra dirs (_index, .git, node_modules, …) are not skills:
+            # state must agree with the engine's canon definition (R39)
+            if entry.name in SKIP_SOURCE:
                 continue
             md = entry / "SKILL.md"
             if not md.is_file():
@@ -52,6 +58,20 @@ def sync_all() -> list[dict]:
     from .internal import reconcile
 
     return reconcile.run()
+
+
+def sync_one(name: str) -> dict:
+    """Single-skill sync (UX-017): re-derive ONE skill to every agent view.
+    Scoped reconciliation — narrow writes, never touches sibling skills.
+    Unknown or non-canon names return a clean error, never an exception."""
+    from .internal import reconcile, source_dir
+    from .internal.reconcile import SKIP_SOURCE
+
+    if name.startswith(".") or name in SKIP_SOURCE:
+        return {"ok": False, "error": f"refusing non-canon name: {name}"}
+    if not (source_dir() / name).is_dir():
+        return {"ok": False, "error": f"skill not found: {name}"}
+    return {"ok": True, "name": name, "results": reconcile.run(only=name)}
 
 
 def remove_skill(name: str) -> dict:
