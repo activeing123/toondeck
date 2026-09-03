@@ -185,7 +185,7 @@ describe("B6: vault cross-links", () => {
       </I18nProvider>,
     );
     expect(
-      await screen.findByText(/quick enable|快捷启用/),
+      await screen.findByText(/quick enabling|快捷启用/),
     ).toBeInTheDocument();
     expect(screen.getByText(/full management|全量管理/)).toBeInTheDocument();
   });

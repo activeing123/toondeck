@@ -29,7 +29,7 @@ describe("ConfirmDialog", () => {
     const onCancel = vi.fn();
     renderDialog(onConfirm, onCancel);
 
-    expect(screen.getByText(/overwrites their MCP config/i)).toBeInTheDocument();
+    expect(screen.getByText(/overwriting its MCP server list/i)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "sync now" }));
     expect(onConfirm).toHaveBeenCalledTimes(1);
     expect(onCancel).not.toHaveBeenCalled();
