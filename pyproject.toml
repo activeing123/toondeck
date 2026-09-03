@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "toondeck"
-version = "0.1.0"
+version = "0.2.0"
 description = "One deck for every agent — MCP tools, skills, models and API keys, configured once, running everywhere. Powered by mcptoon."
 readme = "README.md"
 requires-python = ">=3.10"

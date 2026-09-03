@@ -25,11 +25,15 @@ def _apply() -> None:
         return
 
     # 1) Dead-stdin write (EINVAL 22) -> honest MCPError with stderr excerpt.
+    # mcptoon 0.7.4's response pump passes `timeout=` to _stdio_request; the
+    # shim must accept and forward it or every probed request TypeErrors.
     orig_request = mcptoon_client.MCPClient._stdio_request
 
-    def _classified_request(self, payload: bytes) -> dict:
+    def _classified_request(self, payload: bytes, timeout: float | None = None) -> dict:
         try:
-            return orig_request(self, payload)
+            if timeout is None:
+                return orig_request(self, payload)
+            return orig_request(self, payload, timeout=timeout)
         except OSError as e:
             if e.errno == 22:
                 stderr = ""
