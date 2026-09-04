@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 
 export type Lang = "en" | "zh";
 
@@ -330,6 +330,13 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     const saved = localStorage.getItem("toondeck.lang");
     return saved === "zh" || saved === "en" ? saved : "en";
   });
+  // P0-1 (R49): keep <html lang> in lockstep with the UI language — screen
+  // readers pick pronunciation rules from the document attribute, so a UI
+  // showing Chinese while the document claims English is read with English
+  // phonetics. Sync once on mount (restored preference) and on every change.
+  useEffect(() => {
+    document.documentElement.lang = lang;
+  }, [lang]);
   const t = (k: string, vars?: Record<string, string | number>) => resolve(lang, k, vars);
   const wrap = (l: Lang) => {
     localStorage.setItem("toondeck.lang", l);

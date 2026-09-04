@@ -183,16 +183,18 @@ export default function FleetDashboard({ reloadSignal = 0 }: { reloadSignal?: nu
         </div>
       )}
 
-      <div className="flex flex-wrap items-center gap-3 text-xs text-deck-muted">
-        <div>
-          {t("fleet.sourcesScanned", { n: m.sources_scanned })}
+      {/* P0-2 (R49): the sources chips + config path must wrap at narrow
+          widths — this row was the 893px horizontal-overflow culprit. */}
+      <div className="flex flex-col gap-2 text-xs text-deck-muted">
+        <div className="flex flex-wrap items-center gap-2 min-w-0">
+          <span className="whitespace-nowrap">{t("fleet.sourcesScanned", { n: m.sources_scanned })}</span>
           {Object.entries(m.sources_breakdown).map(([srv, srcs]) => (
-            <span key={srv} className="ml-2 rounded-full border border-deck-line px-2 py-0.5">
+            <span key={srv} className="rounded-full border border-deck-line px-2 py-0.5 max-w-full truncate">
               {srv} ← {srcs.join(", ")}
             </span>
           ))}
         </div>
-        <div className="font-mono text-xs text-deck-muted break-all">{t("fleet.sot", { path: m.config_path })}</div>
+        <div className="font-mono text-xs text-deck-muted break-all min-w-0">{t("fleet.sot", { path: m.config_path })}</div>
       </div>
     </section>
   );

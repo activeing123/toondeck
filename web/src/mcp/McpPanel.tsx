@@ -33,7 +33,7 @@ function TokenCard({ ts }: { ts: { method: string; tool_total: number; full_json
   return (
     <div className="glass rounded-deck p-4">
       <div className="text-xs text-deck-muted uppercase tracking-wide">context cost of your tool inventory</div>
-      <div className="mt-1 flex items-baseline gap-3">
+      <div className="mt-1 flex flex-wrap items-baseline gap-3">
         <span className="text-2xl font-mono text-deck-muted line-through">{ts.full_json_tokens.toLocaleString()}</span>
         <span className="text-deck-muted">→</span>
         <span className="text-3xl font-mono font-bold text-deck-accent">{ts.slim_tokens.toLocaleString()}</span>
@@ -104,16 +104,16 @@ export default function McpPanel() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">
-          MCP <span className="text-deck-accent">{state.server_total}</span> servers
-          {state.disabled_total > 0 && (
-            <span className="ml-3 text-sm text-deck-muted">
-              {state.disabled_total} tools off
-            </span>
-          )}
-        </h1>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h1 className="text-2xl font-bold">
+            MCP <span className="text-deck-accent">{state.server_total}</span> servers
+            {state.disabled_total > 0 && (
+              <span className="ml-3 text-sm text-deck-muted">
+                {state.disabled_total} tools off
+              </span>
+            )}
+          </h1>
+          <div className="flex flex-wrap gap-2">
           <button
             onClick={() => {
               reload();
@@ -159,8 +159,7 @@ export default function McpPanel() {
                   <b>{src}</b> · {n}
                 </span>
               ))}
-              <span className="ml-auto text-deck-muted">
-                {t("mcp.universe", { managed: managed.length, discovered: discovered.length })} ·{" "}
+              <span className="ml-auto text-deck-muted min-w-0">{t("mcp.universe", { managed: managed.length, discovered: discovered.length })} ·{" "}
                 {t("mcp.managedTools", { n: state.servers.reduce((n, s) => n + s.tool_total, 0) })}
               </span>
             </div>

@@ -56,6 +56,7 @@ function baseMock() {
 describe("C1: fleet dashboard follows the language toggle", () => {
   beforeEach(() => {
     vi.stubGlobal("fetch", baseMock());
+    localStorage.removeItem("toondeck.lang"); // tests must not inherit each other's saved language
   });
 
   it("flips the dashboard heading and big-card labels EN↔ZH", async () => {
@@ -67,6 +68,22 @@ describe("C1: fleet dashboard follows the language toggle", () => {
     );
     expect(await screen.findByText(/mcptoon fleet overview/i)).toBeInTheDocument();
     await user_click_toggle_and_expect();
+  });
+
+  it("P0-1 sentinel: <html lang> follows the toggle (screen-reader pronunciation)", async () => {
+    const { waitFor } = await import("@testing-library/react");
+    render(
+      <I18nProvider>
+        <LangToggle />
+      </I18nProvider>,
+    );
+    document.documentElement.lang = "en";
+    await import("@testing-library/user-event").then(async ({ default: userEvent }) => {
+      await userEvent.click(screen.getByRole("button", { name: "toggle" }));
+      await waitFor(() => expect(document.documentElement.lang).toBe("zh"));
+      await userEvent.click(screen.getByRole("button", { name: "toggle" }));
+      await waitFor(() => expect(document.documentElement.lang).toBe("en"));
+    });
   });
 });
 
