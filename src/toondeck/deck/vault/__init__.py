@@ -33,6 +33,7 @@ def set_key(provider: str, secret: str) -> dict:
 def get_state() -> dict:
     """Metadata-only view: which providers are stored/when tested. No secrets."""
     catalog = _providers.load_all()
+    user_ids = _providers.user_defined_ids()
     data = meta.load_all()
     provs = data.get("providers", {})
     providers = []
@@ -43,7 +44,11 @@ def get_state() -> dict:
                 "id": pid,
                 "display_name": p["display_name"],
                 "env_var": p["env_var"],
+                "base_url": p.get("base_url"),
+                "test_url": p.get("test_url"),
+                "auth_style": p.get("auth_style", "bearer"),
                 "local": p.get("local", False),
+                "custom": pid in user_ids,  # R48: user-defined → editable
                 "stored": bool(entry.get("stored")),
                 "set_at": entry.get("set_at"),
                 "last_test": entry.get("last_test"),
@@ -120,3 +125,24 @@ def alias_env(aliases: dict[str, str]) -> dict:
         if secret is not None:
             env[target_var] = secret
     return env
+
+
+# ── R48: user-defined providers (the catalog is no longer read-only) ──
+
+def add_provider(p: dict) -> dict:
+    """Create/override a user provider (TOONDECK_HOME/vault-providers.json)."""
+    from .internal import providers as _providers
+
+    r = _providers.upsert(p)
+    if isinstance(r, str):
+        return {"ok": False, "error": r}
+    return {"ok": True, "provider": r["id"]}
+
+
+def remove_provider(pid: str) -> dict:
+    from .internal import providers as _providers
+
+    r = _providers.remove(pid)
+    if isinstance(r, str):
+        return {"ok": False, "error": r}
+    return r

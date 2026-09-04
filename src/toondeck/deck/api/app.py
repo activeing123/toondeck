@@ -118,7 +118,19 @@ class ProfileEditIn(BaseModel):
 
 class VaultKeyIn(BaseModel):
     provider: str
-    secret: str
+    secret: str  # goes into the OS keychain, never to disk metadata
+
+
+class VaultProviderIn(BaseModel):
+    # R48: user-defined provider definition (no secrets here — keys go to
+    # the keyring via /api/vault/keys as with every other provider)
+    id: str
+    display_name: str
+    env_var: str
+    base_url: str
+    test_url: str | None = None
+    auth_style: str = "bearer"
+    local: bool = False
 
 
 class McpImportIn(BaseModel):
@@ -238,6 +250,20 @@ def create_app() -> FastAPI:
     @app.get("/api/vault/state")
     def vault_state() -> dict:
         return vault.get_state()
+
+    @app.post("/api/vault/providers")
+    def vault_add_provider(payload: VaultProviderIn) -> dict:
+        # R48: user-defined providers (merge into the catalog; secrets stay
+        # in the keyring as with any other provider)
+        r = vault.add_provider(payload.model_dump())
+        journal.record("vault.provider_add", provider=payload.id, ok=bool(r.get("ok")))
+        return r
+
+    @app.delete("/api/vault/providers/{pid}")
+    def vault_remove_provider(pid: str) -> dict:
+        r = vault.remove_provider(pid)
+        journal.record("vault.provider_remove", provider=pid, ok=bool(r.get("ok")))
+        return r
 
     @app.post("/api/vault/keys")
     def vault_set_key(payload: VaultKeyIn) -> dict:

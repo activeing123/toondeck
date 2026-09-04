@@ -4,12 +4,17 @@ import { toast } from "../ui/Toast";
 import { ConfirmDialog } from "../ui/ConfirmDialog";
 import { ZeroState } from "../ui/ZeroState";
 import { Led } from "../ui/Led";
+import { VaultProviderDialog, type ProviderFormDraft } from "./VaultProviderDialog";
 
 type ProviderRow = {
   id: string;
   display_name: string;
   env_var: string;
+  base_url: string | null;
+  test_url: string | null;
+  auth_style: string;
   local: boolean;
+  custom: boolean;
   stored: boolean;
   set_at: string | null;
   last_test: { ok: boolean; status: string; detail: string | null; at: string } | null;
@@ -22,6 +27,9 @@ export default function VaultPanel() {
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [reStore, setReStore] = useState<string | null>(null);
+  // R48: user-defined provider editor
+  const [dialog, setDialog] = useState<ProviderFormDraft | null>(null);
+  const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const s = await fetch("/api/vault/state").then((r) => r.json());
@@ -76,6 +84,35 @@ export default function VaultPanel() {
     }
   };
 
+  // R48: user-defined provider CRUD
+  const submitProvider = async (form: ProviderFormDraft): Promise<{ ok: boolean; error?: string }> => {
+    const body = {
+      id: form.id.trim(),
+      display_name: form.display_name.trim(),
+      env_var: form.env_var.trim(),
+      base_url: form.base_url.trim(),
+      test_url: form.test_url.trim() || null,
+      auth_style: form.auth_style,
+      local: form.local,
+    };
+    const r = await fetch("/api/vault/providers", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }).then((x) => x.json());
+    if (!r.ok) return { ok: false, error: r.error };
+    setDialog(null);
+    toast.ok(t("vault.providerSaved"));
+    await load();
+    return { ok: true };
+  };
+
+  const removeProvider = async (id: string) => {
+    await fetch(`/api/vault/providers/${encodeURIComponent(id)}`, { method: "DELETE" });
+    setConfirmRemove(null);
+    await load();
+  };
+
   if (!providers) return <p className="text-deck-muted">{t("common.loading")}</p>;
   const stored = providers.filter((p) => p.stored).length;
 
@@ -92,6 +129,37 @@ export default function VaultPanel() {
         {t("vault.relation")}
       </p>
 
+      {/* R48: the config explainer — what "configure the vault" actually means */}
+      <section className="glass rounded-deck p-4" data-testid="vault-guide">
+        <h2 className="font-semibold mb-2">{t("vault.guideTitle")}</h2>
+        <ol className="space-y-1 text-sm text-deck-muted">
+          <li>{t("vault.guideStep1")}</li>
+          <li>{t("vault.guideStep2")}</li>
+          <li>{t("vault.guideStep3")}</li>
+        </ol>
+        <p className="mt-2 text-xs text-deck-muted">{t("vault.guideAlias")}</p>
+        <div className="mt-3">
+          <button
+            data-testid="vault-add-provider"
+            onClick={() =>
+              setDialog({
+                mode: "create",
+                id: "",
+                display_name: "",
+                env_var: "",
+                base_url: "",
+                test_url: "",
+                auth_style: "bearer",
+                local: false,
+              })
+            }
+            className="rounded-deck border border-deck-line px-3 py-1.5 text-sm hover:border-deck-accent"
+          >
+            {t("vault.addProvider")}
+          </button>
+        </div>
+      </section>
+
       {providers.length === 0 ? (
         <ZeroState icon="🔐" titleKey="vault.emptyTitle" hintKey="vault.emptyHint" />
       ) : (
@@ -104,8 +172,45 @@ export default function VaultPanel() {
                 label={`${p.display_name}: ${t(p.local ? "led.local" : p.stored ? "led.keyStored" : "led.noKey")}`}
               />
               <h2 className="font-semibold">{p.display_name}</h2>
+              {p.custom && (
+                <span
+                  data-testid="custom-badge"
+                  className="rounded-full border border-deck-accent/50 px-2 py-0.5 text-xs text-deck-accent"
+                >
+                  {t("vault.customBadge")}
+                </span>
+              )}
               <span className="ml-auto font-mono text-xs text-deck-muted">{p.env_var}</span>
             </div>
+            {p.custom && (
+              <div className="mt-2 flex gap-2 text-xs">
+                <button
+                  data-testid={`provider-edit-${p.id}`}
+                  onClick={() =>
+                    setDialog({
+                      mode: "edit",
+                      id: p.id,
+                      display_name: p.display_name,
+                      env_var: p.env_var,
+                      base_url: p.base_url ?? "",
+                      test_url: p.test_url ?? "",
+                      auth_style: p.auth_style || "bearer",
+                      local: p.local,
+                    })
+                  }
+                  className="rounded-deck border border-deck-line px-2 py-1 hover:border-deck-accent"
+                >
+                  {t("vault.editProvider")}
+                </button>
+                <button
+                  data-testid={`provider-remove-${p.id}`}
+                  onClick={() => setConfirmRemove(p.id)}
+                  className="rounded-deck border border-deck-line px-2 py-1 text-deck-muted hover:text-led-err"
+                >
+                  {t("vault.removeProvider")}
+                </button>
+              </div>
+            )}
 
             {p.last_test && (
               <p className={`mt-2 text-xs ${p.last_test.ok ? "text-led-ok" : "text-led-err"}`}>
@@ -208,6 +313,22 @@ export default function VaultPanel() {
           }}
           onCancel={() => setConfirmDelete(null)}
         />
+      )}
+      {confirmRemove && (
+        <ConfirmDialog
+          messageKey="vault.removeProviderConfirm"
+          messageVars={{ id: confirmRemove }}
+          confirmLabel={t("vault.removeProvider")}
+          onConfirm={() => {
+            const id = confirmRemove;
+            setConfirmRemove(null);
+            void removeProvider(id);
+          }}
+          onCancel={() => setConfirmRemove(null)}
+        />
+      )}
+      {dialog && (
+        <VaultProviderDialog draft={dialog} onClose={() => setDialog(null)} onSubmit={submitProvider} />
       )}
     </div>
   );
