@@ -58,7 +58,7 @@ describe("AgentsPanel", () => {
     expect(await screen.findByText("Fake Agent")).toBeInTheDocument();
     expect(await screen.findByText(/running · pid 1234/)).toBeInTheDocument();
     expect(await screen.findByText("Gone Agent")).toBeInTheDocument();
-    expect(await screen.findByText("not installed")).toBeInTheDocument();
+    expect(await screen.findByText("not found — install it first")).toBeInTheDocument();
   });
 
   it("disables launch for missing command and running agent", async () => {

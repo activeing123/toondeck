@@ -250,6 +250,10 @@ export default function AgentsPanel() {
         <summary className="cursor-pointer font-semibold">
           {t("agents.providers", { ok: providers.filter((p) => p.configured).length, n: providers.length })}
         </summary>
+        {/* 小白-5: the benefit line — why enabling a provider matters */}
+        <p className="mt-2 text-xs text-deck-muted" data-testid="providers-hint">
+          {t("agents.providersHint")}
+        </p>
         <div className="mt-3 space-y-2">
           {providers.map((p) => (
             <div key={p.id} className="flex flex-wrap items-center gap-2 text-xs border border-deck-line rounded-deck px-3 py-2">
@@ -362,16 +366,26 @@ export default function AgentsPanel() {
               ) : null}
 
               <div className="mt-2 flex flex-wrap gap-1.5 text-xs">
-                {Object.entries(a.evidence).map(([k, v]) => (
-                  <span
-                    key={k}
-                    className={`rounded px-1.5 py-0.5 font-mono ${
-                      v ? "bg-deck-panel2 text-deck-ink" : "bg-transparent border border-deck-line text-deck-muted line-through"
-                    }`}
-                  >
-                    {k}
-                  </span>
-                ))}
+                {/* 小白-4: detection evidence (exe:/dir: chips) is engineer
+                    honesty, not newcomer reading — folded into a details
+                    toggle so the card leads with state in plain words */}
+                <details data-testid={`evidence-${a.id}`}>
+                  <summary className="cursor-pointer text-deck-muted">
+                    {t("agents.evidence")}
+                  </summary>
+                  <div className="mt-1.5 flex flex-wrap gap-1.5">
+                    {Object.entries(a.evidence).map(([k, v]) => (
+                      <span
+                        key={k}
+                        className={`rounded px-1.5 py-0.5 font-mono ${
+                          v ? "bg-deck-panel2 text-deck-ink" : "bg-transparent border border-deck-line text-deck-muted line-through"
+                        }`}
+                      >
+                        {k}
+                      </span>
+                    ))}
+                  </div>
+                </details>
               </div>
 
               <div className="mt-3 flex flex-wrap items-center gap-2">

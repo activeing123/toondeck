@@ -86,3 +86,34 @@ describe("R51: no hover-only explanations on agent cards", () => {
     );
   });
 });
+
+/*
+ * 小白-4/5: the card leads with plain-language state; engineer evidence is
+ * folded away; the providers block says WHY enabling matters.
+ */
+describe("小白 lane: plain words, folded evidence, provider benefit", () => {
+  beforeEach(() => {
+    vi.stubGlobal("fetch", mockFetch());
+  });
+
+  it("installed agent reads 'installed — press launch', not tech noise", async () => {
+    render(<AgentsPanel />);
+    const badges = await screen.findAllByText(/installed — press launch|已装好 · 点启动就行/);
+    expect(badges.length).toBe(2); // claude-code + catpaw, both installed
+  });
+
+  it("exe:/dir: evidence chips are inside a collapsed details toggle", async () => {
+    render(<AgentsPanel />);
+    const details = await screen.findByTestId("evidence-claude-code");
+    expect(details.tagName).toBe("DETAILS");
+    expect(details).not.toHaveAttribute("open"); // folded by default
+    expect(details).toHaveTextContent("cmd:claude"); // still there when opened
+  });
+
+  it("providers block carries the benefit line", async () => {
+    render(<AgentsPanel />);
+    expect(await screen.findByTestId("providers-hint")).toHaveTextContent(
+      /Once enabled|启用后 agent 即可用/,
+    );
+  });
+});

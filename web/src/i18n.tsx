@@ -106,8 +106,10 @@ export const DICT: Record<string, { en: string; zh: string }> = {
   "agents.logs": { en: "logs", zh: "日志" },
   "agents.hideLogs": { en: "hide logs", zh: "收起日志" },
   "agents.model": { en: "model…", zh: "模型…" },
-  "agents.notInstalled": { en: "not installed", zh: "未安装" },
-  "agents.notLaunched": { en: "not launched", zh: "未启动" },
+  // 小白-4: the collapsed evidence label (plain words, no exe:/dir: noise)
+  "agents.evidence": { en: "detection details", zh: "探测详情" },
+  "agents.notInstalled": { en: "not found — install it first", zh: "没找到 · 需要先安装" },
+  "agents.notLaunched": { en: "installed — press launch", zh: "已装好 · 点启动就行" },
   "agents.running": { en: "running", zh: "运行中" },
   "agents.exited": { en: "exited", zh: "已退出" },
   "agents.windowLaunched": { en: "opened in a desktop window", zh: "已在桌面打开终端窗口" },
@@ -215,6 +217,11 @@ export const DICT: Record<string, { en: string; zh: string }> = {
   },
   // UX-C1 part 2: agents provider catalog + custom source + TUI explainer
   "agents.providers": { en: "🔌 model providers ({ok}/{n} enabled)", zh: "🔌 模型提供商（{ok}/{n} 已启用）" },
+  // 小白-5: the benefit line — WHY enable a provider at all
+  "agents.providersHint": {
+    en: "Once enabled, agents can use this provider's models; keys stay in the local vault.",
+    zh: "启用后 agent 即可用此家模型；密钥只存在本机保险库里。",
+  },
   "agents.modelsCount": { en: "({n} models)", zh: "({n} 模型)" },
   "agents.enabled": { en: "✓ enabled", zh: "✓ 已启用" },
   // R46: provider dialog — edit-in-place inline inputs are gone
@@ -366,6 +373,11 @@ export const DICT: Record<string, { en: string; zh: string }> = {
   "skills.doctorLed": { en: "health check: {summary}", zh: "体检：{summary}" },
   "skills.doctorLine": { en: "health check: {summary} · {n} in the recycle bin", zh: "体检：{summary} · 回收站 {n} 条" },
   "skills.syncAll": { en: "sync all agents", zh: "同步全部 agent" },
+  // 小白-7: the danger-family tooltip — what sync actually overwrites
+  "skills.syncWarnTitle": {
+    en: "Danger: overwrites every agent's skill shelf with the deck's version",
+    zh: "危险操作：会用牌桌版本覆盖所有 agent 的技能架",
+  },
   "skills.watchOn": { en: "● watching for changes", zh: "● 实时守护中" },
   "skills.watchOff": { en: "○ watch for changes", zh: "○ 实时守护关" },
   "skills.watchHint": {
@@ -373,6 +385,11 @@ export const DICT: Record<string, { en: string; zh: string }> = {
     zh: "技能源目录变化时自动重新同步",
   },
   "skills.viewsTitle": { en: "synced to each agent's skill folder", zh: "已同步到各 agent 的技能目录" },
+  // 小白-6: the subtitle under AGENT VIEWS — what a green lamp actually means
+  "skills.viewsSubtitle": {
+    en: "Each lamp = one agent's skill folder. Green means it can see every skill above.",
+    zh: "一盏灯 = 一个 agent 的技能目录；绿灯 = 它能看到上面所有技能。",
+  },
   "skills.showMore": { en: "show {n} more skills", zh: "展开其余 {n} 个技能" },
 };
 

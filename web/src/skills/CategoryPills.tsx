@@ -205,13 +205,14 @@ function SkillCard({ s, onChanged }: { s: SkillRow; onChanged: () => void }) {
         <p className="mt-1 line-clamp-2 text-xs text-deck-muted">{s.description}</p>
       )}
       <div className="mt-2 flex gap-2 text-xs">
+        {/* 小白-7: card sync is the same overwrite family — graded warning */}
         <button
           data-testid={`skill-sync-${s.dirname}`}
           onClick={onSync}
           disabled={busy}
-          className="rounded-deck border border-deck-line px-2 py-1 hover:bg-deck-panel2 disabled:opacity-50"
+          className="rounded-deck border border-led-warn/50 px-2 py-1 text-led-warn hover:bg-led-warn/10 disabled:opacity-50"
         >
-          {busy ? t("skills.cardSyncing") : t("skills.cardSync")}
+          {busy ? t("skills.cardSyncing") : `⚠ ${t("skills.cardSync")}`}
         </button>
         <button
           data-testid={`skill-details-${s.dirname}`}

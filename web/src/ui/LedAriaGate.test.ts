@@ -15,8 +15,9 @@ const LED_COLOR = /bg-led-(ok|warn|err)/;
 
 // led-err used as BUTTON styling (background/border/text color on a text
 // button) is styling, not state — pattern-whitelisted, documented, deliberate:
-// CategoryPills remove button (border/text led-err).
-const BUTTON_STYLING = /border-led-err|bg-led-err\/\d+|text-led-err\b/;
+// CategoryPills remove button (border/text led-err). led-warn joins the same
+// family with the R54/小白-7 danger grading (sync buttons carry ⚠ + color).
+const BUTTON_STYLING = /border-led-err|bg-led-err\/\d+|text-led-err\b|border-led-warn|bg-led-warn\/\d+|text-led-warn\b/;
 
 // ConfirmDialog: its only bg-led-err is the danger confirm button background
 // (solid, no opacity suffix) — a text button, styling not state.

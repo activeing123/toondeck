@@ -72,12 +72,16 @@ export default function SkillsPanel() {
           >
             {t("common.refresh")}
           </button>
+          {/* 小白-7: sync overwrites agent shelves — visually graded as the
+              dangerous family (⚠ + warning color), distinct from refresh/体检 */}
           <button
             onClick={onSync}
             disabled={busy}
-            className="rounded-deck bg-deck-accent px-3 py-1.5 text-sm font-semibold text-deck-bg hover:opacity-90"
+            title={t("skills.syncWarnTitle")}
+            data-testid="sync-all-danger"
+            className="rounded-deck border border-led-err/50 bg-led-err/10 px-3 py-1.5 text-sm font-semibold text-led-err hover:bg-led-err/20 disabled:opacity-40"
           >
-            {busy ? "…" : t("skills.syncAll")}
+            {busy ? "…" : `⚠ ${t("skills.syncAll")}`}
           </button>
           <button
             onClick={onDoctor}
