@@ -253,7 +253,6 @@ export const DICT: Record<string, { en: string; zh: string }> = {
     zh: "体检失败——有 server 超时或引擎无响应（35s 上限），可直接重试",
   },
   // UX-C1 part 2: agents provider catalog + custom source + TUI explainer
-  "agents.providers": { en: "🔌 model providers ({ok}/{n} enabled)", zh: "🔌 模型提供商（{ok}/{n} 已启用）" },
   "agents.providersTitle": { en: "🔌 model sources", zh: "🔌 模型来源" },
   // 小白-5: the benefit line — WHY enable a provider at all
   "agents.providersHint": {
