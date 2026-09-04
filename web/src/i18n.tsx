@@ -355,7 +355,11 @@ export const DICT: Record<string, { en: string; zh: string }> = {
   "mcp.toolsCount": { en: "{n} tools", zh: "{n} 个工具" },
   "mcp.toolsOff": { en: "tools off — click to re-enable", zh: "已关工具 — 点击重新开启" },
   "mcp.noTools": { en: "no tools exposed", zh: "未暴露任何工具" },
-  "mcp.adoptOne": { en: "adopt into management", zh: "收编接管" },
+  "mcp.adoptOne": { en: "adopt into my config", zh: "收编进我的配置" },
+  "mcp.adoptHint": {
+    en: "Discovered in {src}'s config, not yet yours. Adopting copies it into your single source of truth — managed here from now on.",
+    zh: "这是在 {src} 的配置里发现的，还没归你管。收编后会复制进你的单一真源，以后都在这里统一管理。",
+  },
   "mcp.universe": { en: "{managed} managed · {discovered} awaiting adoption", zh: "{managed} 个已接管 · {discovered} 个待收编" },
   "vault.emptyTitle": { en: "no providers detected", zh: "未发现任何 provider" },
   "vault.emptyHint": {

@@ -180,13 +180,25 @@ export default function ServerTable({
                   r.managed && <p className="text-xs text-deck-muted">{t("mcp.noTools")}</p>
                 )}
                 {!r.managed && (
-                  <button
-                    onClick={() => onAdopt(r.name)}
-                    data-testid={`server-adopt-${r.name}`}
-                    className="rounded-deck bg-deck-accent px-2.5 py-1 text-xs font-semibold text-deck-bg"
-                  >
-                    {t("mcp.adoptOne")}
-                  </button>
+                  <div className="border-t border-deck-line pt-2 space-y-1.5">
+                    {/* N-R5: adoption was a bare verb on a hidden row — a
+                        novice never learned what adopting does or that the
+                        server came from another agent's config. Name the
+                        source and the deal right next to the button. */}
+                    <p
+                      data-testid={`adopt-hint-${r.name}`}
+                      className="text-xs text-deck-muted"
+                    >
+                      {t("mcp.adoptHint", { src: r.sources.join("、") || r.target || r.name })}
+                    </p>
+                    <button
+                      onClick={() => onAdopt(r.name)}
+                      data-testid={`server-adopt-${r.name}`}
+                      className="rounded-deck bg-deck-accent px-2.5 py-1 text-xs font-semibold text-deck-bg"
+                    >
+                      {t("mcp.adoptOne")}
+                    </button>
+                  </div>
                 )}
               </div>
             )}

@@ -200,7 +200,11 @@ export default function McpPanel() {
               <ServerTable
                 rows={rows}
                 onToggle={(server, tool) => toggleTool(server, tool).then(reload)}
-                onAdopt={(name) => importServers([name]).then(() => reload())}
+                onAdopt={(name) =>
+                  importServers([name])
+                    .then(() => reload())
+                    .then(() => setInvReload((x) => x + 1))
+                }
               />
             )}
           </>
