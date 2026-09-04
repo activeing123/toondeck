@@ -3,6 +3,7 @@ import AgentsPanel from "./agents/AgentsPanel";
 import DesignSheet from "./design/DesignSheet";
 import { I18nProvider, useI18n, type Lang } from "./i18n";
 import { Led } from "./ui/Led";
+import HelpFooter from "./ui/HelpFooter";
 import LogsPanel from "./logs/LogsPanel";
 import McpPanel from "./mcp/McpPanel";
 import LockScreen, { portalUnlocked } from "./portal/LockScreen";
@@ -268,6 +269,7 @@ function Shell({ children }: { children: React.ReactNode }) {
         <main className="flex-1 p-4 md:p-8 max-w-6xl">
           <PageFocus viewTag={route}>{children}</PageFocus>
         </main>
+        <HelpFooter />
       </div>
     </div>
   );
