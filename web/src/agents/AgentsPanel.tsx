@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import LogTerminal from "./LogTerminal";
 import AdoptPanel from "./AdoptPanel";
+import { ProviderDialog, type ProviderDraft } from "./ProviderDialog";
 import { useI18n } from "../i18n";
 import { toast } from "../ui/Toast";
 import { ZeroState } from "../ui/ZeroState";
@@ -37,15 +38,12 @@ export default function AgentsPanel() {
   const [statuses, setStatuses] = useState<Record<string, StatusRow>>({});
   const [models, setModels] = useState<Record<string, string>>({});
   const [sources, setSources] = useState<Record<string, string>>({});
-  const [profiles, setProfiles] = useState<Record<string, { base_url?: string }>>({});
+  const [profiles, setProfiles] = useState<Record<string, { base_url?: string; keyring?: boolean }>>({});
   const [providers, setProviders] = useState<
     { id: string; display_name: string; base_url: string; models: string[]; keyless: boolean; configured: boolean }[]
   >([]);
-  const [keyFor, setKeyFor] = useState<string | null>(null);
-  const [keyInput, setKeyInput] = useState("");
-  const [newProfile, setNewProfile] = useState("");
-  const [newUrl, setNewUrl] = useState("");
-  const [newKey, setNewKey] = useState("");
+  // R46: one dialog state replaces the three inline input states
+  const [dialog, setDialog] = useState<ProviderDraft | null>(null);
   const [openLogs, setOpenLogs] = useState<string | null>(null);
   const [pending, setPending] = useState<{ id: string; action: "launch" | "stop" } | null>(null);
   const [flash, setFlash] = useState<Record<string, string>>({});
@@ -119,43 +117,80 @@ export default function AgentsPanel() {
     });
   };
 
-  const addProfile = async () => {
-    if (!newProfile.trim()) return;
-    await fetch("/api/agents/profiles", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: newProfile.trim(),
-        base_url: newUrl.trim() || null,
-        api_key: newKey || null,
-      }),
-    });
-    setNewProfile("");
-    setNewUrl("");
-    setNewKey("");
-    await load();
-  };
-
   const removeProfile = async (name: string) => {
-    await fetch(`/api/agents/profiles/${name}`, { method: "DELETE" });
+    await fetch(`/api/agents/profiles/${encodeURIComponent(name)}`, { method: "DELETE" });
     await load();
   };
 
-  const enableProvider = async (id: string, keyless: boolean) => {
+  // R46: dialog submit routes by mode — enable/custom POST (full entry),
+  // edit PUT (merge: blank key keeps the stored one)
+  const submitDialog = async (r: { name: string; baseUrl: string; apiKey: string; ok: boolean }) => {
+    if (!dialog) return;
+    const keyless = dialog.mode === "enable" && dialog.keyless;
+    const res =
+      dialog.mode === "edit"
+        ? await fetch(`/api/agents/profiles/${encodeURIComponent(dialog.id)}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              base_url: r.baseUrl || null,
+              api_key: r.apiKey.trim() ? r.apiKey : null,
+            }),
+          }).then((x) => x.json())
+        : await fetch("/api/agents/profiles", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              name: r.name,
+              base_url: r.baseUrl || null,
+              api_key: keyless ? null : r.apiKey || null,
+            }),
+          }).then((x) => x.json());
+    if (!res.ok) {
+      toast.error(res.error ?? "save failed");
+      return;
+    }
+    setDialog(null);
+    toast.ok(t("agents.sourceSaved"));
+    await load();
+  };
+
+  const openEnable = (id: string) => {
     const p = providers.find((x) => x.id === id);
     if (!p) return;
-    await fetch("/api/agents/profiles", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: id,
-        base_url: p.base_url,
-        api_key: keyless ? null : keyInput || null,
-      }),
+    setDialog({
+      mode: "enable",
+      id: p.id,
+      displayName: p.display_name,
+      baseUrl: p.base_url,
+      hasStoredKey: false,
+      keyless: p.keyless,
     });
-    setKeyFor(null);
-    setKeyInput("");
-    await load();
+  };
+
+  const openEdit = (id: string) => {
+    const p = providers.find((x) => x.id === id);
+    if (!p) return;
+    const entry = profiles[id] ?? {};
+    setDialog({
+      mode: "edit",
+      id: p.id,
+      displayName: p.display_name,
+      baseUrl: entry.base_url ?? p.base_url,
+      hasStoredKey: entry.keyring === true,
+      keyless: false,
+    });
+  };
+
+  const openCustom = () => {
+    setDialog({
+      mode: "custom",
+      id: "",
+      displayName: t("agents.customSource"),
+      baseUrl: "",
+      hasStoredKey: false,
+      keyless: false,
+    });
   };
 
   const act = async (id: string, action: "launch" | "stop") => {
@@ -212,82 +247,48 @@ export default function AgentsPanel() {
           {providers.map((p) => (
             <div key={p.id} className="flex flex-wrap items-center gap-2 text-xs border border-deck-line rounded-deck px-3 py-2">
               <b>{p.display_name}</b>
-              <span className="text-deck-muted font-mono">{p.base_url}</span>
+              <span className="text-deck-muted font-mono">
+                {profiles[p.id]?.base_url ?? p.base_url}
+              </span>
               <span className="text-deck-muted">{t("agents.modelsCount", { n: p.models.length })}</span>
+              {p.configured && profiles[p.id]?.keyring && (
+                <span className="text-led-ok">{t("agents.keyStoredChip")}</span>
+              )}
               {p.configured ? (
                 <>
                   <span className="text-led-ok">{t("agents.enabled")}</span>
-                  <button onClick={() => removeProfile(p.id)} className="ml-auto text-deck-muted hover:text-led-err">
+                  <button
+                    onClick={() => openEdit(p.id)}
+                    data-testid={`provider-edit-${p.id}`}
+                    className="ml-auto rounded-deck border border-deck-line px-2.5 py-1 hover:bg-deck-panel2"
+                  >
+                    {t("agents.editSource")}
+                  </button>
+                  <button onClick={() => removeProfile(p.id)} className="text-deck-muted hover:text-led-err">
                     {t("agents.disable")}
                   </button>
                 </>
-              ) : p.keyless ? (
+              ) : (
                 <button
-                  onClick={() => enableProvider(p.id, true)}
+                  onClick={() => openEnable(p.id)}
+                  data-testid={`provider-enable-${p.id}`}
                   className="ml-auto rounded-deck bg-deck-accent px-2.5 py-1 font-semibold text-deck-bg"
                 >
-                  {t("agents.enableKeyless")}
+                  {p.keyless ? t("agents.enableKeyless") : t("agents.enable")}
                 </button>
-              ) : (
-                <>
-                  <button
-                    onClick={() => setKeyFor(keyFor === p.id ? null : p.id)}
-                    className="ml-auto rounded-deck border border-deck-line px-2.5 py-1 hover:bg-deck-panel2"
-                  >
-                    {keyFor === p.id ? t("agents.cancel") : t("agents.enable")}
-                  </button>
-                  {keyFor === p.id && (
-                    <>
-                      <input
-                        type="password"
-                        value={keyInput}
-                        onChange={(e) => setKeyInput(e.target.value)}
-                        placeholder={t("agents.keyPlaceholder")}
-                        className="rounded-deck border border-deck-line bg-deck-panel px-2 py-1 w-52"
-                      />
-                      <button
-                        onClick={() => enableProvider(p.id, false)}
-                        className="rounded-deck bg-deck-accent px-2.5 py-1 font-semibold text-deck-bg"
-                      >
-                        {t("agents.save")}
-                      </button>
-                    </>
-                  )}
-                </>
               )}
             </div>
           ))}
 
-          <details className="pt-2 border-t border-deck-line">
-            <summary className="cursor-pointer text-deck-muted text-xs">{t("agents.customSource")}</summary>
-            <div className="flex flex-wrap gap-2 pt-2">
-              <input
-                value={newProfile}
-                onChange={(e) => setNewProfile(e.target.value)}
-                placeholder={t("agents.profileName")}
-                className="rounded-deck border border-deck-line bg-deck-panel px-2 py-1 text-xs w-40"
-              />
-              <input
-                value={newUrl}
-                onChange={(e) => setNewUrl(e.target.value)}
-                placeholder={t("agents.baseUrl")}
-                className="rounded-deck border border-deck-line bg-deck-panel px-2 py-1 text-xs w-56"
-              />
-              <input
-                value={newKey}
-                onChange={(e) => setNewKey(e.target.value)}
-                placeholder={t("agents.keyPlaceholder")}
-                type="password"
-                className="rounded-deck border border-deck-line bg-deck-panel px-2 py-1 text-xs w-48"
-              />
-              <button
-                onClick={addProfile}
-                className="rounded-deck bg-deck-accent px-3 py-1 text-xs font-semibold text-deck-bg"
-              >
-                {t("agents.save")}
-              </button>
-            </div>
-          </details>
+          <div className="pt-2 border-t border-deck-line">
+            <button
+              onClick={openCustom}
+              data-testid="provider-add-custom"
+              className="rounded-deck border border-deck-line px-2.5 py-1 text-xs hover:bg-deck-panel2"
+            >
+              {t("agents.addSource")}
+            </button>
+          </div>
           <div className="pt-2 border-t border-deck-line">
             <a href="#/vault" className="text-xs text-deck-accent hover:underline">
               {t("agents.vaultLink")}
@@ -295,6 +296,14 @@ export default function AgentsPanel() {
           </div>
         </div>
       </details>
+
+      {dialog && (
+        <ProviderDialog
+          draft={dialog}
+          onClose={() => setDialog(null)}
+          onSubmit={submitDialog}
+        />
+      )}
 
       {agents.length === 0 ? (
         <ZeroState icon="🤖" titleKey="agents.emptyTitle" hintKey="agents.emptyHint" />

@@ -231,6 +231,48 @@ def add_profile(name: str, base_url: str | None = None, api_key: str | None = No
     return {"ok": True, "name": name}
 
 
+def edit_profile(name: str, base_url: str | None = None, api_key: str | None = None) -> dict:
+    """Merge-edit an existing profile (R46 UI dialog).
+
+    Unlike add_profile (which REPLACES the entry and would silently drop the
+    keyring flag), edit_profile changes only what the caller actually passed:
+    base_url=None keeps the current URL, api_key=None keeps the stored key.
+    """
+    if not _VALID_PROFILE.fullmatch(name or ""):
+        return {"ok": False, "error": f"bad profile name: {name!r}"}
+    profiles = _load_profiles()
+    if name not in profiles:
+        return {"ok": False, "error": f"unknown profile: {name}"}
+    entry = profiles[name]
+    if base_url is not None:
+        stripped = base_url.strip()
+        if stripped:
+            entry["base_url"] = stripped
+        else:
+            entry.pop("base_url", None)  # explicit empty string clears the URL
+    if api_key is not None:
+        stripped_key = api_key.strip()
+        if stripped_key:
+            try:
+                import keyring
+
+                keyring.set_password("toondeck://model-profile", name, stripped_key)
+                entry["keyring"] = True
+            except Exception as e:  # noqa: BLE001 — keyring failures must be visible
+                return {"ok": False, "error": f"keyring: {e}"}
+        else:
+            entry.pop("keyring", None)  # explicit empty string clears the key
+            try:
+                import keyring
+
+                keyring.delete_password("toondeck://model-profile", name)
+            except Exception:  # noqa: BLE001 — entry may not exist in the keyring
+                pass
+    profiles[name] = entry
+    _save_profiles(profiles)
+    return {"ok": True, "name": name}
+
+
 def remove_profile(name: str) -> dict:
     profiles = _load_profiles()
     if name not in profiles:

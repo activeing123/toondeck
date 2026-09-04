@@ -109,6 +109,13 @@ class ProfileIn(BaseModel):
     api_key: str | None = None  # goes straight into the OS keyring, never the JSON
 
 
+class ProfileEditIn(BaseModel):
+    # R46 merge semantics: a field left as None means "keep what is stored".
+    # Empty strings mean "clear this field" (handled by edit_profile).
+    base_url: str | None = None
+    api_key: str | None = None
+
+
 class VaultKeyIn(BaseModel):
     provider: str
     secret: str
@@ -279,6 +286,14 @@ def create_app() -> FastAPI:
     @app.post("/api/agents/profiles")
     def agent_add_profile(payload: ProfileIn) -> dict:
         return agents.add_profile(payload.name, payload.base_url, payload.api_key)
+
+    @app.put("/api/agents/profiles/{name}")
+    def agent_edit_profile(name: str, payload: ProfileEditIn) -> dict:
+        # R46: merge-edit — url-only edits keep the stored key alive (the
+        # POST route replaces the whole entry and would silently sever it)
+        r = agents.edit_profile(name, payload.base_url, payload.api_key)
+        journal.record("profile.edit", name=name, ok=bool(r.get("ok")))
+        return r
 
     @app.delete("/api/agents/profiles/{name}")
     def agent_del_profile(name: str) -> dict:
