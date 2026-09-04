@@ -61,11 +61,15 @@ def redact(line: str) -> str:
 
 
 class AgentProcess:
-    def __init__(self, agent_id: str, process: subprocess.Popen) -> None:
+    def __init__(self, agent_id: str, process: subprocess.Popen, capture_mode: str = "pipe") -> None:
         self.agent_id = agent_id
         self.process = process
         self.started_at = time.time()
         self.exit_code: int | None = None
+        # N-R6: "window" launches stream to the desktop console, so the WS
+        # ring stays empty — consumers need to know that's expected, not a
+        # broken stream.
+        self.capture_mode = capture_mode
         self.logs: deque[str] = deque(maxlen=RING_SIZE)
         self.subscribers: list[queue.Queue] = []
         self._lock = threading.Lock()
@@ -219,7 +223,7 @@ class Manager:
                 )
             except OSError as e:
                 return {"ok": False, "error": f"spawn failed: {e}"}
-            self.procs[agent_id] = AgentProcess(agent_id, proc)
+            self.procs[agent_id] = AgentProcess(agent_id, proc, capture_mode=mode)
         return {"ok": True, "agent_id": agent_id, "pid": proc.pid, "mode": mode}
 
     def stop(self, agent_id: str) -> dict:

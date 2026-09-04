@@ -88,3 +88,31 @@ def test_ws_unknown_agent_closes_cleanly(engine_env):
     with pytest.raises(Exception):
         with client.websocket_connect("/api/agents/ghost/logs") as ws:
             ws.receive_text()
+
+
+def test_ws_exited_window_agent_gets_honest_close(fake_adapters):
+    """N-R6: an exited WINDOW-mode agent will never stream more lines —
+    the socket must say so (in plain language) and close, not hang as a
+    fake live stream."""
+    from toondeck.deck.agents.internal import manager as mgr
+
+    # hand-build an exited window-mode proc, no ring lines
+    import subprocess
+
+    p = subprocess.Popen([sys.executable, "-c", "raise SystemExit(3)"])
+    time.sleep(0.3)
+    ap = mgr.AgentProcess("wagent", p, capture_mode="window")
+    mgr.get_manager().procs["wagent"] = ap
+    try:
+        from toondeck.deck.api.app import create_app
+
+        client = TestClient(create_app())
+        with client.websocket_connect("/api/agents/wagent/logs") as ws:
+            first = ws.receive_text()
+            second = ws.receive_text()
+        assert "窗口模式" in first or "window" in first
+        assert "exit code 3" in second
+    finally:
+        mgr.get_manager().procs.pop("wagent", None)
+        if p.poll() is None:
+            p.kill()

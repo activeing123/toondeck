@@ -462,7 +462,21 @@ def create_app() -> FastAPI:
 
         q = channel["queue"]
         try:
-            for line in channel["snapshot"][-50:]:
+            snapshot = channel["snapshot"]
+            proc = agents.status(agent_id)
+            # N-R6: an exited WINDOW-mode agent will never produce more lines —
+            # its logs live in the desktop console it was launched in. Say so
+            # and end the stream instead of pretending to stream forever.
+            if (
+                proc.get("state") == "exited"
+                and channel.get("capture_mode") == "window"
+                and not snapshot
+            ):
+                await ws.send_text("⏹ 该 agent 以窗口模式启动，日志直接打在它自己的桌面控制台窗口里（本面板抓不到）。")
+                await ws.send_text(f"⏹ 已退出 · exit code {proc.get('exit_code')}。找不到窗口？到任务栏找同名控制台窗口；关闭它即退出 agent。")
+                await ws.close(code=1000)
+                return
+            for line in snapshot[-50:]:
                 await ws.send_text(line)
             while True:
                 try:

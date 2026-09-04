@@ -73,13 +73,17 @@ def stop(agent_id: str) -> dict:
 
 
 def log_channel(agent_id: str) -> dict | None:
-    """WS support: {'snapshot': [...], 'queue': Queue} or None if never launched."""
+    """WS support: {'snapshot': [...], 'queue': Queue, 'capture_mode': str} or None if never launched."""
     from .internal import manager
 
     proc = manager.get_manager().procs.get(agent_id)
     if proc is None:
         return None
-    return {"snapshot": proc.snapshot(), "queue": proc.subscribe()}
+    return {
+        "snapshot": proc.snapshot(),
+        "queue": proc.subscribe(),
+        "capture_mode": getattr(proc, "capture_mode", "pipe"),
+    }
 
 
 def log_unsubscribe(agent_id: str, q: "object") -> None:
