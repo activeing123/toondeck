@@ -133,21 +133,21 @@ export default function McpPanel() {
             disabled={busy}
             className="rounded-deck border border-deck-line px-3 py-1.5 text-sm hover:bg-deck-panel2"
           >
-            {busy ? "…" : "refresh"}
+            {busy ? "…" : t("common.refresh")}
           </button>
           <button
             onClick={onHealth}
             disabled={checking}
             className="rounded-deck border border-deck-line px-3 py-1.5 text-sm hover:bg-deck-panel2"
           >
-            {checking ? "probing…" : "run health check"}
+            {checking ? t("fleet.probing") : t("mcp.healthBtn")}
           </button>
           <button
             onClick={onSync}
             disabled={syncing}
             className="rounded-deck bg-deck-accent px-3 py-1.5 text-sm font-semibold text-deck-bg hover:opacity-90"
           >
-            {syncing ? "syncing…" : "sync all agents"}
+            {syncing ? t("mcp.syncing") : t("skills.syncAll")}
           </button>
         </div>
       </div>

@@ -123,9 +123,15 @@ export default function FleetDashboard({ reloadSignal = 0 }: { reloadSignal?: nu
   const m = o.mcptoon;
   const totalTools = inv?.tools_total ?? m.tools_cached;
   const bySource = inv?.by_source ?? {};
+  // N-round2: chips count tools PER SOURCE (a tool reachable from two agents
+  // appears twice); the hero counts UNIQUE tools. When a newcomer adds the
+  // chips and gets a bigger number, say so in one line instead of letting
+  // the math quietly disagree.
+  const chipSum = Object.values(bySource).reduce((a, b) => a + b, 0);
+  const chipSumAbove = chipSum > totalTools;
 
   return (
-    <section className="glass rounded-deck p-4 space-y-4">
+    <section data-testid="fleet-dashboard" className="glass rounded-deck p-4 space-y-4">
       <div className="flex items-center gap-2">
         <h2 className="font-semibold">{t("fleet.overview")}</h2>
         {engine && (
@@ -183,6 +189,9 @@ export default function FleetDashboard({ reloadSignal = 0 }: { reloadSignal?: nu
               {src} · {n} {t("fleet.tools")}
             </span>
           ))}
+          {chipSumAbove && (
+            <span data-testid="by-source-note">{t("fleet.dedupNote", { sum: chipSum, total: totalTools })}</span>
+          )}
         </div>
       )}
 
