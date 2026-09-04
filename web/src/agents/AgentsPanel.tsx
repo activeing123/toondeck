@@ -361,6 +361,28 @@ export default function AgentsPanel() {
           >
             {t("agents.bulkApply")}
           </button>
+          {/* N-R13: the add-custom entry was only in the provider card below
+              11 cards — invisible from the top. Surface it right here too. */}
+          <button
+            data-testid="bulk-add-source"
+            onClick={openCustom}
+            className="rounded-deck border border-deck-line px-2.5 py-1.5 text-xs hover:bg-deck-panel2"
+          >
+            {t("agents.addSourceTop")}
+          </button>
+          <a
+            data-testid="goto-providers"
+            href="#server-cards-end"
+            onClick={(e) => {
+              e.preventDefault();
+              document
+                .querySelector("[data-testid=provider-section]")
+                ?.scrollIntoView({ behavior: "smooth", block: "start" });
+            }}
+            className="text-xs text-deck-accent hover:underline"
+          >
+            {t("agents.gotoProviders")}
+          </a>
         </div>
       </div>
 

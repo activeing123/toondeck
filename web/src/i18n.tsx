@@ -325,6 +325,8 @@ export const DICT: Record<string, { en: string; zh: string }> = {
     zh: "模型名随便填，原样传给 agent（自定义模型也行）。想单独设置，就在下面每张卡上改。",
   },
   "agents.bulkPlaceholder": { en: "e.g. claude-sonnet-4-5", zh: "如 claude-sonnet-4-5" },
+  "agents.addSourceTop": { en: "＋ add custom model source", zh: "＋ 添加自定义模型源" },
+  "agents.gotoProviders": { en: "manage sources ↓", zh: "管理模型来源 ↓" },
   "agents.bulkApply": { en: "apply to all agents", zh: "应用到全部 agent" },
   "agents.bulkConfirm": {
     en: "Set all {n} agents' model to {model}? Per-card overrides will be replaced.",
