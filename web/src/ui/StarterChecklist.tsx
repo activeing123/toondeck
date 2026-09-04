@@ -61,6 +61,14 @@ export default function StarterChecklist() {
 
   if (dismissed || ORDER.every((k) => ticks[k])) return null;
 
+  // literal keys (not template interpolation) — the i18n key-space audit
+  // statically scans the t-call arguments and cannot see interpolation
+  const stepText: Record<ClKey, string> = {
+    pw: t("cl.step.pw"),
+    health: t("cl.step.health"),
+    sync: t("cl.step.sync"),
+  };
+
   return (
     <div
       data-testid="starter-checklist"
@@ -95,7 +103,7 @@ export default function StarterChecklist() {
             <span className={ticks[k] ? "text-led-ok" : "text-deck-muted"}>
               {ticks[k] ? "✓" : `${i + 1}.`}
             </span>{" "}
-            {t(`cl.step.${k}`)}
+            {stepText[k]}
           </li>
         ))}
       </ol>
