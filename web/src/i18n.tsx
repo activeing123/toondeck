@@ -432,6 +432,11 @@ export const DICT: Record<string, { en: string; zh: string }> = {
     zh: "一盏灯 = 一个 agent 的技能目录；绿灯 = 它能看到上面所有技能。",
   },
   "skills.showMore": { en: "show {n} more skills", zh: "展开其余 {n} 个技能" },
+  "skills.unreachableTitle": { en: "engine unreachable", zh: "引擎连不上了" },
+  "skills.unreachableHint": {
+    en: "Skills read from the local engine — is the deck still running? Check the console, then refresh.",
+    zh: "技能数据来自本地引擎——deck 是否还在运行？确认命令行窗口没关，然后点下面刷新。",
+  },
 };
 
 type I18nCtx = {

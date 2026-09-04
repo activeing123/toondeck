@@ -23,15 +23,22 @@ export default function SkillsPanel() {
   const [busy, setBusy] = useState(false);
   const [query, setQuery] = useState("");
   const [lastSync, setLastSync] = useState<string[] | null>(null);
+  const [unreachable, setUnreachable] = useState(false);
 
   const load = () => {
+    setUnreachable(false);
     Promise.all([fetchSkillsState(), fetchDoctor(), watcherGet()]).then(
       ([s, d, w]) => {
         setState(s);
         setDoctor(d);
         setWatcher(w);
       },
-    );
+    ).catch(() => {
+      // N-R9: the MCP/Agents pages report an unreachable engine — the skills
+      // page used to spin on "loading deck…" forever, which reads as "slow"
+      // instead of "down". Say it, honestly.
+      setUnreachable(true);
+    });
   };
   useEffect(load, []);
 
@@ -54,6 +61,22 @@ export default function SkillsPanel() {
     watcherPost(action).then(load).finally(() => setBusy(false));
   };
 
+  if (unreachable)
+    return (
+      <div
+        data-testid="skills-unreachable"
+        className="glass rounded-deck p-4 text-sm space-y-1"
+      >
+        <p className="font-semibold text-led-err">{t("skills.unreachableTitle")}</p>
+        <p className="text-deck-muted">{t("skills.unreachableHint")}</p>
+        <button
+          onClick={load}
+          className="rounded-deck border border-deck-line px-3 py-1 text-xs hover:bg-deck-panel2"
+        >
+          {t("common.refresh")}
+        </button>
+      </div>
+    );
   if (!state) return <p className="text-deck-muted">loading deck…</p>;
 
   return (
