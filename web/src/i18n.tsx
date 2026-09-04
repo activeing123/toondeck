@@ -5,8 +5,25 @@ export type Lang = "en" | "zh";
 // R42: exported (readonly by convention) so CjkLiteralGate can hold the DICT
 // itself to the same discipline as the chrome — en values must stay CJK-free.
 export const DICT: Record<string, { en: string; zh: string }> = {
-  "brand.tagline": { en: "One deck for every agent", zh: "一张牌桌，统御所有 agent" },
-  "nav.deck": { en: "deck", zh: "甲板" },
+  // R53: the deck landing page is gone — #/ is the portal gate now
+  // R53: portal password gate
+  "portal.lockTitle": { en: "admin console — password required", zh: "管理后台——请输入密码" },
+  "portal.firstRun": {
+    en: "First run: the default password is admin123 — after signing in you can change it in the sidebar.",
+    zh: "首次使用：默认密码 admin123——登录后可在侧栏修改。",
+  },
+  "portal.placeholder": { en: "password", zh: "密码" },
+  "portal.unlock": { en: "unlock", zh: "进入后台" },
+  "portal.wrong": { en: "wrong password", zh: "密码不对" },
+  "portal.forgot": {
+    en: "Forgot it? Stop the deck, delete portal.json in ~/.toondeck, start again → password resets to admin123.",
+    zh: "忘记密码？停掉 deck，删除 ~/.toondeck 下的 portal.json，重启即恢复默认密码 admin123。",
+  },
+  "portal.change": { en: "change password", zh: "修改密码" },
+  "portal.currentPw": { en: "current password", zh: "当前密码" },
+  "portal.newPw": { en: "new password (min 6 chars)", zh: "新密码（至少 6 位）" },
+  "portal.changeDone": { en: "password changed", zh: "密码已修改" },
+  "portal.lock": { en: "lock", zh: "锁定" },
   "nav.mcp": { en: "mcp", zh: "MCP" },
   "nav.skills": { en: "skills", zh: "技能" },
   "nav.agents": { en: "agents", zh: "代理" },
@@ -273,30 +290,8 @@ export const DICT: Record<string, { en: string; zh: string }> = {
   },
   "skills.removeConfirm": { en: "remove skill", zh: "确认移除" },
   "skills.invalidBadge": { en: "invalid", zh: "无效" },
-  // UX-D1: console onboarding
-  "onboard.step1": { en: "step 1 — bring your MCP fleet on deck", zh: "第 1 步 —— 接管你的 MCP 舰队" },
-  "onboard.step1Body": {
-    en: "No MCP servers are managed yet. Open the MCP page to discover them from your agent configs and adopt them in one click.",
-    zh: "还没有任何 MCP server 被接管。去 MCP 页从各 agent 配置里发现 server，一键收编。",
-  },
-  "onboard.step2": { en: "next step — put an agent on the deck", zh: "下一步 —— 把 agent 拉上牌桌" },
-  "onboard.step2Body": {
-    en: "{servers} MCP servers and {tools} tools are managed. Launch a CLI agent from the Agents page and its logs stream right here.",
-    zh: "已有 {servers} 个 MCP server、{tools} 个工具被接管。去 Agents 页一键启动 CLI agent，日志会实时出现在这里。",
-  },
-  "onboard.goMcp": { en: "discover servers on the MCP page →", zh: "去 MCP 页发现收编 →" },
-  "onboard.goAgents": { en: "launch an agent on the Agents page →", zh: "去 Agents 页启动 →" },
-  // R40: multi-path console onboarding
-  "onboard.goSkills": { en: "import skills on the Skills page →", zh: "去 Skills 页导入技能 →" },
-  "onboard.noAgentBody": {
-    en: "MCP servers are managed, but no CLI agent on this machine is installed yet. Install one (or fix its PATH) and launch it from the Agents page.",
-    zh: "MCP server 已接管，但本机还没有已安装的 CLI agent。装一个（或修好它的 PATH），去 Agents 页启动。",
-  },
-  "onboard.noSkills": { en: "no skills on deck yet", zh: "牌桌上还没有技能" },
-  "onboard.noSkillsBody": {
-    en: "Your agents' skill shelves are empty. Point ToonDeck at a skills folder and sync — every agent view picks it up.",
-    zh: "各 agent 的技能架还是空的。把技能文件夹指给 ToonDeck 并同步——所有 agent 视图自动生效。",
-  },
+  // R53: console landing page retired behind the portal gate — the onboard.*
+  // decision-tree keys and the tagline died with it (portal.* replaced them)
   // R44: LED state labels (screen readers; the dot is the only state signal)
   "led.ok": { en: "ok", zh: "正常" },
   "led.warn": { en: "degraded", zh: "有恙" },

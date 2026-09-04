@@ -121,6 +121,15 @@ class VaultKeyIn(BaseModel):
     secret: str  # goes into the OS keychain, never to disk metadata
 
 
+class PortalLoginIn(BaseModel):
+    password: str
+
+
+class PortalPasswordIn(BaseModel):
+    current: str
+    new: str
+
+
 class VaultProviderIn(BaseModel):
     # R48: user-defined provider definition (no secrets here — keys go to
     # the keyring via /api/vault/keys as with every other provider)
@@ -161,6 +170,31 @@ def create_app() -> FastAPI:
             "version": metadata.version("toondeck"),
             "engine": _mcptoon_engine(),
         }
+
+    # ── R53: portal password gate (default admin123 until first login
+    #    seeds the hash; TOONDECK_PORTAL_PASSWORD env overrides) ──
+    from . import portal
+
+    @app.get("/api/portal/state")
+    def portal_state() -> dict:
+        return portal.state()
+
+    @app.post("/api/portal/login")
+    def portal_login(payload: PortalLoginIn) -> dict:
+        ok = portal.verify(payload.password)
+        if ok:
+            portal.ensure_sealed(payload.password)
+        journal.record("portal.login", ok=ok)
+        return {"ok": ok}
+
+    @app.put("/api/portal/password")
+    def portal_set_password(payload: PortalPasswordIn) -> dict:
+        if not portal.verify(payload.current):
+            return {"ok": False, "error": "current password is wrong"}
+        r = portal.set_password(payload.new)
+        if r.get("ok"):
+            journal.record("portal.password", ok=True)
+        return r
 
     # ── MCP management (thin shell over deck.engine) ──
     @app.get("/api/mcp/state")

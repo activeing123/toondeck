@@ -5,6 +5,7 @@ import { I18nProvider, useI18n, type Lang } from "./i18n";
 import { Led } from "./ui/Led";
 import LogsPanel from "./logs/LogsPanel";
 import McpPanel from "./mcp/McpPanel";
+import LockScreen, { portalUnlocked } from "./portal/LockScreen";
 import SkillsPanel from "./skills/SkillsPanel";
 import VaultPanel from "./vault/VaultPanel";
 
@@ -52,45 +53,6 @@ function useDigitNav() {
   return route;
 }
 
-type Health = {
-  ok: boolean;
-  service: string;
-  version: string;
-  engine: { available: boolean; version: string | null };
-};
-
-type AgentRow = {
-  id: string;
-  display_name: string;
-  installed: boolean;
-  evidence: Record<string, boolean>;
-};
-
-function AgentGrid({ agents }: { agents: AgentRow[] | null }) {
-  const { t } = useI18n();
-  if (!agents) return null;
-  return (
-    <div className="glass rounded-deck px-5 py-3 text-sm w-full max-w-md">
-      <div className="text-xs text-deck-muted uppercase tracking-wide mb-2">
-        agents on this machine
-      </div>
-      <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
-        {agents.map((a) => (
-          <div key={a.id} className="flex items-center gap-2">
-            <Led tone={a.installed ? "ok" : "off"} label={`${a.display_name}: ${t(a.installed ? "led.installed" : "led.notInstalled")}`} />
-            <span className={a.installed ? "" : "text-deck-muted"}>{a.display_name}</span>
-          </div>
-        ))}
-      </div>
-      <div className="mt-3 text-right">
-        <a className="text-xs text-deck-accent hover:underline" href="#/skills">
-          manage skills →
-        </a>
-      </div>
-    </div>
-  );
-}
-
 // R37: the design veto sheet is a dev tool — it never ships in the
 // production nav. NAV entries carry a `dev` flag; both navs filter through
 // prodNav(). The route stays deep-linkable for the development workflow.
@@ -99,7 +61,6 @@ function AgentGrid({ agents }: { agents: AgentRow[] | null }) {
 type NavItem = { hash: string; key: string; icon: string; dev?: boolean };
 
 const NAV: NavItem[] = [
-  { hash: "#/", key: "nav.deck", icon: "🃏" },
   { hash: "#/mcp", key: "nav.mcp", icon: "🔌" },
   { hash: "#/skills", key: "nav.skills", icon: "🧩" },
   { hash: "#/agents", key: "nav.agents", icon: "🤖" },
@@ -185,168 +146,88 @@ function Sidebar({ route }: { route: string }) {
             {t("status.offline")}
           </div>
         )}
+        <PortalSecurity />
       </div>
     </aside>
   );
 }
 
-function ConsoleTagline() {
+/** R53: per-tab session lock + password change — the gate stays honest. */
+function PortalSecurity() {
   const { t } = useI18n();
-  return (
-    <p className="text-deck-muted">
-      {t("brand.tagline")}
-      <span className="ml-2 rounded-full border border-deck-line px-2 py-0.5 text-xs">
-        powered by mcptoon
-      </span>
-    </p>
-  );
-}
+  const [open, setOpen] = useState(false);
+  const [cur, setCur] = useState("");
+  const [nw, setNw] = useState("");
+  const [msg, setMsg] = useState<string | null>(null);
 
-function ConsoleMcpSummary({ inv }: { inv: { adopted_total: number; tools_total: number } | null }) {
-  if (!inv) return null;
-  return (
-    <div className="text-sm text-deck-muted">
-      🔌 {inv.adopted_total} MCP servers · {inv.tools_total} tools
-    </div>
-  );
-}
-
-/**
- * UX-D1 + R40: first-screen onboarding — tell the user what to do FIRST.
- * Decision tree, most-blocking problem wins, one honest card at a time:
- * 1. MCP inventory not loaded yet          → wait (no guessing)
- * 2. 0 MCP servers adopted                 → MCP discovery
- * 3. agents known but none installed       → install/launch guidance
- * 4. skills shelf empty (total === 0)      → skills import guidance
- * 5. fleet healthy                         → step-2 numbers card
- * Failed side-fetches (agents/skills) hide their branch instead of guessing.
- */
-function ConsoleOnboarding({
-  inv,
-  agents,
-  skillsTotal,
-}: {
-  inv: { adopted_total: number; tools_total: number } | null;
-  agents: AgentRow[] | null;
-  skillsTotal: number | null;
-}) {
-  const { t } = useI18n();
-  if (!inv) return null; // still loading — the card waits for honest data
-  if (inv.adopted_total === 0) {
-    return (
-      <div className="glass rounded-deck px-6 py-4 text-sm space-y-2 max-w-md border border-deck-accent/40">
-        <div className="font-semibold">{t("onboard.step1")}</div>
-        <p className="text-deck-muted">{t("onboard.step1Body")}</p>
-        <a href="#/mcp" className="inline-block text-deck-accent hover:underline">
-          {t("onboard.goMcp")}
-        </a>
-      </div>
-    );
-  }
-  if (agents && agents.length > 0 && agents.every((a) => !a.installed)) {
-    return (
-      <div className="glass rounded-deck px-6 py-4 text-sm space-y-2 max-w-md border border-deck-accent/40">
-        <div className="font-semibold">{t("onboard.step2")}</div>
-        <p className="text-deck-muted">{t("onboard.noAgentBody")}</p>
-        <a href="#/agents" className="inline-block text-deck-accent hover:underline">
-          {t("onboard.goAgents")}
-        </a>
-      </div>
-    );
-  }
-  if (skillsTotal === 0) {
-    return (
-      <div className="glass rounded-deck px-6 py-4 text-sm space-y-2 max-w-md border border-deck-accent/40">
-        <div className="font-semibold">{t("onboard.noSkills")}</div>
-        <p className="text-deck-muted">{t("onboard.noSkillsBody")}</p>
-        <a href="#/skills" className="inline-block text-deck-accent hover:underline">
-          {t("onboard.goSkills")}
-        </a>
-      </div>
-    );
-  }
-  return (
-    <div className="glass rounded-deck px-6 py-4 text-sm space-y-2 max-w-md">
-      <div className="font-semibold">{t("onboard.step2")}</div>
-      <p className="text-deck-muted">
-        {t("onboard.step2Body", { servers: inv.adopted_total, tools: inv.tools_total })}
-      </p>
-      <a href="#/agents" className="inline-block text-deck-accent hover:underline">
-        {t("onboard.goAgents")}
-      </a>
-    </div>
-  );
-}
-
-function Console() {
-  const [health, setHealth] = useState<Health | null>(null);
-  // R25 bugfix: the card used to read /api/mcp/state, which has no top-level
-  // tool count — the landing page literally interpolated "undefined tools".
-  // The honest source is /api/mcp/tools (cached inventory, also warms the
-  // MCP page's cache). Shape-guarded: a malformed payload hides the card
-  // instead of faking zeros.
-  const [inv, setInv] = useState<{ adopted_total: number; tools_total: number } | null>(null);
-  // R40: shared state for onboarding decisions + the agent grid — one fetch
-  // per endpoint, no duplicate requests.
-  const [agents, setAgents] = useState<AgentRow[] | null>(null);
-  const [skillsTotal, setSkillsTotal] = useState<number | null>(null);
-
-  useEffect(() => {
-    fetch("/api/health")
-      .then((r) => r.json())
-      .then(setHealth)
-      .catch(() => setHealth(null));
-  }, []);
-
-  useEffect(() => {
-    fetch("/api/mcp/tools")
-      .then((r) => r.json())
-      .then((b) => {
-        if (typeof b?.adopted_total === "number" && typeof b?.tools_total === "number") {
-          setInv({ adopted_total: b.adopted_total, tools_total: b.tools_total });
-        } else {
-          setInv(null); // never guess — no honest numbers, no card
-        }
-      })
-      .catch(() => setInv(null));
-    fetch("/api/agents")
-      .then((r) => r.json())
-      .then((b) => setAgents(Array.isArray(b?.agents) ? b.agents : null))
-      .catch(() => setAgents(null));
-    fetch("/api/skills/state")
-      .then((r) => r.json())
-      .then((b) =>
-        setSkillsTotal(typeof b?.counts?.total === "number" ? b.counts.total : null),
-      )
-      .catch(() => setSkillsTotal(null));
-  }, []);
+  const save = async () => {
+    const r = await fetch("/api/portal/password", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ current: cur, new: nw }),
+    }).then((x) => x.json());
+    if (r.ok) {
+      setMsg(t("portal.changeDone"));
+      setCur("");
+      setNw("");
+    } else {
+      setMsg(r.error ?? "failed");
+    }
+  };
 
   return (
-    <main className="min-h-screen bg-deck-bg text-deck-ink flex flex-col items-center justify-center gap-6">
-      <PageFocus viewTag="console">
-        <h1 className="text-4xl font-bold tracking-tight">
-          Toon<span className="text-deck-accent">Deck</span>
-        </h1>
-        <ConsoleTagline />
-        <ConsoleOnboarding inv={inv} agents={agents} skillsTotal={skillsTotal} />
-      </PageFocus>
-      {health ? (
-        <div className="glass rounded-deck px-6 py-4 text-sm shadow-glow-gold space-y-1">
-          <div>
-            service <span className="text-deck-accent">{health.version}</span> ·{" "}
-            <span className="font-mono">127.0.0.1:8721</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Led tone={health.engine.available ? "ok" : "err"} />
-            mcptoon engine {health.engine.available ? health.engine.version : "unavailable"}
-          </div>
-          <ConsoleMcpSummary inv={inv} />
+    <div className="space-y-1.5">
+      <button
+        data-testid="portal-lock"
+        onClick={() => {
+          sessionStorage.removeItem("toondeck.portal");
+          window.location.hash = "#/";
+        }}
+        className="rounded-deck border border-deck-line px-2 py-1 hover:text-deck-ink"
+      >
+        🔒 {t("portal.lock")}
+      </button>{" "}
+      <button
+        data-testid="portal-change"
+        onClick={() => setOpen((v) => !v)}
+        className="rounded-deck border border-deck-line px-2 py-1 hover:text-deck-ink"
+      >
+        {t("portal.change")}
+      </button>
+      {open && (
+        <div className="space-y-1.5">
+          <input
+            type="password"
+            data-testid="portal-cur"
+            value={cur}
+            onChange={(e) => setCur(e.target.value)}
+            placeholder={t("portal.currentPw")}
+            className="w-full rounded-deck border border-deck-line bg-deck-panel px-2 py-1"
+          />
+          <input
+            type="password"
+            data-testid="portal-new"
+            value={nw}
+            onChange={(e) => setNw(e.target.value)}
+            placeholder={t("portal.newPw")}
+            className="w-full rounded-deck border border-deck-line bg-deck-panel px-2 py-1"
+          />
+          <button
+            data-testid="portal-save"
+            onClick={save}
+            disabled={!cur || !nw}
+            className="rounded-deck bg-deck-accent px-2 py-1 font-semibold text-deck-bg disabled:opacity-40"
+          >
+            {t("agents.save")}
+          </button>
         </div>
-      ) : (
-        <div className="text-deck-muted">connecting…</div>
       )}
-      <AgentGrid agents={agents} />
-    </main>
+      {msg && (
+        <p className="text-xs" role="status">
+          {msg}
+        </p>
+      )}
+    </div>
   );
 }
 
@@ -373,7 +254,7 @@ function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-deck-bg text-deck-ink flex">
       <Sidebar route={route} />
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 flex flex-col">
         {/* R31: below md the sidebar is gone — this horizontal tab bar is the nav */}
         <nav
           aria-label="tabs"
@@ -408,6 +289,8 @@ function MobileTab({ n, active }: { n: { hash: string; key: string; icon: string
   );
 }
 
+
+
 export default function App() {
   useDigitNav();
   return (
@@ -419,6 +302,21 @@ export default function App() {
 
 function Routed() {
   const route = useHashRoute();
+  // R53: #/ is the portal gate. Unauthenticated → lock screen (no shell);
+  // authenticated → straight into the console (#/mcp). No landing page.
+  if (route === "#/" || route === "#" || route === "") {
+    if (!portalUnlocked()) {
+      return (
+        <LockScreen
+          onUnlock={() => {
+            window.location.hash = "#/mcp";
+          }}
+        />
+      );
+    }
+    window.location.hash = "#/mcp";
+    return null;
+  }
   if (route.startsWith("#/design")) {
     return (
       <Shell>
@@ -461,5 +359,7 @@ function Routed() {
       </Shell>
     );
   }
-  return <Console />;
+  // unknown route → the console, not a dead end
+  window.location.hash = "#/mcp";
+  return null;
 }

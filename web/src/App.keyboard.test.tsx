@@ -55,6 +55,16 @@ function baseFetch() {
       return Promise.resolve({
         json: () => Promise.resolve({ skills: [], categories: [], total: 0, valid: 0 }),
       });
+    // R53: the digit-nav test jumps to #/skills — SkillsPanel needs these
+    // or the tree crashes and every subsequent link query dies with it
+    if (url === "/api/skills/state")
+      return Promise.resolve({
+        json: () => Promise.resolve({ source: "x", exists: true, skills: [], counts: { total: 0, valid: 0 } }),
+      });
+    if (url === "/api/skills/doctor")
+      return Promise.resolve({ json: () => Promise.resolve({ summary: "ok", views: [], graveyard: { removed: 0 } }) });
+    if (url === "/api/skills/watcher")
+      return Promise.resolve({ json: () => Promise.resolve({ ok: true, running: false }) });
     return Promise.resolve({ json: () => Promise.resolve({}) });
   });
 }
@@ -77,12 +87,13 @@ describe("R29: keyboard navigation", () => {
   });
 
   it("digit keys jump to the matching tab", async () => {
+    window.location.hash = "#/mcp"; // R53: no landing page — start on a shell route
     render(<App />);
-    await screen.findByText(/step 1|next step/i); // landing rendered
-    fireEvent.keyDown(window, { key: "2" });
-    await waitFor(() => expect(window.location.hash).toBe("#/mcp"));
+    await screen.findAllByRole("link", { name: /mcp/i });
+    fireEvent.keyDown(window, { key: "2" }); // mcp=1, skills=2
+    await waitFor(() => expect(window.location.hash).toBe("#/skills"));
     await waitFor(() => {
-      for (const link of screen.getAllByRole("link", { name: /mcp/i }))
+      for (const link of screen.getAllByRole("link", { name: /skills/i }))
         expect(link).toHaveAttribute("aria-current", "page");
     });
   });
@@ -100,9 +111,10 @@ describe("R29: keyboard navigation", () => {
   });
 
   it("route change moves focus to the page container", async () => {
+    window.location.hash = "#/mcp"; // R53: no landing page — start on a shell route
     render(<App />);
-    await screen.findByText(/step 1|next step/i); // landing rendered
-    fireEvent.keyDown(window, { key: "6" }); // vault
+    await screen.findAllByRole("link", { name: /mcp/i });
+    fireEvent.keyDown(window, { key: "5" }); // R53: vault is digit 5
     await waitFor(() => expect(window.location.hash).toBe("#/vault"));
     await waitFor(() =>
       expect(document.activeElement?.getAttribute("data-route-focus")).toBe("true"),

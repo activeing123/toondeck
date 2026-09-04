@@ -71,7 +71,6 @@ describe("R24: i18n key-space audit", () => {
   // at every call site (Led label= props across panels; static regex needs a
   // quote directly after `t(` so expression-shaped calls are invisible to it)
   const DYNAMIC_KEYS = new Set([
-    "nav.deck",
     "nav.mcp",
     "nav.skills",
     "nav.agents",

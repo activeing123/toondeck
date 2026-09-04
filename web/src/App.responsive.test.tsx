@@ -3,7 +3,7 @@ R31: responsive contract.
 
 The sidebar was w-56 shrink-0 with NO breakpoint classes — a narrow window
 lost 224px permanently and the panels squeezed into the rest. Contract:
-- below md: a horizontal, scrollable tab bar (role=navigation, all 7 tabs)
+- below md: a horizontal, scrollable tab bar (role=navigation, all 6 tabs)
 - at md+: the desktop sidebar only (hidden md:flex)
 - main content padding adapts (p-4 md:p-8)
 - toasts span the bottom edge on phones (left-4 right-4 sm:left-auto)
@@ -51,7 +51,7 @@ function baseFetch() {
 describe("R31: responsive shell", () => {
   beforeEach(() => {
     window.location.hash = "#/mcp";
-    // R37: the responsive contract counts the DEV-inclusive nav (7 tabs)
+    // R37: the responsive contract counts the DEV-inclusive nav (6 tabs)
     localStorage.setItem("toondeck.dev", "1");
     vi.stubGlobal("fetch", baseFetch());
   });
@@ -60,11 +60,11 @@ describe("R31: responsive shell", () => {
     localStorage.removeItem("toondeck.dev");
   });
 
-  it("renders a mobile tab bar with all 7 tabs", async () => {
+  it("renders a mobile tab bar with all 6 tabs", async () => {
     render(<App />);
     const mob = await screen.findByRole("navigation", { name: /tabs/i });
     const links = within(mob).getAllByRole("link");
-    expect(links.length).toBe(7);
+    expect(links.length).toBe(6);
   });
 
   it("keeps the desktop sidebar md-only", async () => {
