@@ -1,13 +1,23 @@
 {
   "id": "claude-code",
   "display_name": "Claude Code",
-  "executable_probes": ["cla", "claude"],
-  "dir_probes": ["~/.claude"],
-  "config_paths": ["~/.claude.json", "~/.claude/settings.json"],
+  "executable_probes": [
+    "cla",
+    "claude"
+  ],
+  "dir_probes": [
+    "~/.claude"
+  ],
+  "config_paths": [
+    "~/.claude.json",
+    "~/.claude/settings.json"
+  ],
   "skills_dir": "~/.claude/skills",
-  "launch_command": ["claude"],
+  "launch_command": [
+    "claude"
+  ],
   "tui": true,
   "model_env": "ANTHROPIC_MODEL",
-  "env_config_support": false
+  "env_config_support": false,
+  "install_hint": "npm install -g @anthropic-ai/claude-code"
 }
-

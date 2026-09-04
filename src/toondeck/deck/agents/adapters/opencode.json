@@ -15,5 +15,6 @@
     "opencode"
   ],
   "env_config_support": true,
-  "tui": true
+  "tui": true,
+  "install_hint": "npm install -g opencode-ai"
 }

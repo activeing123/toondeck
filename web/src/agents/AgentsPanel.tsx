@@ -25,6 +25,7 @@ type AgentRow = {
   config_paths: Record<string, boolean>;
   launch_command: string[] | null;
   tui?: boolean;
+  install_hint?: string | null;
 };
 
 type StatusRow = {
@@ -331,6 +332,21 @@ export default function AgentsPanel() {
               </div>
               {flash[a.id] && (
                 <div className="mt-1.5 text-xs text-deck-muted">{flash[a.id]}</div>
+              )}
+              {!a.installed && a.install_hint && (
+                // N-R4: an uninstalled card was a dead end — no LED action,
+                // no next step. The install command goes right on the card,
+                // copyable, so the novice can paste it into any terminal.
+                <p
+                  data-testid={`install-hint-${a.id}`}
+                  className="mt-1.5 text-xs text-deck-muted"
+                >
+                  {t("agents.installPre")}{" "}
+                  <code className="rounded bg-deck-panel2 px-1.5 py-0.5 font-mono text-deck-accent select-all">
+                    {a.install_hint}
+                  </code>{" "}
+                  {t("agents.installPost")}
+                </p>
               )}
               {st.state === "exited" && (
                 // N-R6: the mcptoon self-heal loop was invisible — a novice

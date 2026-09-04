@@ -131,3 +131,19 @@ def test_omp_is_a_first_class_adapter(tmp_path):
     r = detect(adapters["omp"], home=tmp_path)
     assert r["installed"] is True
     assert r["launch_command"] == ["omp"]
+
+
+def test_detect_exposes_install_hint_for_uninstalled_agents(tmp_path):
+    """N-R4: a novice staring at an uninstalled card needs the install
+    command right there — adapters carry an optional install_hint."""
+    import json as _json
+    from pathlib import Path
+
+    from toondeck.deck.agents import internal
+    from toondeck.deck.agents.internal.probes import detect
+
+    adapters = internal.load_all()
+    hint_adapters = {k: v for k, v in adapters.items() if v.get("install_hint")}
+    assert {"claude-code", "codex", "omp"} <= set(hint_adapters), "missing install hints"
+    r = detect(adapters["gemini-cli"], home=tmp_path)
+    assert r["install_hint"].startswith("npm install")

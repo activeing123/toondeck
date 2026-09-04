@@ -50,4 +50,7 @@ def detect(adapter: dict, home: Path | None = None) -> dict:
         "launch_command": adapter.get("launch_command"),
         "env_config_support": adapter.get("env_config_support", False),
         "tui": bool(adapter.get("tui", False)),
+        # N-R4: how to install this agent, shown on an uninstalled card —
+        # a dead "not installed" card with no next step fails novices.
+        "install_hint": adapter.get("install_hint"),
     }
