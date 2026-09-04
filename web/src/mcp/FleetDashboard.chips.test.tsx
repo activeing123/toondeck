@@ -63,3 +63,21 @@ describe("N: source chips vs unique-tool total reconciliation", () => {
     expect(screen.queryByTestId("by-source-note")).toBeNull();
   });
 });
+
+describe("N-R1: deck-vs-engine memory anchor", () => {
+  beforeEach(() => {
+    localStorage.setItem("toondeck.lang", "zh");
+  });
+
+  it("the hero names the relationship: ToonDeck cockpit, mcptoon engine", async () => {
+    vi.stubGlobal("fetch", mockFetch({ toondeck: 13 }, 13));
+    render(
+      <I18nProvider>
+        <FleetDashboard />
+      </I18nProvider>,
+    );
+    const anchor = await screen.findByTestId("deck-vs-engine");
+    expect(anchor).toHaveTextContent(/驾驶舱/);
+    expect(anchor).toHaveTextContent(/mcptoon/);
+  });
+});

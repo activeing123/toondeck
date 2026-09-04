@@ -141,6 +141,14 @@ export default function FleetDashboard({ reloadSignal = 0 }: { reloadSignal?: nu
         )}
       </div>
 
+      {/* N-R1: two names ship in one app — ToonDeck (this cockpit) and
+          mcptoon (the engine under it). A novice meets both and never learns
+          which is which; one sticky line fixes the confusion and makes the
+          engine name the one thing they remember. */}
+      <p data-testid="deck-vs-engine" className="text-xs text-deck-muted">
+        {t("fleet.deckVsEngine")}
+      </p>
+
       <div className="flex flex-wrap gap-3">
         {/* R52 (P2): the capabilities total is clickable too — it summarizes
             tools + skills + agents, so it jumps to the deck home hub that

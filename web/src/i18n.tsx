@@ -214,6 +214,10 @@ export const DICT: Record<string, { en: string; zh: string }> = {
   "fleet.skillsSub": { en: "{total} in total · views {ok}/{views} healthy", zh: "{total} 总数 · 视图 {ok}/{views} 健康" },
   "fleet.launchable": { en: "{n} launchable in one click", zh: "{n} 个可一键启动" },
   "fleet.bySource": { en: "tool sources:", zh: "工具来源：" },
+  "fleet.deckVsEngine": {
+    en: "ToonDeck is the cockpit — mcptoon is the engine doing the scanning, syncing and launching underneath.",
+    zh: "ToonDeck 是驾驶舱——底下干活的引擎是 mcptoon：扫描、同步、启动都是它在做。记住它，命令行里用的也是这个名字。",
+  },
   "fleet.dedupNote": {
     en: "sources add up to {sum} — one tool via several agents counts once: {total} unique",
     zh: "按来源相加是 {sum} —— 同一工具被多个 agent 配置时只计一次，去重后共 {total} 个",
