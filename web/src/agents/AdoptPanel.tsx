@@ -114,6 +114,11 @@ export default function AdoptPanel({
         {msg && <span className="ml-auto text-sm text-led-ok">{msg}</span>}
       </div>
 
+      {/* N-R7: name the deal — adopting registers an agent into the deck so
+          it gets its own card, launch button and skill sync. */}
+      <p className="mt-2 text-xs text-deck-muted" data-testid="discover-hint">
+        {t("agents.discoverHint")}
+      </p>
       {fresh.length > 0 && (
         <div className="mt-3 space-y-2">
           {fresh.map((u) => (

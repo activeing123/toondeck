@@ -139,6 +139,10 @@ export const DICT: Record<string, { en: string; zh: string }> = {
   "agents.windowLaunched": { en: "opened in a desktop window", zh: "已在桌面打开终端窗口" },
   "agents.downloadLog": { en: "download log report (hand it to an agent to debug)", zh: "下载日志报告（可直接丢给 agent 分析修复）" },
   "agents.discover": { en: "discover agents", zh: "发现 agent" },
+  "agents.discoverHint": {
+    en: "adding one registers it into the deck — it gets its own card with launch/stop/logs, and joins skill sync.",
+    zh: "添加后它就正式注册进 deck：拥有自己的卡片（启动/停止/日志），并纳入技能同步。",
+  },
   "agents.adopt": { en: "adopt", zh: "收编" },
   "agents.adopted": { en: "adopted", zh: "已收编" },
   "agents.installPre": { en: "Install first — the card lights up on its own:", zh: "安装好后卡片会自动点亮：" },
