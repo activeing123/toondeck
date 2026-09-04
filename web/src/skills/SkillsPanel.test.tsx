@@ -60,8 +60,8 @@ describe("SkillsPanel", () => {
     await userEvent.click(await screen.findByTestId("category-pill-🛠 开发工程"));
     expect(await screen.findByText("good")).toBeInTheDocument();
     expect(await screen.findByText("A good skill.")).toBeInTheDocument();
-    expect(await screen.findByText("agent views")).toBeInTheDocument();
-    expect(await screen.findByText(/doctor:/)).toBeInTheDocument();
+    expect(await screen.findByText(/synced to each agent/)).toBeInTheDocument();
+    expect(await screen.findByText(/health check:/)).toBeInTheDocument();
   });
 
   it("filters skills by query", async () => {
@@ -81,7 +81,7 @@ describe("SkillsPanel", () => {
 
   it("watcher toggle reflects running state", async () => {
     render(<SkillsPanel />);
-    await userEvent.click(await screen.findByRole("button", { name: /watch off/ }));
-    expect(await screen.findByText(/● watching/)).toBeInTheDocument();
+    await userEvent.click(await screen.findByRole("button", { name: /watch for changes/ }));
+    expect(await screen.findByText(/● watching for changes/)).toBeInTheDocument();
   });
 });

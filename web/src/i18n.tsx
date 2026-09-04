@@ -265,11 +265,11 @@ export const DICT: Record<string, { en: string; zh: string }> = {
   "skills.cardErrors": { en: "problems:", zh: "问题：" },
   "skills.syncOneDone": { en: "synced \"{name}\" to all agent views", zh: "已将「{name}」同步到全部 agent 视图" },
   "skills.syncOneFail": { en: "sync failed for \"{name}\"", zh: "「{name}」同步失败" },
-  "skills.removeDone": { en: "removed \"{name}\" — recoverable from the graveyard", zh: "已移除「{name}」——可在 graveyard 找回" },
+  "skills.removeDone": { en: "removed \"{name}\" — recoverable from the recycle bin", zh: "已移除「{name}」——可在回收站找回" },
   "skills.removeFail": { en: "remove failed for \"{name}\"", zh: "「{name}」移除失败" },
   "skills.removeWarn": {
-    en: "Remove \"{name}\"? Its source folder moves to the graveyard and every agent view loses it. Recoverable by hand.",
-    zh: "移除「{name}」？其源目录将移入 graveyard，所有 agent 视图不再包含它。可手动找回。",
+    en: "Remove \"{name}\"? It moves to the recycle bin and every agent view loses it. Recoverable by hand.",
+    zh: "移除「{name}」？技能将移入回收站，所有 agent 目录不再包含它。可手动找回。",
   },
   "skills.removeConfirm": { en: "remove skill", zh: "确认移除" },
   "skills.invalidBadge": { en: "invalid", zh: "无效" },
@@ -310,6 +310,19 @@ export const DICT: Record<string, { en: string; zh: string }> = {
   "led.noKey": { en: "no key", zh: "无密钥" },
   "led.local": { en: "local provider", zh: "本地 provider" },
   "led.timeout": { en: "timed out", zh: "超时" },
+  // N-lane (novice UX): help exit + skills terminology greening
+  "footer.github": { en: "GitHub · source & issues", zh: "GitHub · 源码与反馈" },
+  "skills.doctorBtn": { en: "health check", zh: "体检" },
+  "skills.doctorLed": { en: "health check: {summary}", zh: "体检：{summary}" },
+  "skills.doctorLine": { en: "health check: {summary} · {n} in the recycle bin", zh: "体检：{summary} · 回收站 {n} 条" },
+  "skills.syncAll": { en: "sync all agents", zh: "同步全部 agent" },
+  "skills.watchOn": { en: "● watching for changes", zh: "● 实时守护中" },
+  "skills.watchOff": { en: "○ watch for changes", zh: "○ 实时守护关" },
+  "skills.watchHint": {
+    en: "re-sync skills automatically when the source folder changes",
+    zh: "技能源目录变化时自动重新同步",
+  },
+  "skills.viewsTitle": { en: "synced to each agent's skill folder", zh: "已同步到各 agent 的技能目录" },
 };
 
 type I18nCtx = {

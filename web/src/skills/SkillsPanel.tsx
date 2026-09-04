@@ -12,8 +12,10 @@ import {
 import CategoryPills from "./CategoryPills";
 import ViewMatrix from "./ViewMatrix";
 import { Led } from "../ui/Led";
+import { useI18n } from "../i18n";
 
 export default function SkillsPanel() {
+  const { t } = useI18n();
   const [state, setState] = useState<SkillsState | null>(null);
   const [doctor, setDoctor] = useState<DoctorReport | null>(null);
   const [watcher, setWatcher] = useState<WatcherStatus | null>(null);
@@ -67,32 +69,33 @@ export default function SkillsPanel() {
             onClick={load}
             className="rounded-deck border border-deck-line px-3 py-1.5 text-sm hover:bg-deck-panel2"
           >
-            refresh
+            {t("common.refresh")}
           </button>
           <button
             onClick={onSync}
             disabled={busy}
             className="rounded-deck bg-deck-accent px-3 py-1.5 text-sm font-semibold text-deck-bg hover:opacity-90"
           >
-            {busy ? "…" : "sync all agents"}
+            {busy ? "…" : t("skills.syncAll")}
           </button>
           <button
             onClick={onDoctor}
             disabled={busy}
             className="rounded-deck border border-deck-line px-3 py-1.5 text-sm hover:bg-deck-panel2"
           >
-            doctor
+            {t("skills.doctorBtn")}
           </button>
           <button
             onClick={onWatcher}
             disabled={busy}
+            title={t("skills.watchHint")}
             className={`rounded-deck border px-3 py-1.5 text-sm ${
               watcher?.running
                 ? "border-led-ok text-led-ok"
                 : "border-deck-line hover:bg-deck-panel2"
             }`}
           >
-            {watcher?.running ? "● watching" : "○ watch off"}
+            {watcher?.running ? t("skills.watchOn") : t("skills.watchOff")}
           </button>
         </div>
       </div>
@@ -106,10 +109,11 @@ export default function SkillsPanel() {
 
       {doctor && (
         <div className="flex items-center gap-3 text-sm">
-          <Led tone={doctor.summary === "ok" ? "ok" : "warn"} label={`doctor: ${doctor.summary}`} />
-          <span>
-            doctor: <b>{doctor.summary}</b> · graveyard {doctor.graveyard.removed} removed
-          </span>
+          <Led
+            tone={doctor.summary === "ok" ? "ok" : "warn"}
+            label={t("skills.doctorLed", { summary: doctor.summary })}
+          />
+          <span>{t("skills.doctorLine", { summary: doctor.summary, n: doctor.graveyard.removed })}</span>
         </div>
       )}
 
