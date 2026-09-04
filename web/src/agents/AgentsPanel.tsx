@@ -337,6 +337,23 @@ export default function AgentsPanel() {
                 <div className="mt-1.5 text-xs text-deck-muted">{flash[a.id]}</div>
               )}
 
+              {/* R51 (P1-2): the launch explanation used to live only in the
+                  button's hover title (keyboard/touch users never saw it).
+                  Persistent micro-copy: the actual command, or why the
+                  launch button is disabled (GUI-only agent). */}
+              {a.launch_command ? (
+                <p
+                  className="mt-2 truncate font-mono text-xs text-deck-muted"
+                  data-testid={`launch-cmd-${a.id}`}
+                >
+                  $ {a.launch_command.join(" ")}
+                </p>
+              ) : a.installed ? (
+                <p className="mt-2 text-xs text-deck-muted" data-testid={`gui-only-${a.id}`}>
+                  {t("agents.guiOnlyHint")}
+                </p>
+              ) : null}
+
               <div className="mt-2 flex flex-wrap gap-1.5 text-xs">
                 {Object.entries(a.evidence).map(([k, v]) => (
                   <span
@@ -355,7 +372,6 @@ export default function AgentsPanel() {
                   onClick={() => act(a.id, "launch")}
                   disabled={!canLaunch || st.state === "running" || pending?.id === a.id}
                   className="rounded-deck bg-deck-accent px-3 py-1.5 text-sm font-semibold text-deck-bg disabled:opacity-40"
-                  title={a.launch_command ? a.launch_command.join(" ") : "GUI-only agent"}
                 >
                   {pending?.id === a.id && pending.action === "launch" ? (
                     <>
@@ -444,11 +460,11 @@ export default function AgentsPanel() {
                       placeholder={t("agents.model")}
                       className="ml-auto w-44 rounded-deck bg-deck-panel2 px-2.5 py-1.5 text-xs font-mono"
                     />
+                  <span className="text-xs text-deck-muted whitespace-nowrap">{t("agents.sourceLabel")}</span>
                     <select
                       value={sources[a.id] ?? ""}
                       onChange={(e) => changeSource(a.id, e.target.value)}
                       className="rounded-deck bg-deck-panel2 px-2 py-1.5 text-xs"
-                      title={t("agents.sourceTitle")}
                     >
                       <option value="">{t("agents.defaultApi")}</option>
                       {Object.keys(profiles).map((n) => (

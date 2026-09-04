@@ -167,7 +167,12 @@ export const DICT: Record<string, { en: string; zh: string }> = {
   "agents.profileName": { en: "name (e.g. my-proxy)", zh: "名称 (如 my-proxy)" },
   "agents.baseUrl": { en: "base URL (https://…/v1)", zh: "Base URL (https://…/v1)" },
   "agents.save": { en: "save", zh: "保存" },
-  "agents.sourceTitle": { en: "API model source", zh: "API 模型源" },
+  // R51: hover-only explanations became persistent micro-copy (P1-2)
+  "agents.guiOnlyHint": {
+    en: "GUI-only agent — no launch command; add one to enable launching.",
+    zh: "仅桌面窗 agent——暂无启动命令；添加一条即可启用启动按钮。",
+  },
+  "agents.sourceLabel": { en: "API model source:", zh: "API 模型源：" },
   "agents.defaultApi": { en: "default API", zh: "默认 API" },
   "agents.windowLog": {
     en: "🪟 logs stream in their own desktop window — this panel only records pipe-mode launches.",
