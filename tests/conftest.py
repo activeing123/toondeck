@@ -34,4 +34,7 @@ def engine_env(tmp_path, monkeypatch):
     monkeypatch.setattr(mcache, "_CACHE_FILE", tmp_path / "schema_cache.json")
     monkeypatch.setenv("TOONDECK_SKILLS_DIR", str(tmp_path / "skills"))
     monkeypatch.setenv("TOONDECK_VIEWS_DIR", str(tmp_path / "views"))
+    # R45: the activity journal must be hermetic too — API tests record deck
+    # actions, and without this they would append to the REAL ~/.toondeck
+    monkeypatch.setenv("TOONDECK_HOME", str(tmp_path / "toondeck-home"))
     return tmp_path

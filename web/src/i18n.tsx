@@ -140,8 +140,26 @@ export const DICT: Record<string, { en: string; zh: string }> = {
     zh: "未启动过的 agent：{names} — 去 Agents 页一键启动后，日志会出现在这里。",
   },
   "logs.empty": {
-    en: "no logs yet — launch an agent (Agents page) or run an MCP health check first.",
-    zh: "还没有任何日志 — 启动一个 agent（Agents 页）或跑一次 MCP 体检后再来。",
+    en: "no agent pipe logs yet — launch an agent (Agents page). Deck actions are recorded below in the activity journal.",
+    zh: "还没有 agent 管道日志 — 去 Agents 页启动一个。deck 自身的动作会记录在下方活动日志里。",
+  },
+  // R45: activity journal — what the deck itself did (honest ledger, not pipe logs)
+  "logs.activityTitle": { en: "Activity", zh: "活动日志" },
+  "logs.activityHint": { en: "what the deck itself did — checks, syncs, launches, probes", zh: "deck 自身的动作 — 体检、同步、启动、探针" },
+  "logs.actHealth": { en: "MCP health check", zh: "MCP 体检" },
+  "logs.actSync": { en: "MCP config sync", zh: "MCP 配置同步" },
+  "logs.actSkillsSync": { en: "skills sync", zh: "技能同步" },
+  "logs.actSkillsSyncOne": { en: "skill sync", zh: "单技能同步" },
+  "logs.actLaunch": { en: "agent launch", zh: "启动 agent" },
+  "logs.actStop": { en: "agent stop", zh: "停止 agent" },
+  "logs.actProbe": { en: "vault probe", zh: "密钥探针" },
+  "logs.actAdopt": { en: "agent adopt", zh: "收编 agent" },
+  "logs.actUnknown": { en: "event", zh: "事件" },
+  "logs.actOk": { en: "ok", zh: "成功" },
+  "logs.actFail": { en: "failed", zh: "失败" },
+  "logs.actEmpty": {
+    en: "nothing yet — run a health check or sync and it will show up here.",
+    zh: "还没有记录 — 跑一次体检或同步，动作就会记在这里。",
   },
   // skills pills
   "skills.searchPlaceholder": { en: "🔍 search skill names or descriptions…", zh: "🔍 搜索技能名或描述…" },

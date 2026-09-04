@@ -17,6 +17,7 @@ from pydantic import BaseModel
 from .. import agentdiscover
 from .. import agents
 from .. import engine
+from .. import journal
 from .. import mcpdiscover
 from .. import skills
 from .. import vault
@@ -154,7 +155,13 @@ def create_app() -> FastAPI:
 
     @app.post("/api/mcp/sync")
     def mcp_sync() -> dict:
-        return {"results": engine.request_sync()}
+        results = engine.request_sync()
+        journal.record(
+            "mcp.sync",
+            agents=len(results),
+            ok=sum(1 for x in results if isinstance(x, dict) and x.get("ok", True)),
+        )
+        return {"results": results}
 
     @app.get("/api/mcp/health")
     def mcp_health(timeout: float = 10.0) -> dict:
@@ -163,7 +170,21 @@ def create_app() -> FastAPI:
         clamped = min(30.0, max(1.0, float(timeout)))
         out = dict(_health_singleflight(clamped))
         out["timeout_s"] = clamped
+        results = out.get("results") or []
+        journal.record(
+            "mcp.health",
+            timeout_s=clamped,
+            servers=len(results),
+            ok=sum(1 for h in results if isinstance(h, dict) and h.get("ok")),
+        )
         return out
+
+    # ── R45: activity journal — the Logs page feeds on what the deck does ──
+    @app.get("/api/activity")
+    def activity(limit: int = 100) -> dict:
+        if limit < 1:
+            return {"events": []}  # honor the ask: 0 events means 0 events
+        return {"events": journal.read(min(500, limit))}
 
     @app.get("/api/skills/state")
     def skills_state() -> dict:
@@ -171,13 +192,21 @@ def create_app() -> FastAPI:
 
     @app.post("/api/skills/sync")
     def skills_sync() -> dict:
-        return {"results": skills.sync_all()}
+        results = skills.sync_all()
+        journal.record(
+            "skills.sync",
+            views=len(results),
+            ok=sum(1 for x in results if isinstance(x, dict) and x.get("ok", True)),
+        )
+        return {"results": results}
 
     @app.post("/api/skills/sync/{name}")
     def skills_sync_one(name: str) -> dict:
         # UX-017: single-skill sync. Unknown name → 200 ok:false, same
         # deck-level error reporting contract as /api/skills/remove.
-        return skills.sync_one(name)
+        r = skills.sync_one(name)
+        journal.record("skills.sync_one", name=name, ok=bool(r.get("ok")))
+        return r
 
     @app.get("/api/skills/doctor")
     def skills_doctor() -> dict:
@@ -213,7 +242,9 @@ def create_app() -> FastAPI:
 
     @app.post("/api/vault/test/{provider}")
     def vault_test(provider: str) -> dict:
-        return vault.test(provider)
+        r = vault.test(provider)
+        journal.record("vault.probe", provider=provider, ok=bool(r.get("ok")))
+        return r
 
     @app.get("/api/mcp/discover")
     def mcp_discover() -> dict:
@@ -269,7 +300,13 @@ def create_app() -> FastAPI:
 
     @app.post("/api/agents/adopt")
     def agents_adopt(payload: AdoptIn) -> dict:
-        return agentdiscover.adopt(payload.label, payload.launch_command)
+        r = agentdiscover.adopt(payload.label, payload.launch_command)
+        journal.record(
+            "agent.adopt",
+            label=payload.label,
+            ok=bool(r.get("ok", True)) if isinstance(r, dict) else True,
+        )
+        return r
 
     @app.post("/api/agents/{agent_id}/launch-command")
     def agent_set_launch_command(agent_id: str, payload: LaunchCommandIn) -> dict:
@@ -314,7 +351,7 @@ def create_app() -> FastAPI:
         if payload and payload.plain_env:
             env_extra.update(payload.plain_env)
         profile = payload.profile if payload and payload.profile else agents.get_sources().get(agent_id)
-        return agents.launch(
+        r = agents.launch(
             agent_id,
             cwd=payload.cwd if payload else None,
             args=payload.args if payload else None,
@@ -322,10 +359,21 @@ def create_app() -> FastAPI:
             window=payload.window if payload else None,
             profile=profile,
         )
+        journal.record(
+            "agent.launch",
+            agent=agent_id,
+            ok=bool(r.get("ok", True)),
+            pid=r.get("pid"),
+            mode=r.get("mode"),
+            profile=profile,
+        )
+        return r
 
     @app.post("/api/agents/{agent_id}/stop")
     def agent_stop(agent_id: str) -> dict:
-        return agents.stop(agent_id)
+        r = agents.stop(agent_id)
+        journal.record("agent.stop", agent=agent_id, ok=bool(r.get("ok", True)))
+        return r
 
     @app.websocket("/api/agents/{agent_id}/logs")
     async def agent_logs(ws: WebSocket, agent_id: str) -> None:

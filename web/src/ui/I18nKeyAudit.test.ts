@@ -90,6 +90,18 @@ describe("R24: i18n key-space audit", () => {
     "led.noKey",
     "led.local",
     "led.timeout",
+    // logs.* — R45 activity journal, called as t(ACT_LABEL[e.event]) over a
+    // lookup table in LogsPanel (static regex cannot see table-driven calls)
+    "logs.actHealth",
+    "logs.actSync",
+    "logs.actSkillsSync",
+    "logs.actSkillsSyncOne",
+    "logs.actLaunch",
+    "logs.actStop",
+    "logs.actProbe",
+    "logs.actAdopt",
+    // actUnknown is the raw-name fallback reached via ternary in LogsPanel
+    "logs.actUnknown",
   ]);
 
   it("has no dead keys (DICT entries no t() call references)", () => {
