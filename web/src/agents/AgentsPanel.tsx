@@ -347,6 +347,25 @@ export default function AgentsPanel() {
               {flash[a.id] && (
                 <div className="mt-1.5 text-xs text-deck-muted">{flash[a.id]}</div>
               )}
+              {st.state === "exited" && (
+                // N-R6: the mcptoon self-heal loop was invisible — a novice
+                // saw "exited · code 1" and stopped there. Point at the md
+                // report hand-off right on the failed card.
+                <p
+                  data-testid={`selffix-hint-${a.id}`}
+                  className="mt-1.5 text-xs text-deck-muted"
+                >
+                  {t("agents.selffixPre")}{" "}
+                  <a
+                    href={`/api/agents/${a.id}/logs/download`}
+                    download
+                    className="text-deck-accent hover:underline"
+                  >
+                    {t("logs.downloadMd")}
+                  </a>
+                  {t("agents.selffixPost")}
+                </p>
+              )}
 
               {/* R51 (P1-2): the launch explanation used to live only in the
                   button's hover title (keyboard/touch users never saw it).

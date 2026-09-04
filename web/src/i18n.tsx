@@ -294,6 +294,11 @@ export const DICT: Record<string, { en: string; zh: string }> = {
   "logs.running": { en: "running · pid {pid}", zh: "运行中 · pid {pid}" },
   "logs.exited": { en: "exited · code {code}", zh: "已退出 · code {code}" },
   "logs.downloadMd": { en: "⬇ md report", zh: "⬇ 下载 md 报告" },
+  "agents.selffixPre": { en: "Agent exited with a problem?", zh: "agent 挂了？" },
+  "agents.selffixPost": {
+    en: " and hand it to any agent — ask it to diagnose and fix the launch.",
+    zh: " 下载后丢给任意 agent（claude/codex 都行），让它自己诊断修复。",
+  },
   "logs.collapse": { en: "collapse", zh: "收起" },
   "logs.live": { en: "live log", zh: "实时日志" },
   "logs.filterPlaceholder": { en: "🔍 filter lines…", zh: "🔍 过滤日志行…" },
