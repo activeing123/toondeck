@@ -481,13 +481,12 @@ export default function AgentsPanel() {
                     t("agents.launch")
                   )}
                 </button>
-                {/* N-R3: a never-launched agent has nothing to stop and no
-                    logs to show — disabled buttons just confuse a novice.
-                    Render them only once the agent has a lifecycle. */}
-                {st.state !== "never" && (
+                {/* N-R3/N-R10: 停止 only exists while something is actually
+                    running — disabled copies on exited cards read as noise. */}
+                {st.state === "running" && (
                   <button
                     onClick={() => act(a.id, "stop")}
-                    disabled={st.state !== "running" || pending?.id === a.id}
+                    disabled={pending?.id === a.id}
                     className="rounded-deck border border-deck-line px-3 py-1.5 text-sm disabled:opacity-40"
                   >
                     {pending?.id === a.id && pending.action === "stop" ? (
