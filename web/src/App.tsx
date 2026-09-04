@@ -174,7 +174,12 @@ function PortalSecurity() {
       setNw("");
       markChecklistDone("pw"); // N-R2: first-hour step sealed
     } else {
-      setMsg(r.error ?? "failed");
+      // N-R3: backend error strings are English engineer-speak; map the
+      // known ones, prefix the unknown ones — never print naked English.
+      const known: Record<string, string> = {
+        "current password is wrong": t("portal.errCurrent"),
+      };
+      setMsg(known[r.error ?? ""] ?? `${t("portal.errPrefix")}${r.error ?? ""}`);
     }
   };
 
@@ -226,7 +231,7 @@ function PortalSecurity() {
         </div>
       )}
       {msg && (
-        <p className="text-xs" role="status">
+        <p className="text-xs" role="status" data-testid="portal-msg">
           {msg}
         </p>
       )}

@@ -127,6 +127,8 @@ export const DICT: Record<string, { en: string; zh: string }> = {
     zh: "都在界面里点得到——做完一步自动打勾。",
   },
   "cl.dismiss": { en: "dismiss", zh: "知道了，收起" },
+  "portal.errCurrent": { en: "the current password is not right — try again", zh: "当前密码不对——再试一次" },
+  "portal.errPrefix": { en: "change failed: ", zh: "修改失败：" },
   "cl.step.pw": { en: "Change the default password (sidebar → change password)", zh: "改掉默认密码 admin123（侧栏 →「修改密码」）" },
   "cl.step.health": { en: "Run one health check on the MCP page", zh: "在 MCP 页跑一次「全量体检」" },
   "cl.step.sync": { en: "Sync all agents so every agent gets the same tools", zh: "「同步全部 agent」，让每个 agent 拿到同一份工具" },
