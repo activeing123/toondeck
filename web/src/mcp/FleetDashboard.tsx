@@ -136,17 +136,19 @@ export default function FleetDashboard({ reloadSignal = 0 }: { reloadSignal?: nu
       </div>
 
       <div className="flex flex-wrap gap-3">
-        <div className="glass rounded-deck p-4 min-w-52 border border-deck-accent/40">
-          <div className="text-4xl font-mono font-bold text-deck-accent">
-            {invLoading ? "…" : totalTools + o.skills.valid + o.agents.installed}
-          </div>
-          <div className="mt-1 text-sm font-semibold">{t("fleet.capabilities")}</div>
-          <div className="text-xs text-deck-muted">
-            {invLoading
+        {/* R52 (P2): the capabilities total is clickable too — it summarizes
+            tools + skills + agents, so it jumps to the deck home hub that
+            owns all three. No more static big number. */}
+        <Big
+          n={invLoading ? "…" : totalTools + o.skills.valid + o.agents.installed}
+          label={t("fleet.capabilities")}
+          sub={
+            invLoading
               ? t("fleet.probing")
-              : t("fleet.summary", { tools: totalTools, skills: o.skills.valid, agents: o.agents.installed })}
-          </div>
-        </div>
+              : t("fleet.summary", { tools: totalTools, skills: o.skills.valid, agents: o.agents.installed })
+          }
+          href="#/"
+        />
         <Big
           n={invLoading ? "…" : totalTools}
           label={t("fleet.mcpTools")}
@@ -156,7 +158,8 @@ export default function FleetDashboard({ reloadSignal = 0 }: { reloadSignal?: nu
               : t("fleet.firstScan")
           }
           accent
-          onClick={() => document.getElementById("tools-browser")?.scrollIntoView({ behavior: "smooth" })}
+          // R52: the old #tools-browser anchor died with the R47 IA change
+          onClick={() => document.getElementById("server-table")?.scrollIntoView({ behavior: "smooth" })}
         />
         <Big
           n={`${o.skills.valid}`}

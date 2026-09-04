@@ -106,7 +106,17 @@ export default function McpPanel() {
     <div className="space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h1 className="text-2xl font-bold">
-            MCP <span className="text-deck-accent">{state.server_total}</span> servers
+            MCP{" "}
+            <button
+              type="button"
+              data-testid="mcp-managed-count"
+              onClick={() => document.getElementById("server-table")?.scrollIntoView({ behavior: "smooth" })}
+              className="text-deck-accent underline decoration-dotted underline-offset-4 cursor-pointer"
+              aria-label={t("fleet.mcpTools")}
+            >
+              {state.server_total}
+            </button>{" "}
+            servers
             {state.disabled_total > 0 && (
               <span className="ml-3 text-sm text-deck-muted">
                 {state.disabled_total} tools off
@@ -159,8 +169,17 @@ export default function McpPanel() {
                   <b>{src}</b> · {n}
                 </span>
               ))}
-              <span className="ml-auto text-deck-muted min-w-0">{t("mcp.universe", { managed: managed.length, discovered: discovered.length })} ·{" "}
-                {t("mcp.managedTools", { n: state.servers.reduce((n, s) => n + s.tool_total, 0) })}
+              <span className="ml-auto text-deck-muted min-w-0">
+                {t("mcp.universe", { managed: managed.length, discovered: discovered.length })} ·{" "}
+                <button
+                  type="button"
+                  data-testid="mcp-tools-count"
+                  onClick={() => document.getElementById("server-table")?.scrollIntoView({ behavior: "smooth" })}
+                  className="underline decoration-dotted underline-offset-4 cursor-pointer"
+                  aria-label={t("mcp.managedTools", { n: state.servers.reduce((n, s) => n + s.tool_total, 0) })}
+                >
+                  {t("mcp.managedTools", { n: state.servers.reduce((n, s) => n + s.tool_total, 0) })}
+                </button>
               </span>
             </div>
 

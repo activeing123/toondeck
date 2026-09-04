@@ -106,7 +106,7 @@ export default function ServerTable({
   const [open, setOpen] = useState<string | null>(null);
 
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-1.5" id="server-table">
       {rows.map((r) => {
         const tone = statusTone(r.status);
         const label = `${r.name}: ${t(statusWord(r.status))}`;
