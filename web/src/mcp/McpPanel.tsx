@@ -1,7 +1,7 @@
-import { useState } from "react";
-import DiscoverPanel from "./DiscoverPanel";
+import { useEffect, useState } from "react";
 import FleetDashboard from "./FleetDashboard";
-import ToolsBrowser from "./ToolsBrowser";
+import ServerTable, { buildRows } from "./ServerTable";
+import { importServers } from "./DiscoverPanel";
 import { HealthVerdict } from "./HealthVerdict";
 import { useI18n } from "../i18n";
 import { Led as SharedLed } from "../ui/Led";
@@ -9,10 +9,12 @@ import { ConfirmDialog } from "../ui/ConfirmDialog";
 import { ZeroState } from "../ui/ZeroState";
 import {
   checkHealth,
+  fetchInventory,
   requestSync,
   toggleTool,
   useMcpState,
   type HealthResult,
+  type InventoryData,
   type SyncResult,
 } from "./api";
 
@@ -55,6 +57,19 @@ export default function McpPanel() {
   const { t } = useI18n();
   const [invReload, setInvReload] = useState(0);
   const [confirmSync, setConfirmSync] = useState(false);
+  // R47: one inventory fetch feeds the unified table (was: ToolsBrowser
+  // lazy-loaded it behind a click, so the page looked half-empty by default)
+  const [inventory, setInventory] = useState<InventoryData | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    fetchInventory().then((d) => {
+      if (alive) setInventory(d);
+    }).catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, [invReload]);
 
   const onSync = () => {
     // UX-B4 + R26: name the blast radius in an in-app dialog (native confirm
@@ -76,13 +91,9 @@ export default function McpPanel() {
       .finally(() => setChecking(false));
   };
 
-  const onToggle = (server: string, tool: string) =>
-    toggleTool(server, tool).then(reload);
-
   if (error) return <p className="text-led-err">{error}</p>;
   if (!state) return <p className="text-deck-muted">loading deck…</p>;
 
-  const healthBy = Object.fromEntries((health ?? []).map((h) => [h.server, h]));
   const sourceCount = state.servers.reduce(
     (acc, s) => {
       for (const src of s.sources ?? []) acc[src] = (acc[src] ?? 0) + 1;
@@ -134,24 +145,38 @@ export default function McpPanel() {
 
       <TokenCard ts={state.token_savings} />
 
-      <div className="flex flex-wrap items-center gap-2 text-xs">
-        <span className="text-deck-muted">{t("mcp.takeoverSources")}</span>
-        {Object.entries(sourceCount).map(([src, n]) => (
-          <span key={src} className="rounded-full border border-deck-line px-2.5 py-1">
-            <b>{src}</b> · {n}
-          </span>
-        ))}
-        <span className="ml-auto text-deck-muted">
-          {t("mcp.managedTools", { n: state.servers.reduce((n, s) => n + s.tool_total, 0) })}
-        </span>
-      </div>
+      {(() => {
+        const managed = state.servers;
+        const invServers = inventory?.servers ?? [];
+        const discovered = invServers.filter((s) => !managed.some((m) => m.name === s.server));
+        const rows = buildRows(managed, invServers, health);
+        return (
+          <>
+            <div className="flex flex-wrap items-center gap-2 text-xs">
+              <span className="text-deck-muted">{t("mcp.takeoverSources")}</span>
+              {Object.entries(sourceCount).map(([src, n]) => (
+                <span key={src} className="rounded-full border border-deck-line px-2.5 py-1">
+                  <b>{src}</b> · {n}
+                </span>
+              ))}
+              <span className="ml-auto text-deck-muted">
+                {t("mcp.universe", { managed: managed.length, discovered: discovered.length })} ·{" "}
+                {t("mcp.managedTools", { n: state.servers.reduce((n, s) => n + s.tool_total, 0) })}
+              </span>
+            </div>
 
-      <ToolsBrowser />
-
-      <DiscoverPanel
-        configuredNames={state.servers.map((s) => s.name)}
-        onImported={reload}
-      />
+            {rows.length === 0 ? (
+              <ZeroState icon="🔌" titleKey="mcp.emptyTitle" hintKey="mcp.emptyHint" />
+            ) : (
+              <ServerTable
+                rows={rows}
+                onToggle={(server, tool) => toggleTool(server, tool).then(reload)}
+                onAdopt={(name) => importServers([name]).then(() => reload())}
+              />
+            )}
+          </>
+        );
+      })()}
 
       {healthErr && (
         <div className="glass rounded-deck p-3 text-sm text-led-err">
@@ -165,6 +190,7 @@ export default function McpPanel() {
           wallMs={healthMeta.wallMs}
           timeoutS={healthMeta.timeoutS}
           onRerun={onHealth}
+          summaryOnly
         />
       )}
 
@@ -179,78 +205,6 @@ export default function McpPanel() {
         </div>
       )}
 
-      {state.servers.length === 0 ? (
-        <ZeroState icon="🔌" titleKey="mcp.emptyTitle" hintKey="mcp.emptyHint" />
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {state.servers.map((s) => {
-          const h = healthBy[s.name];
-          const tone = h ? (h.status === "ok" ? "ok" : h.status === "timeout" ? "warn" : "err") : "off";
-          return (
-            <section key={s.name} className="glass rounded-deck p-4">
-              <div className="flex items-center gap-2">
-                <SharedLed tone={tone} label={`${s.name}: ${h ? t(h.status === "ok" ? "led.ok" : h.status === "timeout" ? "led.timeout" : "led.err") : t("led.off")}`} size="md" />
-                <h2 className="font-semibold">{s.name}</h2>
-                {s.tool_total > 0 && (
-                  <span className="text-xs text-deck-muted">{s.tool_total} tools</span>
-                )}
-                {h && h.status === "ok" && (
-                  <span className="ml-auto font-mono text-xs text-deck-muted">{h.latency_ms}ms</span>
-                )}
-                {!h && (
-                  <span className="ml-auto rounded-full border border-deck-line px-2 py-0.5 text-xs text-deck-muted">
-                    {s.transport}
-                  </span>
-                )}
-              </div>
-              <p className="mt-2 font-mono text-xs text-deck-muted break-all">{s.target}</p>
-              {(s.sources?.length ?? 0) > 0 && (
-                <div className="mt-1.5 flex flex-wrap gap-1">
-                  {(s.sources ?? []).map((src: string) => (
-                    <span
-                      key={src}
-                      className="rounded-full border border-deck-line px-2 py-0.5 text-xs text-deck-muted"
-                    >
-                      ← {src}
-                    </span>
-                  ))}
-                </div>
-              )}
-              {(s.env_keys.length > 0 || s.header_keys.length > 0) && (
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  {s.env_keys.map((k) => (
-                    <span key={k} className="rounded bg-deck-panel2 px-1.5 py-0.5 text-xs">
-                      🔑 {k}
-                    </span>
-                  ))}
-                  {s.header_keys.map((k) => (
-                    <span key={k} className="rounded bg-deck-panel2 px-1.5 py-0.5 text-xs">
-                      🔑 {k}
-                    </span>
-                  ))}
-                </div>
-              )}
-              {s.disabled_tools.length > 0 && (
-                <div className="mt-3 border-t border-deck-line pt-2">
-                  <p className="text-xs text-deck-muted mb-1">tools off — click to re-enable</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {s.disabled_tools.map((t) => (
-                      <button
-                        key={t}
-                        onClick={() => onToggle(s.name, t)}
-                        className="rounded-full border border-led-warn/50 px-2 py-0.5 text-xs hover:bg-deck-panel2"
-                      >
-                        {t} ⏻
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </section>
-          );
-        })}
-        </div>
-      )}
       {confirmSync && (
         <ConfirmDialog
           messageKey="mcp.syncWarn"

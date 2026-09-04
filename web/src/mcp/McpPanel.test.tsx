@@ -88,11 +88,13 @@ describe("McpPanel", () => {
     window.location.hash = "#/mcp";
   });
 
-  it("renders server cards from engine state, secrets as key names only", async () => {
+  it("renders server rows from engine state, secrets as key names only", async () => {
     vi.stubGlobal("fetch", mockFetch());
     render(<App />);
     expect(await screen.findByText("fetch")).toBeInTheDocument();
     expect(screen.getByText("exa")).toBeInTheDocument();
+    // key chips live inside the expanded row (R47 table anatomy)
+    await userEvent.click(screen.getByText("exa"));
     expect(screen.getByText(/EXA_API_KEY/)).toBeInTheDocument();
     expect(screen.getAllByText("stdio")).toHaveLength(2);
   });
@@ -101,6 +103,8 @@ describe("McpPanel", () => {
     const fetchMock = mockFetch();
     vi.stubGlobal("fetch", fetchMock);
     render(<McpPanel />);
+    await screen.findByText("exa");
+    await userEvent.click(screen.getByText("exa")); // expand the row first
     const chip = await screen.findByRole("button", { name: /websearch/ });
     await userEvent.click(chip);
     await waitFor(() => {

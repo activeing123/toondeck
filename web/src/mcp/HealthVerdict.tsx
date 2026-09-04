@@ -29,11 +29,15 @@ export function HealthVerdict({
   wallMs,
   timeoutS,
   onRerun,
+  summaryOnly = false,
 }: {
   results: HealthResult[];
   wallMs: number;
   timeoutS: number | null;
   onRerun: () => void;
+  /** R47: summary mode — verdict header only; per-server rows live in the
+   * unified ServerTable now. */
+  summaryOnly?: boolean;
 }) {
   const { t } = useI18n();
   const ok = results.filter((h) => h.status === "ok").length;
@@ -61,20 +65,22 @@ export function HealthVerdict({
           {t("mcp.healthRerun")}
         </button>
       </div>
-      {results.map((h) => (
-        <div key={h.server} className="flex items-center gap-2">
-          <Led
-            tone={h.status === "ok" ? "ok" : h.status === "timeout" ? "warn" : "err"}
-            label={`${h.server}: ${t(h.status === "ok" ? "led.ok" : h.status === "timeout" ? "led.timeout" : "led.err")}`}
-          />
-          <span className="font-medium">{h.server}</span>
-          <span className="text-deck-muted">{h.status}</span>
-          <span className={`ml-auto font-mono text-xs ${gradeLatency(h.latency_ms, h.status, timeoutS ?? 10)}`}>
-            {h.tools} tools · {fmtMs(h.latency_ms)}
-          </span>
-          {h.error && <span className="text-led-err text-xs">{h.error}</span>}
-        </div>
-      ))}
+      {summaryOnly
+        ? null
+        : results.map((h) => (
+            <div key={h.server} className="flex items-center gap-2">
+              <Led
+                tone={h.status === "ok" ? "ok" : h.status === "timeout" ? "warn" : "err"}
+                label={`${h.server}: ${t(h.status === "ok" ? "led.ok" : h.status === "timeout" ? "led.timeout" : "led.err")}`}
+              />
+              <span className="font-medium">{h.server}</span>
+              <span className="text-deck-muted">{h.status}</span>
+              <span className={`ml-auto font-mono text-xs ${gradeLatency(h.latency_ms, h.status, timeoutS ?? 10)}`}>
+                {h.tools} tools · {fmtMs(h.latency_ms)}
+              </span>
+              {h.error && <span className="text-led-err text-xs">{h.error}</span>}
+            </div>
+          ))}
     </div>
   );
 }

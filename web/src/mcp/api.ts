@@ -39,6 +39,27 @@ export type HealthResult = {
   error: string | null;
 };
 
+export type InventoryServer = {
+  server: string;
+  status: string;
+  latency_ms: number;
+  error: string | null;
+  tools: { name: string; description: string }[];
+};
+
+export type InventoryData = {
+  checked?: number;
+  adopted_total?: number;
+  discovered_total?: number;
+  tools_total?: number;
+  servers?: InventoryServer[];
+};
+
+/** Full tool universe (managed + discovered), engine-cached — R47 table feed. */
+export function fetchInventory(): Promise<InventoryData> {
+  return fetch("/api/mcp/tools").then((r) => r.json());
+}
+
 export function fetchState(): Promise<McpState> {
   return fetch("/api/mcp/state").then((r) => r.json());
 }

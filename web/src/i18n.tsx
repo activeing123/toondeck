@@ -40,8 +40,6 @@ export const DICT: Record<string, { en: string; zh: string }> = {
   "agents.exited": { en: "exited", zh: "已退出" },
   "agents.windowLaunched": { en: "opened in a desktop window", zh: "已在桌面打开终端窗口" },
   "agents.downloadLog": { en: "download log report (hand it to an agent to debug)", zh: "下载日志报告（可直接丢给 agent 分析修复）" },
-  "mcp.tools": { en: "tool inventory", zh: "工具清单" },
-  "mcp.browse": { en: "browse tools", zh: "浏览工具" },
   "agents.discover": { en: "discover agents", zh: "发现 agent" },
   "agents.adopt": { en: "adopt", zh: "收编" },
   "agents.adopted": { en: "adopted", zh: "已收编" },
@@ -189,6 +187,14 @@ export const DICT: Record<string, { en: string; zh: string }> = {
     en: "Run a discovery from your agent configs and adopt the servers you trust.",
     zh: "从各 agent 配置里跑一次发现，把你信任的 server 一键收编。",
   },
+  // R47: unified server table
+  "mcp.badgeManaged": { en: "managed", zh: "已接管" },
+  "mcp.badgeDiscovered": { en: "discovered", zh: "待收编" },
+  "mcp.toolsCount": { en: "{n} tools", zh: "{n} 个工具" },
+  "mcp.toolsOff": { en: "tools off — click to re-enable", zh: "已关工具 — 点击重新开启" },
+  "mcp.noTools": { en: "no tools exposed", zh: "未暴露任何工具" },
+  "mcp.adoptOne": { en: "adopt into management", zh: "收编接管" },
+  "mcp.universe": { en: "{managed} managed · {discovered} awaiting adoption", zh: "{managed} 个已接管 · {discovered} 个待收编" },
   "vault.emptyTitle": { en: "no providers detected", zh: "未发现任何 provider" },
   "vault.emptyHint": {
     en: "Provider profiles ship with the CLI agents you install — they land here.",
