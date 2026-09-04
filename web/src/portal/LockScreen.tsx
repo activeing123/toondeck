@@ -99,7 +99,14 @@ export default function LockScreen({ onUnlock }: { onUnlock: () => void }) {
         >
           {busy ? "…" : t("portal.unlock")}
         </button>
-        <p className="text-xs text-deck-muted">{t("portal.forgot")}</p>
+        {/* N-round2: the four-clause recovery recipe led the gate — a novice
+            reads reassurance first, the recipe only on demand. */}
+        <details className="text-xs text-deck-muted" data-testid="forgot-fold">
+          <summary className="cursor-pointer">{t("portal.forgotShort")}</summary>
+          <p className="mt-1" data-testid="forgot-recipe">
+            {t("portal.forgot")}
+          </p>
+        </details>
       </div>
     </main>
   );

@@ -110,6 +110,16 @@ export const DICT: Record<string, { en: string; zh: string }> = {
   "agents.model": { en: "model…", zh: "模型…" },
   // 小白-4: the collapsed evidence label (plain words, no exe:/dir: noise)
   "agents.evidence": { en: "detection details", zh: "探测详情" },
+  "agents.evCommand": { en: "command", zh: "命令" },
+  "agents.evFolder": { en: "folder", zh: "目录" },
+  "agents.evidenceLegend": {
+    en: "✓ found · ✗ missing — these checks only decide the installed badge",
+    zh: "✓ 检测到 · ✗ 未检测到——这些证据只决定「已装好」的标记",
+  },
+  "portal.forgotShort": {
+    en: "Forgot the password? You can never get locked out — tap for the reset steps.",
+    zh: "忘记密码？不会被锁死——点开看找回步骤。",
+  },
   "agents.notInstalled": { en: "not found — install it first", zh: "没找到 · 需要先安装" },
   "agents.notLaunched": { en: "installed — press launch", zh: "已装好 · 点启动就行" },
   "agents.running": { en: "running", zh: "运行中" },

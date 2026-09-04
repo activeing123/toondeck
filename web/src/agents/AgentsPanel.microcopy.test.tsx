@@ -107,7 +107,9 @@ describe("小白 lane: plain words, folded evidence, provider benefit", () => {
     const details = await screen.findByTestId("evidence-claude-code");
     expect(details.tagName).toBe("DETAILS");
     expect(details).not.toHaveAttribute("open"); // folded by default
-    expect(details).toHaveTextContent("cmd:claude"); // still there when opened
+    // N-round2: chips speak human now — "✓ 命令 claude", no raw cmd: prefix
+    expect(details).toHaveTextContent("claude"); // value still there when opened
+    expect(details.textContent).not.toMatch(/exe:|dir:|cmd:/);
   });
 
   it("providers block carries the benefit line", async () => {

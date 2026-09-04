@@ -373,17 +373,33 @@ export default function AgentsPanel() {
                   <summary className="cursor-pointer text-deck-muted">
                     {t("agents.evidence")}
                   </summary>
+                  <p className="mt-1.5 text-deck-muted">{t("agents.evidenceLegend")}</p>
                   <div className="mt-1.5 flex flex-wrap gap-1.5">
-                    {Object.entries(a.evidence).map(([k, v]) => (
-                      <span
-                        key={k}
-                        className={`rounded px-1.5 py-0.5 font-mono ${
-                          v ? "bg-deck-panel2 text-deck-ink" : "bg-transparent border border-deck-line text-deck-muted line-through"
-                        }`}
-                      >
-                        {k}
-                      </span>
-                    ))}
+                    {Object.entries(a.evidence).map(([k, v]) => {
+                      // N-round2: "exe:claude" tokens are engineer honesty —
+                      // speak them ("✓ 命令 claude") and show the ✓/✗ verdict
+                      // with color, dropping the strike-through squint test.
+                      const i = k.indexOf(":");
+                      const kind = i === -1 ? k : k.slice(0, i);
+                      const value = i === -1 ? "" : k.slice(i + 1);
+                      const kindLabel =
+                        kind === "dir" ? t("agents.evFolder") : t("agents.evCommand");
+                      return (
+                        <span
+                          key={k}
+                          className={`rounded px-1.5 py-0.5 ${
+                            v
+                              ? "bg-deck-panel2 text-deck-ink"
+                              : "border border-deck-line text-deck-muted"
+                          }`}
+                        >
+                          <span className={v ? "text-led-ok" : "text-led-err"}>
+                            {v ? "✓" : "✗"}
+                          </span>{" "}
+                          {kindLabel} <code className="font-mono">{value}</code>
+                        </span>
+                      );
+                    })}
                   </div>
                 </details>
               </div>
