@@ -9,7 +9,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import App from "../App";
 
 function mockFetch(error: string) {
-  return vi.fn((url: string, init?: RequestInit) => {
+  return vi.fn((url: string) => {
     if (url === "/api/portal/state")
       return Promise.resolve({ json: () => Promise.resolve({ password_gate: true, seeded: true }) });
     if (url === "/api/mcp/state")
