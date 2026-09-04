@@ -426,30 +426,36 @@ export default function AgentsPanel() {
                     t("agents.launch")
                   )}
                 </button>
-                <button
-                  onClick={() => act(a.id, "stop")}
-                  disabled={st.state !== "running" || pending?.id === a.id}
-                  className="rounded-deck border border-deck-line px-3 py-1.5 text-sm disabled:opacity-40"
-                >
-                  {pending?.id === a.id && pending.action === "stop" ? (
-                    <>
-                      <span
-                        className="mr-1.5 inline-block h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent align-[-2px]"
-                        aria-hidden
-                      />
-                      {t("agents.stopping")}
-                    </>
-                  ) : (
-                    t("agents.stop")
-                  )}
-                </button>
-                <button
-                  onClick={() => setOpenLogs(openLogs === a.id ? null : a.id)}
-                  disabled={st.state === "never"}
-                  className="rounded-deck border border-deck-line px-3 py-1.5 text-sm disabled:opacity-40"
-                >
-                  {openLogs === a.id ? t("agents.hideLogs") : t("agents.logs")}
-                </button>
+                {/* N-R3: a never-launched agent has nothing to stop and no
+                    logs to show — disabled buttons just confuse a novice.
+                    Render them only once the agent has a lifecycle. */}
+                {st.state !== "never" && (
+                  <button
+                    onClick={() => act(a.id, "stop")}
+                    disabled={st.state !== "running" || pending?.id === a.id}
+                    className="rounded-deck border border-deck-line px-3 py-1.5 text-sm disabled:opacity-40"
+                  >
+                    {pending?.id === a.id && pending.action === "stop" ? (
+                      <>
+                        <span
+                          className="mr-1.5 inline-block h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent align-[-2px]"
+                          aria-hidden
+                        />
+                        {t("agents.stopping")}
+                      </>
+                    ) : (
+                      t("agents.stop")
+                    )}
+                  </button>
+                )}
+                {st.state !== "never" && (
+                  <button
+                    onClick={() => setOpenLogs(openLogs === a.id ? null : a.id)}
+                    className="rounded-deck border border-deck-line px-3 py-1.5 text-sm disabled:opacity-40"
+                  >
+                    {openLogs === a.id ? t("agents.hideLogs") : t("agents.logs")}
+                  </button>
+                )}
                 {a.installed && a.launch_command == null && (
                   cmdFor === a.id ? (
                     <>
