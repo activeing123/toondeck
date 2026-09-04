@@ -148,6 +148,11 @@ export const DICT: Record<string, { en: string; zh: string }> = {
   "agents.installPre": { en: "Install first — the card lights up on its own:", zh: "安装好后卡片会自动点亮：" },
   "agents.installPost": { en: "run it in any terminal", zh: "在任意终端运行即可" },
   "agents.stoppedOk": { en: "stopped — launch again any time", zh: "已停止——随时可以再启动" },
+  "agents.unreachableTitle": { en: "engine unreachable", zh: "引擎连不上了" },
+  "agents.unreachableHint": {
+    en: "The agent list comes from the local engine — is the deck still running? Check the console, then refresh.",
+    zh: "agent 列表来自本地引擎——deck 是否还在运行？确认命令行窗口没关，然后点下面刷新。",
+  },
   "agents.probe": { en: "probe", zh: "探测" },
   "agents.launchCmd": { en: "launch command…", zh: "启动命令…" },
   "agents.addLaunchCmd": { en: "add launch command", zh: "添加启动命令" },

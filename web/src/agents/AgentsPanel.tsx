@@ -52,6 +52,7 @@ export default function AgentsPanel() {
   // N-R5: an agent the user stopped on purpose is not a failure — remember
   // the stop so the exited card does not flash the self-fix loop.
   const [userStopped, setUserStopped] = useState<Set<string>>(new Set());
+  const [unreachable, setUnreachable] = useState(false);
   const [flash, setFlash] = useState<Record<string, string>>({});
   const [cmdFor, setCmdFor] = useState<string | null>(null);
   const [cmdInput, setCmdInput] = useState("");
@@ -60,19 +61,26 @@ export default function AgentsPanel() {
   const [bulkPending, setBulkPending] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    const [a, s, m, p, pr] = await Promise.all([
-      fetch("/api/agents").then((r) => r.json()),
-      fetch("/api/agents/status").then((r) => r.json()),
-      fetch("/api/agents/models").then((r) => r.json()),
-      fetch("/api/agents/profiles").then((r) => r.json()),
-      fetch("/api/agents/providers").then((r) => r.json()),
-    ]);
-    setAgents(a.agents);
-    setStatuses(s);
-    setModels(m.models ?? {});
-    setSources(m.sources ?? {});
-    setProfiles(p.profiles ?? {});
-    setProviders(pr.providers ?? []);
+    try {
+      const [a, s, m, p, pr] = await Promise.all([
+        fetch("/api/agents").then((r) => r.json()),
+        fetch("/api/agents/status").then((r) => r.json()),
+        fetch("/api/agents/models").then((r) => r.json()),
+        fetch("/api/agents/profiles").then((r) => r.json()),
+        fetch("/api/agents/providers").then((r) => r.json()),
+      ]);
+      setAgents(a.agents);
+      setStatuses(s);
+      setModels(m.models ?? {});
+      setSources(m.sources ?? {});
+      setProfiles(p.profiles ?? {});
+      setProviders(pr.providers ?? []);
+      setUnreachable(false);
+    } catch {
+      // N-R9: a dead engine must read as DOWN, not as a slow spinner —
+      // same honest card the skills page shows.
+      setUnreachable(true);
+    }
   }, []);
   useEffect(() => {
     load();
@@ -254,6 +262,23 @@ export default function AgentsPanel() {
     }
   };
 
+  if (unreachable)
+    return (
+      <div
+        data-testid="agents-unreachable"
+        className="glass rounded-deck p-4 text-sm space-y-1"
+      >
+        <p className="font-semibold text-led-err">{t("agents.unreachableTitle")}</p>
+        <p className="text-deck-muted">{t("agents.unreachableHint")}</p>
+        <button
+          data-testid="agents-retry"
+          onClick={load}
+          className="rounded-deck border border-deck-line px-3 py-1 text-xs hover:bg-deck-panel2"
+        >
+          {t("common.refresh")}
+        </button>
+      </div>
+    );
   if (!agents) return <p className="text-deck-muted">loading deck…</p>;
   const running = Object.values(statuses).filter((s) => s.state === "running").length;
 
