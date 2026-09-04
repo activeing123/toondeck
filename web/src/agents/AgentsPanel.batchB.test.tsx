@@ -135,7 +135,7 @@ describe("B5: catpaw launch command form", () => {
     expect(launchBefore).toBeDisabled(); // no command yet
 
     await userEvent.click(screen.getByRole("button", { name: /add launch command|添加启动命令/ }));
-    const input = screen.getByPlaceholderText(/launch command|启动命令/);
+    const input = screen.getByTestId('catpaw-cmd-input');
     await userEvent.type(input, "catpaw --workspace demo");
     const card = screen.getByText("CatPaw IDE").closest("section") as HTMLElement;
     await userEvent.click(within(card).getByRole("button", { name: /^save$|^保存$/ }));

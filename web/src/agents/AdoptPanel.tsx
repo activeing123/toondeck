@@ -61,6 +61,40 @@ export default function AdoptPanel({
   };
 
   const fresh = (found?.unknown ?? []).filter((u) => LABEL_RE.test(u.label));
+  // N-R2: the scan is honest about blind spots — exe-only installs (npm
+  // shims like oh-my-pi) carry no MCP config, so a "0 unknown" is NOT a
+  // clean bill of health. Offer a manual add right here.
+  const [manualLabel, setManualLabel] = useState("");
+  const [manualCmd, setManualCmd] = useState("");
+
+  const adoptManual = async () => {
+    const label = manualLabel.trim().toLowerCase();
+    if (!LABEL_RE.test(label)) {
+      setMsg(t("agents.manualBadLabel"));
+      return;
+    }
+    setAdopting(label);
+    setMsg(null);
+    try {
+      const cmd = manualCmd.trim();
+      const r = await fetch("/api/agents/adopt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ label, launch_command: cmd ? cmd.split(/\s+/) : null }),
+      }).then((x) => x.json());
+      if (r.ok) {
+        scan();
+        setManualLabel("");
+        setManualCmd("");
+        setMsg(`${t("agents.adopted")} ${label}`);
+        onAdopted();
+      } else {
+        setMsg(`${label}: ${r.error ?? "failed"}`);
+      }
+    } finally {
+      setAdopting(null);
+    }
+  };
 
   return (
     <section className="glass rounded-deck p-4">
@@ -94,6 +128,7 @@ export default function AdoptPanel({
               </span>
               <input
                 role="textbox"
+                data-testid={`draft-${u.label}`}
                 value={drafts[u.label] ?? ""}
                 onChange={(e) =>
                   setDrafts((d) => ({ ...d, [u.label]: e.target.value }))
@@ -121,10 +156,39 @@ export default function AdoptPanel({
         </div>
       )}
       {found && fresh.length === 0 && (
-        <p className="mt-2 text-sm text-deck-muted">
+        <p className="mt-2 text-sm text-deck-muted" data-testid="discover-empty">
           {t("agents.noUnknown")}
         </p>
       )}
+
+      {/* N-R2: manual add — the scan only fingerprints MCP configs, so an
+          exe-only install (oh-my-pi npm shim etc.) never shows up. Register
+          it here instead of telling the user "all accounted for". */}
+      <div className="mt-3 border-t border-deck-line pt-3 flex flex-wrap items-center gap-2 text-sm">
+        <span className="text-xs text-deck-muted">{t("agents.manualHint")}</span>
+        <input
+          data-testid="manual-label"
+          value={manualLabel}
+          onChange={(e) => setManualLabel(e.target.value)}
+          placeholder={t("agents.manualLabelPh")}
+          className="w-40 rounded-deck border border-deck-line bg-deck-panel px-2 py-1 font-mono text-xs"
+        />
+        <input
+          data-testid="manual-cmd"
+          value={manualCmd}
+          onChange={(e) => setManualCmd(e.target.value)}
+          placeholder={t("agents.manualCmdPh")}
+          className="w-48 rounded-deck border border-deck-line bg-deck-panel px-2 py-1 font-mono text-xs"
+        />
+        <button
+          data-testid="manual-add"
+          disabled={!manualLabel.trim()}
+          onClick={adoptManual}
+          className="rounded-deck border border-deck-line px-3 py-1 text-xs hover:bg-deck-panel2 disabled:opacity-40"
+        >
+          {t("agents.manualAdd")}
+        </button>
+      </div>
     </section>
   );
 }

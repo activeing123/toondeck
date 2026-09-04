@@ -209,7 +209,12 @@ export const DICT: Record<string, { en: string; zh: string }> = {
   "vault.providerSaved": { en: "saved", zh: "已保存" },
   "confirm.cancel": { en: "cancel", zh: "取消" },
   "mcp.syncConfirm": { en: "overwrite & sync now", zh: "覆盖并立即同步" },
-  "agents.noUnknown": { en: "no unrecognized agents — all accounted for ✓", zh: "无陌生 agent——全部在册 ✓" },
+  "agents.noUnknown": { en: "no unrecognized agents in the scanned configs — but exe-only installs (npm shims, portable tools) are invisible to this scan. Add one manually below.", zh: "扫描范围内的配置目录都认得——但只带命令行、没有配置文件的 agent（npm 垫片、绿色软件）是扫不到的。没找到？在下面手动添加。" },
+  "agents.manualHint": { en: "scan missed one? add it manually:", zh: "扫描漏了？手动添加：" },
+  "agents.manualLabelPh": { en: "name, e.g. omp", zh: "名字，如 omp" },
+  "agents.manualCmdPh": { en: "launch command, e.g. omp", zh: "启动命令，如 omp" },
+  "agents.manualAdd": { en: "add agent", zh: "添加 agent" },
+  "agents.manualBadLabel": { en: "name must be letters/digits/-/_ only", zh: "名字只能是字母/数字/-/_" },
   "status.engine": { en: "engine", zh: "引擎" },
   "status.offline": { en: "offline", zh: "离线" },
   // UX-C1: fleet dashboard + panel chrome

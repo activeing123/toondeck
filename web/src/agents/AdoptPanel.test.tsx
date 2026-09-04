@@ -46,7 +46,7 @@ describe("AdoptPanel", () => {
       </I18nProvider>,
     );
     await screen.findByText("mysteryai");
-    await userEvent.type(screen.getByRole("textbox"), "mysteryai --serve");
+    await userEvent.type(screen.getByTestId("draft-mysteryai"), "mysteryai --serve");
     await userEvent.click(screen.getByText(/adopt/i));
     const call = vi
       .mocked(fetch)

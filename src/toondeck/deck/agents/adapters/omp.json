@@ -1,0 +1,10 @@
+{
+  "id": "omp",
+  "display_name": "Oh My Pi (omp)",
+  "executable_probes": ["omp"],
+  "dir_probes": ["~/.omp"],
+  "config_paths": ["~/.omp/agent/config.yml"],
+  "launch_command": ["omp"],
+  "tui": true,
+  "env_config_support": false
+}

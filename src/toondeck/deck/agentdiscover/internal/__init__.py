@@ -10,6 +10,9 @@ SIGNATURE_JSON = Path(__file__).resolve().parent / "signature.json"
 
 #: config filenames that may carry MCP server maps
 MCP_FILENAMES = {"mcp.json", "mcp_config.json", "claude.json", "settings.json", "config.json", "config.toml"}
+#: N-R1: yaml configs count too — oh-my-pi keeps its agent settings in
+#: config.yml, and a yml-blind scan misses every one of those users
+MCP_SUFFIXES = {".json", ".toml", ".yaml", ".yml"}
 MCP_KEYS = ("mcpServers", "mcp_servers", "mcp")
 SCAN_CAP = 500
 

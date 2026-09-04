@@ -3,13 +3,13 @@
 from fastapi.testclient import TestClient
 
 
-def test_detect_all_returns_all_seven_with_summary():
+def test_detect_all_returns_all_first_class_with_summary():
     from toondeck.deck.agents import detect_all
 
     r = detect_all()
-    assert r["total"] == 7
+    assert r["total"] == 8  # N-R1: omp joined the first class
     ids = {a["id"] for a in r["agents"]}
-    assert ids == {"claude-code", "codex", "cursor", "gemini-cli", "opencode", "catpaw", "dsh"}
+    assert ids == {"claude-code", "codex", "cursor", "gemini-cli", "opencode", "catpaw", "dsh", "omp"}
     assert isinstance(r["installed_count"], int)
     for a in r["agents"]:
         assert set(a) >= {"id", "display_name", "installed", "evidence", "config_paths", "tui"}
@@ -23,7 +23,7 @@ def test_api_agents_route(engine_env):
     r = c.get("/api/agents")
     assert r.status_code == 200
     body = r.json()
-    assert body["total"] == 7
+    assert body["total"] == 8
     assert body["installed_count"] >= 0
 
 

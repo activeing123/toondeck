@@ -4,14 +4,14 @@ import json
 
 import pytest
 
-SEVEN = {"claude-code", "codex", "cursor", "gemini-cli", "opencode", "catpaw", "dsh"}
+FIRST_CLASS = {"claude-code", "codex", "cursor", "gemini-cli", "opencode", "catpaw", "dsh", "omp"}
 
 
-def test_all_seven_adapters_load_and_validate():
+def test_all_first_class_adapters_load_and_validate():
     from toondeck.deck.agents import internal as registry
 
     adapters = registry.load_all()
-    assert set(adapters) == SEVEN
+    assert set(adapters) == FIRST_CLASS
     for aid, a in adapters.items():
         assert a["id"] == aid
         assert isinstance(a["display_name"], str) and a["display_name"]

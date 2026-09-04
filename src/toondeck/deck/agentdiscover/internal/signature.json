@@ -1,28 +1,272 @@
 {
-  "claude-code": { "label": "claude-code", "display_name": "Claude Code", "dirs": [".claude", ".claude.json"], "exes": ["claude"] },
-  "codex": { "label": "codex", "display_name": "Codex", "dirs": [".codex"], "exes": ["codex"] },
-  "cursor": { "label": "cursor", "display_name": "Cursor", "dirs": [".cursor"], "exes": ["cursor", "cursor-agent"] },
-  "gemini-cli": { "label": "gemini-cli", "display_name": "Gemini CLI", "dirs": [".gemini"], "exes": ["gemini"] },
-  "opencode": { "label": "opencode", "display_name": "opencode", "dirs": [".config/opencode", ".opencode"], "exes": ["opencode"] },
-  "catpaw": { "label": "catpaw", "display_name": "CatPaw", "dirs": [".catpaw"], "exes": ["catpaw"] },
-  "dsh": { "label": "dsh", "display_name": "DSH", "dirs": [".dsh"], "exes": ["dsh"] },
-  "windsurf": { "label": "windsurf", "display_name": "Windsurf", "dirs": [".codeium/windsurf", ".codeium"], "exes": ["windsurf"] },
-  "vscode-copilot": { "label": "vscode-copilot", "display_name": "VS Code Copilot", "dirs": [".config/Code", ".vscode"], "exes": ["code"] },
-  "aider": { "label": "aider", "display_name": "Aider", "dirs": [".aider", ".aider.conf.yml"], "exes": ["aider"] },
-  "goose": { "label": "goose", "display_name": "Goose", "dirs": [".config/goose"], "exes": ["goose"] },
-  "cline": { "label": "cline", "display_name": "Cline", "dirs": [".cline"], "exes": [] },
-  "roo": { "label": "roo", "display_name": "Roo Code", "dirs": [".roo"], "exes": [] },
-  "kilo": { "label": "kilo", "display_name": "Kilo Code", "dirs": [".kilo"], "exes": [] },
-  "trae": { "label": "trae", "display_name": "Trae", "dirs": [".trae"], "exes": ["trae"] },
-  "qwen-code": { "label": "qwen-code", "display_name": "Qwen Code", "dirs": [".qwen"], "exes": ["qwen"] },
-  "iflow": { "label": "iflow", "display_name": "iFlow CLI", "dirs": [".iflow"], "exes": ["iflow"] },
-  "crush": { "label": "crush", "display_name": "Crush", "dirs": [".config/crush", ".crush"], "exes": ["crush"] },
-  "amp": { "label": "amp", "display_name": "Amp", "dirs": [".local/share/amp", ".amp"], "exes": ["amp"] },
-  "zed": { "label": "zed", "display_name": "Zed", "dirs": [".config/zed", ".zed"], "exes": ["zed"] },
-  "continue": { "label": "continue", "display_name": "Continue", "dirs": [".continue"], "exes": [] },
-  "kiro": { "label": "kiro", "display_name": "Kiro", "dirs": [".kiro", ".aws/amazonq"], "exes": ["kiro"] },
-  "antigravity": { "label": "antigravity", "display_name": "Antigravity", "dirs": [".antigravity"], "exes": ["antigravity"] },
-  "copilot-cli": { "label": "copilot-cli", "display_name": "GitHub Copilot CLI", "dirs": [".copilot"], "exes": ["copilot"] },
-  "junie": { "label": "junie", "display_name": "Junie", "dirs": [".junie"], "exes": [] },
-  "augment": { "label": "augment", "display_name": "Augment", "dirs": [".augment"], "exes": ["augment"] }
+  "claude-code": {
+    "label": "claude-code",
+    "display_name": "Claude Code",
+    "dirs": [
+      ".claude",
+      ".claude.json"
+    ],
+    "exes": [
+      "claude"
+    ]
+  },
+  "codex": {
+    "label": "codex",
+    "display_name": "Codex",
+    "dirs": [
+      ".codex"
+    ],
+    "exes": [
+      "codex"
+    ]
+  },
+  "cursor": {
+    "label": "cursor",
+    "display_name": "Cursor",
+    "dirs": [
+      ".cursor"
+    ],
+    "exes": [
+      "cursor",
+      "cursor-agent"
+    ]
+  },
+  "gemini-cli": {
+    "label": "gemini-cli",
+    "display_name": "Gemini CLI",
+    "dirs": [
+      ".gemini"
+    ],
+    "exes": [
+      "gemini"
+    ]
+  },
+  "opencode": {
+    "label": "opencode",
+    "display_name": "opencode",
+    "dirs": [
+      ".config/opencode",
+      ".opencode"
+    ],
+    "exes": [
+      "opencode"
+    ]
+  },
+  "catpaw": {
+    "label": "catpaw",
+    "display_name": "CatPaw",
+    "dirs": [
+      ".catpaw"
+    ],
+    "exes": [
+      "catpaw"
+    ]
+  },
+  "dsh": {
+    "label": "dsh",
+    "display_name": "DSH",
+    "dirs": [
+      ".dsh"
+    ],
+    "exes": [
+      "dsh"
+    ]
+  },
+  "windsurf": {
+    "label": "windsurf",
+    "display_name": "Windsurf",
+    "dirs": [
+      ".codeium/windsurf",
+      ".codeium"
+    ],
+    "exes": [
+      "windsurf"
+    ]
+  },
+  "vscode-copilot": {
+    "label": "vscode-copilot",
+    "display_name": "VS Code Copilot",
+    "dirs": [
+      ".config/Code",
+      ".vscode"
+    ],
+    "exes": [
+      "code"
+    ]
+  },
+  "aider": {
+    "label": "aider",
+    "display_name": "Aider",
+    "dirs": [
+      ".aider",
+      ".aider.conf.yml"
+    ],
+    "exes": [
+      "aider"
+    ]
+  },
+  "goose": {
+    "label": "goose",
+    "display_name": "Goose",
+    "dirs": [
+      ".config/goose"
+    ],
+    "exes": [
+      "goose"
+    ]
+  },
+  "cline": {
+    "label": "cline",
+    "display_name": "Cline",
+    "dirs": [
+      ".cline"
+    ],
+    "exes": []
+  },
+  "roo": {
+    "label": "roo",
+    "display_name": "Roo Code",
+    "dirs": [
+      ".roo"
+    ],
+    "exes": []
+  },
+  "kilo": {
+    "label": "kilo",
+    "display_name": "Kilo Code",
+    "dirs": [
+      ".kilo"
+    ],
+    "exes": []
+  },
+  "trae": {
+    "label": "trae",
+    "display_name": "Trae",
+    "dirs": [
+      ".trae"
+    ],
+    "exes": [
+      "trae"
+    ]
+  },
+  "qwen-code": {
+    "label": "qwen-code",
+    "display_name": "Qwen Code",
+    "dirs": [
+      ".qwen"
+    ],
+    "exes": [
+      "qwen"
+    ]
+  },
+  "iflow": {
+    "label": "iflow",
+    "display_name": "iFlow CLI",
+    "dirs": [
+      ".iflow"
+    ],
+    "exes": [
+      "iflow"
+    ]
+  },
+  "crush": {
+    "label": "crush",
+    "display_name": "Crush",
+    "dirs": [
+      ".config/crush",
+      ".crush"
+    ],
+    "exes": [
+      "crush"
+    ]
+  },
+  "amp": {
+    "label": "amp",
+    "display_name": "Amp",
+    "dirs": [
+      ".local/share/amp",
+      ".amp"
+    ],
+    "exes": [
+      "amp"
+    ]
+  },
+  "zed": {
+    "label": "zed",
+    "display_name": "Zed",
+    "dirs": [
+      ".config/zed",
+      ".zed"
+    ],
+    "exes": [
+      "zed"
+    ]
+  },
+  "continue": {
+    "label": "continue",
+    "display_name": "Continue",
+    "dirs": [
+      ".continue"
+    ],
+    "exes": []
+  },
+  "kiro": {
+    "label": "kiro",
+    "display_name": "Kiro",
+    "dirs": [
+      ".kiro",
+      ".aws/amazonq"
+    ],
+    "exes": [
+      "kiro"
+    ]
+  },
+  "antigravity": {
+    "label": "antigravity",
+    "display_name": "Antigravity",
+    "dirs": [
+      ".antigravity"
+    ],
+    "exes": [
+      "antigravity"
+    ]
+  },
+  "copilot-cli": {
+    "label": "copilot-cli",
+    "display_name": "GitHub Copilot CLI",
+    "dirs": [
+      ".copilot"
+    ],
+    "exes": [
+      "copilot"
+    ]
+  },
+  "junie": {
+    "label": "junie",
+    "display_name": "Junie",
+    "dirs": [
+      ".junie"
+    ],
+    "exes": []
+  },
+  "augment": {
+    "label": "augment",
+    "display_name": "Augment",
+    "dirs": [
+      ".augment"
+    ],
+    "exes": [
+      "augment"
+    ]
+  },
+  "omp": {
+    "label": "omp",
+    "display_name": "Oh My Pi (omp)",
+    "dirs": [
+      ".omp"
+    ],
+    "exes": [
+      "omp"
+    ]
+  }
 }

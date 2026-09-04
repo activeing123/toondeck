@@ -40,8 +40,12 @@ def fingerprint(home: Path | None = None) -> list[dict]:
                 if seen >= internal.SCAN_CAP:
                     return hits
                 seen += 1
-                if f.is_file() and f.suffix in (".json", ".toml") and (
-                    f.name.lower() in internal.MCP_FILENAMES or "mcp" in f.name.lower()
+                # N-R1: yaml counts — oh-my-pi keeps agent settings in
+                # config.yml; a yml-blind scan misses those users entirely
+                if f.is_file() and f.suffix in internal.MCP_SUFFIXES and (
+                    f.name.lower() in internal.MCP_FILENAMES
+                    or "mcp" in f.name.lower()
+                    or f.suffix in (".yaml", ".yml")
                 ):
                     if internal.looks_like_mcp(f):
                         hits.append({"path": str(f), "dir": root.name})

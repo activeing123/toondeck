@@ -91,3 +91,43 @@ def test_api_discover_adopt_roundtrip(tmp_path, monkeypatch):
     assert r["ok"] is True
     ag = c.get("/api/agents").json()
     assert any(a["id"] == "mysteryai" for a in ag["agents"])
+
+
+def test_signature_db_includes_omp_oh_my_pi():
+    """N-R1: omp (oh-my-pi) is a real coding agent shipped as an npm shim —
+    it must be in the signature DB so unknown-dir filtering knows it."""
+    from toondeck.deck.agentdiscover import signature_db
+
+    omp = [e for e in signature_db() if e["label"] == "omp"]
+    assert omp, "signature DB is missing omp (oh-my-pi)"
+    assert ".omp" in omp[0]["dirs"]
+    assert "omp" in omp[0]["exes"]
+
+
+def test_fingerprint_scans_yaml_configs(tmp_path):
+    """N-R1: oh-my-pi keeps its agent config in config.yml — the MCP
+    fingerprint only looked at .json/.toml and missed every yaml user."""
+    d = tmp_path / ".piagent"
+    (d / "agent").mkdir(parents=True)
+    (d / "agent" / "config.yml").write_text(
+        "modelRoles:\n  default: apihub/text\nmcpServers:\n  x:\n    command: x\n",
+        encoding="utf-8",
+    )
+    from toondeck.deck.agentdiscover import fingerprint
+
+    hits = fingerprint(home=tmp_path)
+    assert any(".piagent" in str(h["path"]) for h in hits)
+
+
+def test_omp_is_a_first_class_adapter(tmp_path):
+    """N-R1: the user's machine has omp installed; the deck must show a real
+    card, not nothing. Hermetic: dir probe alone proves installed."""
+    from toondeck.deck.agents import internal
+    from toondeck.deck.agents.internal.probes import detect
+
+    adapters = internal.load_all()
+    assert "omp" in adapters, "no first-class omp adapter"
+    (tmp_path / ".omp").mkdir()
+    r = detect(adapters["omp"], home=tmp_path)
+    assert r["installed"] is True
+    assert r["launch_command"] == ["omp"]

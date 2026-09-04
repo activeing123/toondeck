@@ -454,6 +454,7 @@ export default function AgentsPanel() {
                   cmdFor === a.id ? (
                     <>
                       <input
+                        data-testid={`${a.id}-cmd-input`}
                         value={cmdInput}
                         onChange={(e) => setCmdInput(e.target.value)}
                         placeholder={t("agents.launchCmd")}
