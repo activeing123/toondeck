@@ -4,6 +4,7 @@ import DesignSheet from "./design/DesignSheet";
 import { I18nProvider, useI18n, type Lang } from "./i18n";
 import { Led } from "./ui/Led";
 import HelpFooter from "./ui/HelpFooter";
+import { markChecklistDone } from "./ui/StarterChecklist";
 import LogsPanel from "./logs/LogsPanel";
 import McpPanel from "./mcp/McpPanel";
 import LockScreen, { portalUnlocked } from "./portal/LockScreen";
@@ -171,6 +172,7 @@ function PortalSecurity() {
       setMsg(t("portal.changeDone"));
       setCur("");
       setNw("");
+      markChecklistDone("pw"); // N-R2: first-hour step sealed
     } else {
       setMsg(r.error ?? "failed");
     }

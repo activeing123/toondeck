@@ -120,6 +120,16 @@ export const DICT: Record<string, { en: string; zh: string }> = {
     en: "Forgot the password? You can never get locked out — tap for the reset steps.",
     zh: "忘记密码？不会被锁死——点开看找回步骤。",
   },
+  // N-R2: the first-hour starter checklist
+  "cl.title": { en: "First hour: three steps and you own the deck", zh: "上手三步，牌桌就是你的了" },
+  "cl.subtitle": {
+    en: "Do them in the app — each one ticks itself off.",
+    zh: "都在界面里点得到——做完一步自动打勾。",
+  },
+  "cl.dismiss": { en: "dismiss", zh: "知道了，收起" },
+  "cl.step.pw": { en: "Change the default password (sidebar → 修改密码)", zh: "改掉默认密码 admin123（侧栏 →「修改密码」）" },
+  "cl.step.health": { en: "Run one health check on the MCP page", zh: "在 MCP 页跑一次「全量体检」" },
+  "cl.step.sync": { en: "Sync all agents so every agent gets the same tools", zh: "「同步全部 agent」，让每个 agent 拿到同一份工具" },
   "agents.notInstalled": { en: "not found — install it first", zh: "没找到 · 需要先安装" },
   "agents.notLaunched": { en: "installed — press launch", zh: "已装好 · 点启动就行" },
   "agents.running": { en: "running", zh: "运行中" },

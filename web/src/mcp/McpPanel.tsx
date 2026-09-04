@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import FleetDashboard from "./FleetDashboard";
+import StarterChecklist, { markChecklistDone } from "../ui/StarterChecklist";
 import ServerTable, { buildRows } from "./ServerTable";
 import { importServers } from "./DiscoverPanel";
 import { HealthVerdict } from "./HealthVerdict";
@@ -87,6 +88,7 @@ export default function McpPanel() {
       .then((b) => {
         setHealth(b.results);
         setHealthMeta({ wallMs: performance.now() - t0, timeoutS: b.timeout_s ?? null });
+        markChecklistDone("health"); // N-R2: first-hour step sealed
       })
       .catch(() => setHealthErr(t("mcp.healthFailed")))
       .finally(() => setChecking(false));
@@ -105,6 +107,8 @@ export default function McpPanel() {
 
   return (
     <div className="space-y-6">
+        {/* N-R2: the first-hour path — sealed steps tick themselves off */}
+        <StarterChecklist />
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h1 className="text-2xl font-bold">
             MCP{" "}
@@ -238,7 +242,10 @@ export default function McpPanel() {
             setConfirmSync(false);
             setSyncing(true);
             requestSync()
-              .then(setSyncResults)
+              .then((r) => {
+                setSyncResults(r);
+                if (r) markChecklistDone("sync"); // N-R2: first-hour step sealed
+              })
               .finally(() => setSyncing(false));
           }}
           onCancel={() => setConfirmSync(false)}
