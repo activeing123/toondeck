@@ -49,6 +49,9 @@ export default function AgentsPanel() {
   const [dialog, setDialog] = useState<ProviderDraft | null>(null);
   const [openLogs, setOpenLogs] = useState<string | null>(null);
   const [pending, setPending] = useState<{ id: string; action: "launch" | "stop" } | null>(null);
+  // N-R5: an agent the user stopped on purpose is not a failure — remember
+  // the stop so the exited card does not flash the self-fix loop.
+  const [userStopped, setUserStopped] = useState<Set<string>>(new Set());
   const [flash, setFlash] = useState<Record<string, string>>({});
   const [cmdFor, setCmdFor] = useState<string | null>(null);
   const [cmdInput, setCmdInput] = useState("");
@@ -220,6 +223,11 @@ export default function AgentsPanel() {
       if (!r.ok) {
         toast.error(`${id}: ${r.error ?? "action failed"}`);
       } else if (action === "launch") {
+        setUserStopped((s) => {
+          const n = new Set(s);
+          n.delete(id); // a fresh launch clears any earlier manual stop
+          return n;
+        });
         setFlash((f) => ({
           ...f,
           [id]:
@@ -231,11 +239,14 @@ export default function AgentsPanel() {
         setTimeout(async () => {
           await load();
           const s = await fetch("/api/agents/status").then((x) => x.json());
-          if (s[id]?.state === "exited") {
+          if (s[id]?.state === "exited" && !userStopped.has(id)) {
             setFlash((f) => ({ ...f, [id]: `⚠ ${t("agents.exited")} code ${s[id].exit_code}` }));
             setOpenLogs(id);
           }
         }, 1500);
+      } else if (action === "stop") {
+        setUserStopped((s) => new Set(s).add(id));
+        toast.ok(t("agents.stoppedOk"));
       }
       await load();
     } finally {
@@ -348,7 +359,10 @@ export default function AgentsPanel() {
                   {t("agents.installPost")}
                 </p>
               )}
-              {st.state === "exited" && (
+              {/* N-R5: only a real crash warrants the self-fix loop — a
+                  user-initiated stop or a clean exit (code 0) is normal
+                  lifecycle, not something to "fix". */}
+              {st.state === "exited" && !userStopped.has(a.id) && st.exit_code !== 0 && (
                 // N-R6: the mcptoon self-heal loop was invisible — a novice
                 // saw "exited · code 1" and stopped there. Point at the md
                 // report hand-off right on the failed card.

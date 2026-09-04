@@ -143,6 +143,7 @@ export const DICT: Record<string, { en: string; zh: string }> = {
   "agents.adopted": { en: "adopted", zh: "已收编" },
   "agents.installPre": { en: "Install first — the card lights up on its own:", zh: "安装好后卡片会自动点亮：" },
   "agents.installPost": { en: "run it in any terminal", zh: "在任意终端运行即可" },
+  "agents.stoppedOk": { en: "stopped — launch again any time", zh: "已停止——随时可以再启动" },
   "agents.probe": { en: "probe", zh: "探测" },
   "agents.launchCmd": { en: "launch command…", zh: "启动命令…" },
   "agents.addLaunchCmd": { en: "add launch command", zh: "添加启动命令" },
