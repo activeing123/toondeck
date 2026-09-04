@@ -5,7 +5,7 @@
  * - an installed GUI-only agent (catpaw) shows WHY launch is disabled
  * - the model-source select is labeled with persistent text
  */
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import AgentsPanel from "./AgentsPanel";
 
@@ -81,9 +81,11 @@ describe("R51: no hover-only explanations on agent cards", () => {
   it("model source select is labeled by persistent text, not a title", async () => {
     render(<AgentsPanel />);
     const label = await screen.findByText(/API model source:|API 模型源：/);
-    expect(label.closest("section")).toContainElement(
-      screen.getAllByRole("combobox").find((el) => el.getAttribute("title") === null)!,
-    );
+    // scoped to the card: the bulk-model bar (N-R11) is also a combobox, but
+    // the R51 contract is about the per-card select specifically
+    const cardSelects = within(label.closest("section")!).getAllByRole("combobox");
+    expect(cardSelects.length).toBeGreaterThan(0);
+    expect(cardSelects.every((el) => el.getAttribute("title") === null)).toBe(true);
   });
 });
 

@@ -5,6 +5,7 @@ import { ProviderDialog, type ProviderDraft } from "./ProviderDialog";
 import { useI18n } from "../i18n";
 import { toast } from "../ui/Toast";
 import { ZeroState } from "../ui/ZeroState";
+import { ConfirmDialog } from "../ui/ConfirmDialog";
 import HowTo from "../ui/HowTo";
 import { Led } from "../ui/Led";
 
@@ -50,6 +51,9 @@ export default function AgentsPanel() {
   const [flash, setFlash] = useState<Record<string, string>>({});
   const [cmdFor, setCmdFor] = useState<string | null>(null);
   const [cmdInput, setCmdInput] = useState("");
+  // N-R11: one-shot model setup for every agent (novice ask: "普适所有 agent")
+  const [bulkModel, setBulkModel] = useState("");
+  const [bulkPending, setBulkPending] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const [a, s, m, p, pr] = await Promise.all([
@@ -116,6 +120,16 @@ export default function AgentsPanel() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ model: profile === "" ? null : profile }),
     });
+  };
+
+  // N-R11: apply one model string to every agent — the string passes through
+  // verbatim, so custom/OpenAI-compatible model names work untouched.
+  const applyBulkModel = async (model: string) => {
+    if (!agents) return;
+    await Promise.all(agents.map((a) => changeModel(a.id, model)));
+    setBulkPending(null);
+    setBulkModel("");
+    toast.ok(t("agents.bulkDone", { n: agents.length, model }));
   };
 
   const removeProfile = async (name: string) => {
@@ -246,73 +260,44 @@ export default function AgentsPanel() {
         steps={[t("howto.agents.1"), t("howto.agents.2"), t("howto.agents.3")]}
       />
 
-      <details className="glass rounded-deck p-4 text-sm">
-        <summary className="cursor-pointer font-semibold">
-          {t("agents.providers", { ok: providers.filter((p) => p.configured).length, n: providers.length })}
-        </summary>
-        {/* 小白-5: the benefit line — why enabling a provider matters */}
-        <p className="mt-2 text-xs text-deck-muted" data-testid="providers-hint">
-          {t("agents.providersHint")}
-        </p>
-        <div className="mt-3 space-y-2">
-          {providers.map((p) => (
-            <div key={p.id} className="flex flex-wrap items-center gap-2 text-xs border border-deck-line rounded-deck px-3 py-2">
-              <b>{p.display_name}</b>
-              <span className="text-deck-muted font-mono">
-                {profiles[p.id]?.base_url ?? p.base_url}
-              </span>
-              <span className="text-deck-muted">{t("agents.modelsCount", { n: p.models.length })}</span>
-              {p.configured && profiles[p.id]?.keyring && (
-                <span className="text-led-ok">{t("agents.keyStoredChip")}</span>
-              )}
-              {p.configured ? (
-                <>
-                  <span className="text-led-ok">{t("agents.enabled")}</span>
-                  <button
-                    onClick={() => openEdit(p.id)}
-                    data-testid={`provider-edit-${p.id}`}
-                    className="ml-auto rounded-deck border border-deck-line px-2.5 py-1 hover:bg-deck-panel2"
-                  >
-                    {t("agents.editSource")}
-                  </button>
-                  <button onClick={() => removeProfile(p.id)} className="text-deck-muted hover:text-led-err">
-                    {t("agents.disable")}
-                  </button>
-                </>
-              ) : (
-                <button
-                  onClick={() => openEnable(p.id)}
-                  data-testid={`provider-enable-${p.id}`}
-                  className="ml-auto rounded-deck bg-deck-accent px-2.5 py-1 font-semibold text-deck-bg"
-                >
-                  {p.keyless ? t("agents.enableKeyless") : t("agents.enable")}
-                </button>
-              )}
-            </div>
-          ))}
-
-          <div className="pt-2 border-t border-deck-line">
-            <button
-              onClick={openCustom}
-              data-testid="provider-add-custom"
-              className="rounded-deck border border-deck-line px-2.5 py-1 text-xs hover:bg-deck-panel2"
-            >
-              {t("agents.addSource")}
-            </button>
-          </div>
-          <div className="pt-2 border-t border-deck-line">
-            <a href="#/vault" className="text-xs text-deck-accent hover:underline">
-              {t("agents.vaultLink")}
-            </a>
-          </div>
+      {/* N-R11 (user ask): one-shot model setup for every agent — the model
+          string passes through verbatim, so custom model names just work.
+          Explicit confirm: this overwrites per-card choices. */}
+      <div className="glass rounded-deck p-3 text-sm" data-testid="bulk-model">
+        <p className="font-semibold">{t("agents.bulkTitle")}</p>
+        <p className="mt-0.5 text-xs text-deck-muted">{t("agents.bulkHint")}</p>
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <datalist id="bulk-model-opts">
+            {["claude-sonnet-4-5", "gpt-5.2-codex", "deepseek-chat", "gemini-2.5-pro"].map((m) => (
+              <option key={m} value={m} />
+            ))}
+          </datalist>
+          <input
+            data-testid="bulk-model-input"
+            list="bulk-model-opts"
+            value={bulkModel}
+            onChange={(e) => setBulkModel(e.target.value)}
+            placeholder={t("agents.bulkPlaceholder")}
+            className="w-56 rounded-deck bg-deck-panel2 px-2.5 py-1.5 text-xs font-mono"
+          />
+          <button
+            data-testid="bulk-apply"
+            disabled={!bulkModel.trim()}
+            onClick={() => setBulkPending(bulkModel.trim())}
+            className="rounded-deck bg-deck-accent px-2.5 py-1.5 text-xs font-semibold text-deck-bg disabled:opacity-40"
+          >
+            {t("agents.bulkApply")}
+          </button>
         </div>
-      </details>
+      </div>
 
-      {dialog && (
-        <ProviderDialog
-          draft={dialog}
-          onClose={() => setDialog(null)}
-          onSubmit={submitDialog}
+      {bulkPending != null && (
+        <ConfirmDialog
+          messageKey="agents.bulkConfirm"
+          messageVars={{ n: agents.length, model: bulkPending }}
+          confirmLabel={t("agents.bulkGo")}
+          onConfirm={() => applyBulkModel(bulkPending)}
+          onCancel={() => setBulkPending(null)}
         />
       )}
 
@@ -547,6 +532,77 @@ export default function AgentsPanel() {
         })}
         </div>
       )}
+
+      <details className="glass rounded-deck p-4 text-sm">
+        <summary className="cursor-pointer font-semibold">
+          {t("agents.providers", { ok: providers.filter((p) => p.configured).length, n: providers.length })}
+        </summary>
+        {/* 小白-5: the benefit line — why enabling a provider matters */}
+        <p className="mt-2 text-xs text-deck-muted" data-testid="providers-hint">
+          {t("agents.providersHint")}
+        </p>
+        <div className="mt-3 space-y-2">
+          {providers.map((p) => (
+            <div key={p.id} className="flex flex-wrap items-center gap-2 text-xs border border-deck-line rounded-deck px-3 py-2">
+              <b>{p.display_name}</b>
+              <span className="text-deck-muted font-mono">
+                {profiles[p.id]?.base_url ?? p.base_url}
+              </span>
+              <span className="text-deck-muted">{t("agents.modelsCount", { n: p.models.length })}</span>
+              {p.configured && profiles[p.id]?.keyring && (
+                <span className="text-led-ok">{t("agents.keyStoredChip")}</span>
+              )}
+              {p.configured ? (
+                <>
+                  <span className="text-led-ok">{t("agents.enabled")}</span>
+                  <button
+                    onClick={() => openEdit(p.id)}
+                    data-testid={`provider-edit-${p.id}`}
+                    className="ml-auto rounded-deck border border-deck-line px-2.5 py-1 hover:bg-deck-panel2"
+                  >
+                    {t("agents.editSource")}
+                  </button>
+                  <button onClick={() => removeProfile(p.id)} className="text-deck-muted hover:text-led-err">
+                    {t("agents.disable")}
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => openEnable(p.id)}
+                  data-testid={`provider-enable-${p.id}`}
+                  className="ml-auto rounded-deck bg-deck-accent px-2.5 py-1 font-semibold text-deck-bg"
+                >
+                  {p.keyless ? t("agents.enableKeyless") : t("agents.enable")}
+                </button>
+              )}
+            </div>
+          ))}
+
+          <div className="pt-2 border-t border-deck-line">
+            <button
+              onClick={openCustom}
+              data-testid="provider-add-custom"
+              className="rounded-deck border border-deck-line px-2.5 py-1 text-xs hover:bg-deck-panel2"
+            >
+              {t("agents.addSource")}
+            </button>
+          </div>
+          <div className="pt-2 border-t border-deck-line">
+            <a href="#/vault" className="text-xs text-deck-accent hover:underline">
+              {t("agents.vaultLink")}
+            </a>
+          </div>
+        </div>
+      </details>
+
+      {dialog && (
+        <ProviderDialog
+          draft={dialog}
+          onClose={() => setDialog(null)}
+          onSubmit={submitDialog}
+        />
+      )}
+
 
       <AdoptPanel onAdopted={load} />
     </div>

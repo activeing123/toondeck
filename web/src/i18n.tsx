@@ -295,6 +295,19 @@ export const DICT: Record<string, { en: string; zh: string }> = {
   "logs.exited": { en: "exited · code {code}", zh: "已退出 · code {code}" },
   "logs.downloadMd": { en: "⬇ md report", zh: "⬇ 下载 md 报告" },
   "agents.selffixPre": { en: "Agent exited with a problem?", zh: "agent 挂了？" },
+  "agents.bulkTitle": { en: "set one model for every agent", zh: "给所有 agent 一次设好模型" },
+  "agents.bulkHint": {
+    en: "Any model name works — it is passed to the agent as-is (custom models welcome). Per-agent tweaks stay on each card below.",
+    zh: "模型名随便填，原样传给 agent（自定义模型也行）。想单独设置，就在下面每张卡上改。",
+  },
+  "agents.bulkPlaceholder": { en: "e.g. claude-sonnet-4-5", zh: "如 claude-sonnet-4-5" },
+  "agents.bulkApply": { en: "apply to all agents", zh: "应用到全部 agent" },
+  "agents.bulkConfirm": {
+    en: "Set all {n} agents' model to {model}? Per-card overrides will be replaced.",
+    zh: "把全部 {n} 个 agent 的模型改成 {model}？各卡片上单独设置的会被覆盖。",
+  },
+  "agents.bulkGo": { en: "yes, set all", zh: "确认，全部改" },
+  "agents.bulkDone": { en: "switched {n} agents to {model}", zh: "已把 {n} 个 agent 的模型切到 {model}" },
   "agents.selffixPost": {
     en: " and hand it to any agent — ask it to diagnose and fix the launch.",
     zh: " 下载后丢给任意 agent（claude/codex 都行），让它自己诊断修复。",
