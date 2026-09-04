@@ -318,6 +318,7 @@ export const DICT: Record<string, { en: string; zh: string }> = {
     zh: "技能源目录变化时自动重新同步",
   },
   "skills.viewsTitle": { en: "synced to each agent's skill folder", zh: "已同步到各 agent 的技能目录" },
+  "skills.showMore": { en: "show {n} more skills", zh: "展开其余 {n} 个技能" },
 };
 
 type I18nCtx = {

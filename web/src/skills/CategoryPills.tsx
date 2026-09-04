@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useI18n } from "../i18n";
 import { ConfirmDialog } from "../ui/ConfirmDialog";
 import { ZeroState } from "../ui/ZeroState";
@@ -15,7 +15,15 @@ import { CATEGORY_RULES, categoryOf, OTHER, type SkillLike as SkillRow } from ".
  * R50 (P1-3) — the pills used to render the raw match pattern first
  * ("video|comfy|remotion|hyp… 🎬 视频与音频"): Object.entries destructure
  * named the pattern "emoji". Patterns now live in the pill tooltip only.
+ *
+ * N-lane — even collapsed IA breaks down when ONE category is huge (the real
+ * farm has a 158-skill category) or the query is broad: the grid rendered
+ * every card, 19311px of page / 929 tab stops again. The grid now opens in
+ * progressive windows (24 cards + one "show more" button per step), and the
+ * window resets whenever the expanded category or the query changes.
  */
+const PAGE_SIZE = 24;
+
 export default function CategoryPills({
   skills,
   query,
@@ -29,7 +37,13 @@ export default function CategoryPills({
 }) {
   const { t } = useI18n();
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [window_, setWindow_] = useState(PAGE_SIZE);
   const searching = query.trim().length > 0;
+
+  // fresh category / fresh query → fresh window (no stale "show more" tail)
+  useEffect(() => {
+    setWindow_(PAGE_SIZE);
+  }, [expanded, query]);
 
   const catList = useMemo(() => {
     const counts = new Map<string, number>();
@@ -90,13 +104,23 @@ export default function CategoryPills({
           <p className="text-xs text-deck-muted" data-testid="search-hits">
             {t("skills.searchHits", { n: shown.length })}
           </p>
-          <CardGrid shown={shown} onChanged={onChanged} />
+          <WindowedGrid
+            shown={shown}
+            window_={window_}
+            onGrow={() => setWindow_((v) => v + PAGE_SIZE)}
+            onChanged={onChanged}
+          />
           {shown.length === 0 && (
             <p className="text-sm text-deck-muted">{t("skills.noMatch")}</p>
           )}
         </>
       ) : expanded ? (
-        <CardGrid shown={shown} onChanged={onChanged} />
+        <WindowedGrid
+          shown={shown}
+          window_={window_}
+          onGrow={() => setWindow_((v) => v + PAGE_SIZE)}
+          onChanged={onChanged}
+        />
       ) : (
         <p className="text-sm text-deck-muted" data-testid="pick-category">
           {t("skills.pickCategory")}
@@ -106,13 +130,37 @@ export default function CategoryPills({
   );
 }
 
-function CardGrid({ shown, onChanged }: { shown: SkillRow[]; onChanged: () => void }) {
+function WindowedGrid({
+  shown,
+  window_,
+  onGrow,
+  onChanged,
+}: {
+  shown: SkillRow[];
+  window_: number;
+  onGrow: () => void;
+  onChanged: () => void;
+}) {
+  const { t } = useI18n();
+  const visible = shown.slice(0, window_);
+  const rest = shown.length - visible.length;
   return (
-    <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-      {shown.map((s) => (
-        <SkillCard key={s.dirname} s={s} onChanged={onChanged} />
-      ))}
-    </div>
+    <>
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+        {visible.map((s) => (
+          <SkillCard key={s.dirname} s={s} onChanged={onChanged} />
+        ))}
+      </div>
+      {rest > 0 && (
+        <button
+          data-testid="show-more-skills"
+          onClick={onGrow}
+          className="rounded-deck border border-deck-line px-4 py-2 text-sm text-deck-muted hover:border-deck-accent/50 hover:text-deck-accent"
+        >
+          {t("skills.showMore", { n: rest })}
+        </button>
+      )}
+    </>
   );
 }
 
