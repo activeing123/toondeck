@@ -67,12 +67,20 @@ describe("SkillsPanel card actions (UX-017)", () => {
     vi.stubGlobal("fetch", mock.fn);
   });
 
+  // R50: cards are behind their category pills by default ("good" matches
+  // the dev-eng rule via the word "skill"; "broken" lands in other)
+  async function expand(dirname: "good" | "broken") {
+    const pill = dirname === "good" ? "category-pill-🛠 开发工程" : "category-pill-📦 其他";
+    await userEvent.click(await screen.findByTestId(pill));
+  }
+
   it("syncs a single skill from its card", async () => {
     render(
       <ToastProvider>
         <SkillsPanel />
       </ToastProvider>,
     );
+    await expand("good");
     await userEvent.click(await screen.findByTestId("skill-sync-good"));
     expect(await screen.findByText(/synced "good"/)).toBeInTheDocument();
     const syncCall = mock.calls.find((c) => c.url === "/api/skills/sync/good");
@@ -85,6 +93,7 @@ describe("SkillsPanel card actions (UX-017)", () => {
         <SkillsPanel />
       </ToastProvider>,
     );
+    await expand("broken");
     await userEvent.click(await screen.findByTestId("skill-sync-broken"));
     expect(await screen.findByText(/sync failed/)).toBeInTheDocument();
   });
@@ -95,6 +104,7 @@ describe("SkillsPanel card actions (UX-017)", () => {
         <SkillsPanel />
       </ToastProvider>,
     );
+    await expand("good");
     await userEvent.click(await screen.findByTestId("skill-remove-good"));
     const dialog = await screen.findByRole("dialog");
     expect(dialog).toHaveTextContent(/good/);
@@ -115,6 +125,7 @@ describe("SkillsPanel card actions (UX-017)", () => {
         <SkillsPanel />
       </ToastProvider>,
     );
+    await expand("broken");
     await userEvent.click(await screen.findByTestId("skill-details-broken"));
     expect(await screen.findByText("no SKILL.md")).toBeInTheDocument();
     expect(screen.getAllByText("broken").length).toBeGreaterThan(0);

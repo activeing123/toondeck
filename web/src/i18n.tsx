@@ -212,7 +212,15 @@ export const DICT: Record<string, { en: string; zh: string }> = {
   },
   // skills pills
   "skills.searchPlaceholder": { en: "🔍 search skill names or descriptions…", zh: "🔍 搜索技能名或描述…" },
-  "skills.all": { en: "📚 all {n}", zh: "📚 全部 {n}" },
+  // R50: collapsed-by-default categories ("all" pill retired — the default
+  // view is collapsed; search flattens everything)
+  "skills.pickCategory": {
+    en: "↑ pick a category to browse its skills — or search to flatten everything.",
+    zh: "↑ 点一个分类浏览该组技能——或直接搜索摊开全部结果。",
+  },
+  "skills.searchHits": { en: "{n} match(es)", zh: "{n} 个匹配" },
+  "skills.matchesHint": { en: "matches", zh: "匹配规则" },
+  "skills.groupsLabel": { en: "skill categories", zh: "技能分类" },
   "skills.noMatch": { en: "no matching skills — try another category or search term.", zh: "没有匹配的技能 — 换个分类或搜索词。" },
   // R33: empty states
   "agents.emptyTitle": { en: "no agents detected yet", zh: "尚未发现任何 agent" },

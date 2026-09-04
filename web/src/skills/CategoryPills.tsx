@@ -6,7 +6,16 @@ import { toast } from "../ui/Toast";
 import { removeSkill, syncSkill } from "./api";
 import { CATEGORY_RULES, categoryOf, OTHER, type SkillLike as SkillRow } from "./categories";
 
-/** 分类 pill 导航：一排看全分类数，点击过滤，搜索框置顶。 */
+/*
+ * R50 (P1-1) — the Skills page was a keyboard marathon: 918 buttons /
+ * 929 tab stops because every skill rendered its card up front. New IA:
+ * - default COLLAPSED: pills only (≈15 tab stops), zero cards
+ * - click a pill to expand that category (click again to collapse)
+ * - typing a query switches to flat search results across all categories
+ * R50 (P1-3) — the pills used to render the raw match pattern first
+ * ("video|comfy|remotion|hyp… 🎬 视频与音频"): Object.entries destructure
+ * named the pattern "emoji". Patterns now live in the pill tooltip only.
+ */
 export default function CategoryPills({
   skills,
   query,
@@ -19,7 +28,8 @@ export default function CategoryPills({
   onChanged: () => void;
 }) {
   const { t } = useI18n();
-  const [active, setActive] = useState<string>("__all__");
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const searching = query.trim().length > 0;
 
   const catList = useMemo(() => {
     const counts = new Map<string, number>();
@@ -28,15 +38,15 @@ export default function CategoryPills({
       counts.set(c, (counts.get(c) ?? 0) + 1);
     }
     return Object.entries(CATEGORY_RULES)
-      .map(([label, emoji]) => ({ label, emoji, n: counts.get(label) ?? 0 }))
-      .concat(counts.has(OTHER) ? [{ label: OTHER, emoji: "", n: counts.get(OTHER)! }] : [])
+      .map(([label, pattern]) => ({ label, pattern, n: counts.get(label) ?? 0 }))
+      .concat(counts.has(OTHER) ? [{ label: OTHER, pattern: "", n: counts.get(OTHER)! }] : [])
       .filter((c) => c.n > 0);
   }, [skills]);
 
   const shown = useMemo(() => {
     const q = query.trim().toLowerCase();
     return skills.filter((s) => {
-      if (active !== "__all__" && categoryOf(s) !== active) return false;
+      if (!searching && expanded && categoryOf(s) !== expanded) return false;
       if (!q) return true;
       return (
         (s.name ?? "").toLowerCase().includes(q) ||
@@ -44,7 +54,7 @@ export default function CategoryPills({
         s.dirname.toLowerCase().includes(q)
       );
     });
-  }, [skills, active, query]);
+  }, [skills, expanded, query, searching]);
 
   return (
     <div className="space-y-4">
@@ -54,46 +64,54 @@ export default function CategoryPills({
         placeholder={t("skills.searchPlaceholder")}
         className="w-full rounded-deck border border-deck-line bg-deck-panel px-4 py-2.5 text-sm outline-none focus:border-deck-accent"
       />
-      <div className="flex flex-wrap gap-2">
-        <button
-          onClick={() => setActive("__all__")}
-          className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
-            active === "__all__"
-              ? "border-deck-accent bg-deck-accent/15 text-deck-accent"
-              : "border-deck-line text-deck-muted hover:border-deck-accent/50"
-          }`}
-        >
-          {t("skills.all", { n: skills.length })}
-        </button>
+      <div className="flex flex-wrap gap-2" role="group" aria-label={t("skills.groupsLabel")}>
         {catList.map((c) => (
           <button
             key={c.label}
-            onClick={() => setActive(c.label)}
+            data-testid={`category-pill-${c.label}`}
+            aria-pressed={expanded === c.label}
+            title={c.pattern ? `${t("skills.matchesHint")}: ${c.pattern}` : undefined}
+            onClick={() => setExpanded(expanded === c.label ? null : c.label)}
             className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
-              active === c.label
+              expanded === c.label
                 ? "border-deck-accent bg-deck-accent/15 text-deck-accent"
                 : "border-deck-line text-deck-muted hover:border-deck-accent/50"
             }`}
           >
-            {c.emoji} {c.label} {c.n}
+            {c.label} {c.n}
           </button>
         ))}
       </div>
       {skills.length === 0 ? (
         // R33: zero skills is a different story from "no search hits"
         <ZeroState icon="🧩" titleKey="skills.emptyTitle" hintKey="skills.emptyHint" />
-      ) : (
+      ) : searching ? (
         <>
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {shown.map((s) => (
-              <SkillCard key={s.dirname} s={s} onChanged={onChanged} />
-            ))}
-          </div>
+          <p className="text-xs text-deck-muted" data-testid="search-hits">
+            {t("skills.searchHits", { n: shown.length })}
+          </p>
+          <CardGrid shown={shown} onChanged={onChanged} />
           {shown.length === 0 && (
             <p className="text-sm text-deck-muted">{t("skills.noMatch")}</p>
           )}
         </>
+      ) : expanded ? (
+        <CardGrid shown={shown} onChanged={onChanged} />
+      ) : (
+        <p className="text-sm text-deck-muted" data-testid="pick-category">
+          {t("skills.pickCategory")}
+        </p>
       )}
+    </div>
+  );
+}
+
+function CardGrid({ shown, onChanged }: { shown: SkillRow[]; onChanged: () => void }) {
+  return (
+    <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+      {shown.map((s) => (
+        <SkillCard key={s.dirname} s={s} onChanged={onChanged} />
+      ))}
     </div>
   );
 }

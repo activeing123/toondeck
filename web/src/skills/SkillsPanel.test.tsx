@@ -55,6 +55,9 @@ describe("SkillsPanel", () => {
 
   it("renders skill list with validity badges and view matrix", async () => {
     render(<SkillsPanel />);
+    // R50: cards live behind their category pills now ("good" matches the
+    // platform/tools rule via the word "skill"; "broken" lands in other)
+    await userEvent.click(await screen.findByTestId("category-pill-🛠 开发工程"));
     expect(await screen.findByText("good")).toBeInTheDocument();
     expect(await screen.findByText("A good skill.")).toBeInTheDocument();
     expect(await screen.findByText("agent views")).toBeInTheDocument();
@@ -63,9 +66,10 @@ describe("SkillsPanel", () => {
 
   it("filters skills by query", async () => {
     render(<SkillsPanel />);
-    await screen.findByText("good");
+    await screen.findByTestId("pick-category"); // collapsed default
     await userEvent.type(screen.getByPlaceholderText("filter skills…"), "goo");
-    expect(screen.getByText("good")).toBeInTheDocument();
+    // search flattens results — no category click needed
+    expect(await screen.findByText("good")).toBeInTheDocument();
     expect(screen.queryByText("broken")).not.toBeInTheDocument();
   });
 
