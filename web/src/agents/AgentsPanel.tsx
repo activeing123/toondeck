@@ -534,10 +534,31 @@ export default function AgentsPanel() {
         </div>
       )}
 
-      <details className="glass rounded-deck p-4 text-sm">
-        <summary className="cursor-pointer font-semibold">
-          {t("agents.providers", { ok: providers.filter((p) => p.configured).length, n: providers.length })}
-        </summary>
+      {/* N-R2 (user ask): "新增模型很隐蔽" — this was a collapsed <details>
+          with the add button buried inside. Now a persistent glass card:
+          count badge up top (amber while nothing is enabled) and a header
+          add button that opens the dialog without unfolding anything. */}
+      <section className="glass rounded-deck p-4 text-sm" data-testid="provider-section">
+        <div className="flex flex-wrap items-center gap-2">
+          <h2 className="font-semibold">{t("agents.providersTitle")}</h2>
+          <span
+            data-testid="provider-badge"
+            className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+              providers.some((p) => p.configured)
+                ? "border border-led-ok/60 text-led-ok"
+                : "bg-amber-400/20 text-amber-600 dark:text-amber-300"
+            }`}
+          >
+            {providers.filter((p) => p.configured).length}/{providers.length}
+          </span>
+          <button
+            onClick={openCustom}
+            data-testid="provider-add-header"
+            className="ml-auto rounded-deck border border-deck-line px-2.5 py-1 text-xs hover:bg-deck-panel2"
+          >
+            {t("agents.addSource")}
+          </button>
+        </div>
         {/* 小白-5: the benefit line — why enabling a provider matters */}
         <p className="mt-2 text-xs text-deck-muted" data-testid="providers-hint">
           {t("agents.providersHint")}
@@ -580,21 +601,12 @@ export default function AgentsPanel() {
           ))}
 
           <div className="pt-2 border-t border-deck-line">
-            <button
-              onClick={openCustom}
-              data-testid="provider-add-custom"
-              className="rounded-deck border border-deck-line px-2.5 py-1 text-xs hover:bg-deck-panel2"
-            >
-              {t("agents.addSource")}
-            </button>
-          </div>
-          <div className="pt-2 border-t border-deck-line">
             <a href="#/vault" className="text-xs text-deck-accent hover:underline">
               {t("agents.vaultLink")}
             </a>
           </div>
         </div>
-      </details>
+      </section>
 
       {dialog && (
         <ProviderDialog

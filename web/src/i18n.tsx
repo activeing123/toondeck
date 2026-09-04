@@ -254,6 +254,7 @@ export const DICT: Record<string, { en: string; zh: string }> = {
   },
   // UX-C1 part 2: agents provider catalog + custom source + TUI explainer
   "agents.providers": { en: "🔌 model providers ({ok}/{n} enabled)", zh: "🔌 模型提供商（{ok}/{n} 已启用）" },
+  "agents.providersTitle": { en: "🔌 model sources", zh: "🔌 模型来源" },
   // 小白-5: the benefit line — WHY enable a provider at all
   "agents.providersHint": {
     en: "Once enabled, agents can use this provider's models; keys stay in the local vault.",
