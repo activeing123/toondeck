@@ -53,6 +53,9 @@ export default function AgentsPanel() {
   // the stop so the exited card does not flash the self-fix loop.
   const [userStopped, setUserStopped] = useState<Set<string>>(new Set());
   const [unreachable, setUnreachable] = useState(false);
+  // N-R12: model options for the per-card select — the union of every
+  // provider's models (curated + live-cached), deduped and sorted.
+  const modelOptions = Array.from(new Set(providers.flatMap((p) => p.models ?? []))).sort();
   const [flash, setFlash] = useState<Record<string, string>>({});
   const [cmdFor, setCmdFor] = useState<string | null>(null);
   const [cmdInput, setCmdInput] = useState("");
@@ -207,6 +210,39 @@ export default function AgentsPanel() {
       hasStoredKey: entry.keyring === true,
       keyless: false,
     });
+  };
+
+  // N-R12: per-provider live actions — refresh the model list from the
+  // provider's /models endpoint, and a 3-second chat round-trip test.
+  const [providerBusy, setProviderBusy] = useState<string | null>(null);
+  const [providerResult, setProviderResult] = useState<Record<string, string>>({});
+
+  const refreshModels = async (name: string) => {
+    setProviderBusy(name);
+    try {
+      const r = await fetch(`/api/agents/providers/${name}/models/refresh`).then((x) => x.json());
+      if (r.ok) {
+        setProviderResult((p) => ({ ...p, [name]: t("agents.modelsRefreshed", { n: r.count }) }));
+        await load();
+      } else {
+        setProviderResult((p) => ({ ...p, [name]: `⚠ ${r.error}` }));
+      }
+    } finally {
+      setProviderBusy(null);
+    }
+  };
+
+  const testChat = async (name: string) => {
+    setProviderBusy(name);
+    try {
+      const r = await fetch(`/api/agents/providers/${name}/test`, { method: "POST" }).then((x) => x.json());
+      setProviderResult((p) => ({
+        ...p,
+        [name]: r.ok ? t("agents.chatTestOk", { model: r.model, reply: r.reply }) : `⚠ ${r.error}`,
+      }));
+    } finally {
+      setProviderBusy(null);
+    }
   };
 
   const openCustom = () => {
@@ -550,18 +586,31 @@ export default function AgentsPanel() {
                 )}
                 {canLaunch && (
                   <>
-                    <datalist id={`model-opts-${a.id}`}>
-                      {["claude-sonnet-4-5", "gpt-5.2-codex", "deepseek-chat", "gemini-2.5-pro"].map((m) => (
-                        <option key={m} value={m} />
-                      ))}
-                    </datalist>
-                    <input
-                      list={`model-opts-${a.id}`}
+                    {/* N-R12 (user ask 4): "选择模型没有地方选择" — a bare
+                        input with a hidden datalist reads as a text box.
+                        A real <select> shows the arrow; a custom model name
+                        stays reachable via the last option. */}
+                    <select
+                      data-testid={`model-select-${a.id}`}
                       value={models[a.id] ?? ""}
-                      onChange={(e) => changeModel(a.id, e.target.value)}
-                      placeholder={t("agents.model")}
-                      className="ml-auto w-44 rounded-deck bg-deck-panel2 px-2.5 py-1.5 text-xs font-mono"
-                    />
+                      onChange={(e) => {
+                        if (e.target.value === "__custom__") {
+                          const m = window.prompt(t("agents.customModelPrompt"));
+                          if (m && m.trim()) changeModel(a.id, m.trim());
+                          return;
+                        }
+                        changeModel(a.id, e.target.value);
+                      }}
+                      className="ml-auto w-44 rounded-deck bg-deck-panel2 px-2 py-1.5 text-xs font-mono"
+                    >
+                      <option value="">{t("agents.modelDefault")}</option>
+                      {modelOptions.map((m) => (
+                        <option key={m} value={m}>
+                          {m}
+                        </option>
+                      ))}
+                      <option value="__custom__">{t("agents.customModel")}</option>
+                    </select>
                   <span className="text-xs text-deck-muted whitespace-nowrap">{t("agents.sourceLabel")}</span>
                     <select
                       value={sources[a.id] ?? ""}
@@ -637,6 +686,24 @@ export default function AgentsPanel() {
               {p.configured ? (
                 <>
                   <span className="text-led-ok">{t("agents.enabled")}</span>
+                  {/* N-R12: live models + chat test — verify a source in
+                      3 seconds instead of trusting a stale list */}
+                  <button
+                    onClick={() => refreshModels(p.id)}
+                    disabled={providerBusy === p.id}
+                    data-testid={`provider-models-refresh-${p.id}`}
+                    className="rounded-deck border border-deck-line px-2 py-1 hover:bg-deck-panel2 disabled:opacity-40"
+                  >
+                    {t("agents.refreshModels")}
+                  </button>
+                  <button
+                    onClick={() => testChat(p.id)}
+                    disabled={providerBusy === p.id}
+                    data-testid={`provider-test-${p.id}`}
+                    className="rounded-deck border border-deck-line px-2 py-1 hover:bg-deck-panel2 disabled:opacity-40"
+                  >
+                    {t("agents.chatTest")}
+                  </button>
                   <button
                     onClick={() => openEdit(p.id)}
                     data-testid={`provider-edit-${p.id}`}
@@ -656,6 +723,20 @@ export default function AgentsPanel() {
                 >
                   {p.keyless ? t("agents.enableKeyless") : t("agents.enable")}
                 </button>
+              )}
+              {(providerResult[p.id] || (p as { models_cache_count?: number }).models_cache_count) && (
+                <div className="w-full" data-testid={`provider-result-${p.id}`}>
+                  {providerResult[p.id] ? (
+                    <span className={providerResult[p.id].startsWith("⚠") ? "text-led-err" : "text-led-ok"}>
+                      {providerResult[p.id]}
+                    </span>
+                  ) : (
+                    <span className="text-deck-muted">
+                      {t("agents.modelsCount", { n: (p as { models_cache_count?: number }).models_cache_count ?? 0 })} ·{" "}
+                      {t("agents.liveCache")}
+                    </span>
+                  )}
+                </div>
               )}
             </div>
           ))}

@@ -41,6 +41,15 @@ describe("AgentsPanel", () => {
           return Promise.resolve({ json: () => Promise.resolve(statuses) });
         if (url === "/api/agents/models")
           return Promise.resolve({ json: () => Promise.resolve({ models: {} }) });
+        if (url === "/api/agents/providers")
+          return Promise.resolve({
+            json: () =>
+              Promise.resolve({
+                providers: [
+                  { id: "openai", display_name: "OpenAI", base_url: "", models: ["gpt-5.2-codex"], keyless: false, configured: true },
+                ],
+              }),
+          });
         return Promise.resolve({
           json: () => Promise.resolve({ ok: true, agent_id: "fake", exit_code: 0 }),
         });
@@ -86,14 +95,16 @@ describe("AgentsPanel", () => {
     expect(vi.mocked(fetch)).toHaveBeenCalledWith("/api/agents/fake/stop", { method: "POST" });
   });
 
-  it("model input persists via PUT (and clears with empty)", async () => {
+  it("model select persists via PUT (and clears with empty)", async () => {
     render(
       <I18nProvider>
         <AgentsPanel />
       </I18nProvider>,
     );
-    const input = await screen.findByPlaceholderText("model…");
-    await userEvent.type(input, "gpt-5.2-codex");
+    // N-R12: the model control is now a real <select> (visible dropdown
+    // arrow) fed by provider model lists
+    const input = await screen.findByTestId("model-select-fake");
+    await userEvent.selectOptions(input, "gpt-5.2-codex");
     const lastPut = vi
       .mocked(fetch)
       .mock.calls.filter((c) => c[0] === "/api/agents/fake/model")

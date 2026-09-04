@@ -367,12 +367,129 @@ PROVIDER_CATALOG: list[dict] = [
 
 
 def provider_catalog() -> list[dict]:
-    """Curated providers + whether each is already configured (profile saved)."""
+    """Curated providers + whether each is already configured (profile saved).
+
+    N-R12: configured profiles also merge their cached live model list, so
+    the GUI can offer fresh models instead of a stale curated guess.
+    """
     profiles = _load_profiles()
     out = []
     for p in PROVIDER_CATALOG:
-        out.append({**p, "configured": p["id"] in profiles})
+        entry = {**p, "configured": p["id"] in profiles}
+        prof = profiles.get(p["id"], {})
+        if "models_cache" in prof:
+            entry["models"] = prof["models_cache"]
+            entry["models_cache_count"] = len(prof["models_cache"])
+        out.append(entry)
+    # custom profiles (user-added sources) appear as first-class rows too
+    known = {p["id"] for p in PROVIDER_CATALOG}
+    for name, prof in profiles.items():
+        if name in known:
+            continue
+        out.append(
+            {
+                "id": name,
+                "display_name": name,
+                "base_url": prof.get("base_url", ""),
+                "models": prof.get("models_cache", []),
+                "models_cache_count": len(prof.get("models_cache", [])),
+                "keyless": False,
+                "configured": True,
+            }
+        )
     return out
+
+
+def _profile_auth(name: str) -> tuple[str | None, str | None]:
+    """(base_url, api_key) for a configured profile; key from the keyring."""
+    profiles = _load_profiles()
+    prof = profiles.get(name)
+    if prof is None:
+        return None, None
+    key = None
+    if prof.get("keyring"):
+        try:
+            import keyring
+
+            key = keyring.get_password("toondeck://model-profile", name)
+        except Exception:  # noqa: BLE001 — missing keyring yields a clear error
+            key = None
+    return prof.get("base_url"), key
+
+
+def refresh_provider_models(name: str) -> dict:
+    """N-R12: pull the live model list from the provider and cache it.
+
+    Speaks both OpenAI (`/models`, Bearer) and Anthropic (`/v1/models`,
+    x-api-key) shapes. The cache lands on the profile JSON so the catalog
+    serves fresh names without any network call.
+    """
+    base_url, key = _profile_auth(name)
+    if not base_url:
+        return {"ok": False, "error": f"unknown profile: {name}"}
+    import httpx
+
+    headers: dict[str, str] = {}
+    if key:
+        headers["Authorization"] = f"Bearer {key}"
+        headers["x-api-key"] = key
+    url = base_url.rstrip("/")
+    if not url.endswith("/models"):
+        url += "/models"
+    try:
+        r = httpx.get(url, headers=headers, timeout=15)
+        r.raise_for_status()
+        data = r.json()
+    except Exception as e:  # noqa: BLE001 — network errors must be readable
+        return {"ok": False, "error": f"fetch models: {e}"}
+    items = data.get("data", data) if isinstance(data, dict) else data
+    models: list[str] = []
+    for it in items or []:
+        mid = it.get("id") or it.get("name") if isinstance(it, dict) else it
+        if isinstance(mid, str) and mid:
+            models.append(mid)
+    if not models:
+        return {"ok": False, "error": "provider returned no models"}
+    profiles = _load_profiles()
+    profiles.setdefault(name, {})["models_cache"] = sorted(models)
+    _save_profiles(profiles)
+    return {"ok": True, "name": name, "models": sorted(models), "count": len(models)}
+
+
+def test_provider_chat(name: str) -> dict:
+    """N-R12: one tiny chat round-trip so a novice can verify a source.
+
+    Asks the model to reply with exactly "pong" — 3 seconds, honest result.
+    """
+    base_url, key = _profile_auth(name)
+    if not base_url:
+        return {"ok": False, "error": f"unknown profile: {name}"}
+    import httpx
+
+    profiles = _load_profiles()
+    models = profiles.get(name, {}).get("models_cache") or []
+    model = models[0] if models else "default"
+    headers: dict[str, str] = {"Content-Type": "application/json"}
+    if key:
+        headers["Authorization"] = f"Bearer {key}"
+    url = base_url.rstrip("/")
+    if url.endswith("/models"):
+        url = url[: -len("/models")]
+    if not url.endswith("/chat/completions"):
+        url += "/chat/completions"
+    payload = {
+        "model": model,
+        "max_tokens": 8,
+        "messages": [{"role": "user", "content": "Reply with exactly: pong"}],
+    }
+    try:
+        r = httpx.post(url, headers=headers, json=payload, timeout=20)
+        r.raise_for_status()
+        data = r.json()
+        reply = (data.get("choices") or [{}])[0].get("message", {}).get("content", "")
+    except Exception as e:  # noqa: BLE001 — errors must be readable
+        return {"ok": False, "error": f"chat test: {e}"}
+    return {"ok": True, "name": name, "model": model, "reply": (reply or "").strip()}
 
 
 def set_model(agent_id: str, model: str | None) -> dict:

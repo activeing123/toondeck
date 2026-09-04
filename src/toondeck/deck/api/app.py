@@ -373,6 +373,15 @@ def create_app() -> FastAPI:
     def agent_providers() -> dict:
         return {"providers": agents.provider_catalog()}
 
+    # N-R12: live model list + 3-second chat test per provider
+    @app.get("/api/agents/providers/{name}/models/refresh")
+    def agent_provider_models_refresh(name: str) -> dict:
+        return agents.refresh_provider_models(name)
+
+    @app.post("/api/agents/providers/{name}/test")
+    def agent_provider_test(name: str) -> dict:
+        return agents.test_provider_chat(name)
+
     @app.post("/api/agents/adopt")
     def agents_adopt(payload: AdoptIn) -> dict:
         r = agentdiscover.adopt(payload.label, payload.launch_command)
