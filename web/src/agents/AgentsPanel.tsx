@@ -5,6 +5,7 @@ import { ProviderDialog, type ProviderDraft } from "./ProviderDialog";
 import { useI18n } from "../i18n";
 import { toast } from "../ui/Toast";
 import { ZeroState } from "../ui/ZeroState";
+import HowTo from "../ui/HowTo";
 import { Led } from "../ui/Led";
 
 function useI18nSafe() {
@@ -238,6 +239,12 @@ export default function AgentsPanel() {
           {agents.filter((a) => a.installed).length} installed · {running} running
         </span>
       </h1>
+
+      {/* R54: tutorial — auto-detect, launch, vault keys flow in */}
+      <HowTo
+        page="agents"
+        steps={[t("howto.agents.1"), t("howto.agents.2"), t("howto.agents.3")]}
+      />
 
       <details className="glass rounded-deck p-4 text-sm">
         <summary className="cursor-pointer font-semibold">

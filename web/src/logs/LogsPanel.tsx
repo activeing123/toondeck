@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import LogTerminal from "../agents/LogTerminal";
 import { useI18n } from "../i18n";
 import { Led } from "../ui/Led";
+import HowTo from "../ui/HowTo";
 
 type StatusRow = { state: string; exit_code: number | null; pid?: number };
 type AgentRow = { id: string; display_name: string; installed: boolean };
@@ -56,6 +57,9 @@ export default function LogsPanel() {
         📜 Logs
         <span className="ml-3 text-sm text-deck-muted">{t("logs.subtitle")}</span>
       </h1>
+
+      {/* R54: tutorial — the journal is automatic; md report is the help exit */}
+      <HowTo page="logs" steps={[t("howto.logs.1"), t("howto.logs.2")]} />
 
       {activity && (
         <section className="glass rounded-deck p-4" data-testid="activity-journal">

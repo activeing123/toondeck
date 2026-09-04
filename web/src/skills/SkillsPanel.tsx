@@ -12,6 +12,7 @@ import {
 import CategoryPills from "./CategoryPills";
 import ViewMatrix from "./ViewMatrix";
 import { Led } from "../ui/Led";
+import HowTo from "../ui/HowTo";
 import { useI18n } from "../i18n";
 
 export default function SkillsPanel() {
@@ -105,6 +106,12 @@ export default function SkillsPanel() {
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         className="glass rounded-deck px-3 py-2 text-sm w-full md:w-72"
+      />
+
+      {/* R54: tutorial — category pills, search flattens, sync/remove semantics */}
+      <HowTo
+        page="skills"
+        steps={[t("howto.skills.1"), t("howto.skills.2"), t("howto.skills.3")]}
       />
 
       {doctor && (

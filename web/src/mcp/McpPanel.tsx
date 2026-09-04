@@ -7,6 +7,7 @@ import { useI18n } from "../i18n";
 import { Led as SharedLed } from "../ui/Led";
 import { ConfirmDialog } from "../ui/ConfirmDialog";
 import { ZeroState } from "../ui/ZeroState";
+import HowTo from "../ui/HowTo";
 import {
   checkHealth,
   fetchInventory,
@@ -152,6 +153,12 @@ export default function McpPanel() {
       </div>
 
       <FleetDashboard reloadSignal={invReload} />
+
+      {/* R54: the tutorial answers the two newcomer questions up front */}
+      <HowTo
+        page="mcp"
+        steps={[t("howto.mcp.1"), t("howto.mcp.2"), t("howto.mcp.3")]}
+      />
 
       <TokenCard ts={state.token_savings} />
 

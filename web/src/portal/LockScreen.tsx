@@ -57,6 +57,11 @@ export default function LockScreen({ onUnlock }: { onUnlock: () => void }) {
       <h1 className="text-3xl font-bold tracking-tight">
         Toon<span className="text-deck-accent">Deck</span>
       </h1>
+      {/* R54 小白-1: the one-line human value proposition — the landing page
+          is gone, so this is the first honest sentence a newcomer reads */}
+      <p className="text-sm text-deck-muted max-w-md text-center" data-testid="portal-oneliner">
+        {t("portal.oneliner")}
+      </p>
       <div
         role="dialog"
         aria-label={t("portal.lockTitle")}

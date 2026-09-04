@@ -24,6 +24,61 @@ export const DICT: Record<string, { en: string; zh: string }> = {
   "portal.newPw": { en: "new password (min 6 chars)", zh: "新密码（至少 6 位）" },
   "portal.changeDone": { en: "password changed", zh: "密码已修改" },
   "portal.lock": { en: "lock", zh: "锁定" },
+  // R53 小白-1: the one-line human intro (the landing page is gone; the lock
+  // screen is the first thing a newcomer sees)
+  "portal.oneliner": {
+    en: "Collect the MCP tools, skills and model keys scattered across your AI agents into one panel.",
+    zh: "把你所有 AI agent 的 MCP 工具、技能、模型密钥，收进一张面板统一管理。",
+  },
+  // R54: per-page tutorials — answer "do I need to configure anything?" and
+  // "which button do I press?" in ≤3 steps, collapsible, per-page memory
+  "howto.title": { en: "how to use this page", zh: "这页怎么用" },
+  "howto.hide": { en: "hide", zh: "收起" },
+  "howto.show": { en: "show", zh: "展开" },
+  "howto.mcp.1": {
+    en: "No configuration needed — the list below is scanned from the agent configs already on this machine.",
+    zh: "无需任何配置——下面的列表是从本机各 agent 已有配置里自动扫描出来的。",
+  },
+  "howto.mcp.2": {
+    en: "Click a row to see its tools; press “import & manage” on a row you want under management.",
+    zh: "点任意一行看它的工具；想接管哪行就点行内的「导入接管」。",
+  },
+  "howto.mcp.3": {
+    en: "Then: “run health check” grades connectivity; “sync all agents” writes the result back to every agent.",
+    zh: "然后：点「run health check」体检连通性；点「sync all agents」把接管结果写回所有 agent。",
+  },
+  "howto.skills.1": {
+    en: "No configuration needed — skills are read from ~/.toondeck/skills automatically.",
+    zh: "无需任何配置——技能自动从 ~/.toondeck/skills 读取。",
+  },
+  "howto.skills.2": {
+    en: "Click a category pill to browse, or just type in the search box to flatten everything.",
+    zh: "点分类标签浏览，或直接在搜索框打字摊开全部结果。",
+  },
+  "howto.skills.3": {
+    en: "Each card: “sync” pushes it to every agent's shelf; “remove” asks first and keeps a recycle copy.",
+    zh: "每张卡：「同步」推送到所有 agent 的技能架；「移除」先确认且留有回收站副本。",
+  },
+  "howto.agents.1": {
+    en: "No configuration needed — installed agents on this machine are detected automatically.",
+    zh: "无需任何配置——本机已装的 agent 自动发现。",
+  },
+  "howto.agents.2": {
+    en: "Press “launch” to start one; keys stored in the vault are injected automatically.",
+    zh: "点「启动」拉起 agent；保险库里存过的密钥会自动注入。",
+  },
+  "howto.agents.3": {
+    en: "Model source / model can be switched anytime; live logs stream in the card.",
+    zh: "模型源和模型随时可换；日志实时显示在卡片里。",
+  },
+  "howto.logs.1": {
+    en: "No configuration needed — every deck action (probe, sync, launch) is recorded here automatically.",
+    zh: "无需任何配置——deck 的每个动作（体检/同步/启动）都自动记录在这里。",
+  },
+  "howto.logs.2": {
+    en: "Something broke? Download the md report on an agent card and hand it to the agent to fix.",
+    zh: "出问题了？在 agent 卡片下载 md 报告，直接丢给 agent 让它自己修。",
+  },
   "nav.mcp": { en: "mcp", zh: "MCP" },
   "nav.skills": { en: "skills", zh: "技能" },
   "nav.agents": { en: "agents", zh: "代理" },
