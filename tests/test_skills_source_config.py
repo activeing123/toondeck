@@ -1,10 +1,10 @@
 """P0-1 RED: the skills source must be configurable, not hard-wired to
 ~/.toondeck/skills. Real machines have a pre-existing skills farm
-(E:\\openthink\\skills linked into three agents). ToonDeck must be able to
+(E:\\shared\\skills linked into three agents). ToonDeck must be able to
 adopt that directory as its source WITHOUT touching it (coexistence law:
 new system must not break old habits), via ~/.toondeck/config.json:
 
-    {"skills_source": "E:\\openthink\\skills"}
+    {"skills_source": "E:\\shared\\skills"}
 
 Precedence: explicit env TOONDECK_SKILLS_DIR (tests/sandbox) > config.json
 > default ~/.toondeck/skills. When the configured source is outside
@@ -41,10 +41,10 @@ def test_default_source_is_home_toondeck_skills(home, monkeypatch):
 
 def test_config_file_adopts_external_source(home):
     cfg = home / "config.json"
-    cfg.write_text(json.dumps({"skills_source": "E:/openthink/skills"}), encoding="utf-8")
+    cfg.write_text(json.dumps({"skills_source": "E:/shared/skills"}), encoding="utf-8")
     from toondeck.deck.skills.internal import source_dir, source_root
 
-    assert source_dir() == __import__("pathlib").Path("E:/openthink/skills")
+    assert source_dir() == __import__("pathlib").Path("E:/shared/skills")
     # hub state stays in the hub home even when the source lives elsewhere
     assert source_root() == home
 
@@ -57,7 +57,7 @@ def test_source_root_default_stays_under_home(home):
 
 def test_env_override_still_wins_over_config(home):
     (home / "config.json").write_text(
-        json.dumps({"skills_source": "E:/openthink/skills"}), encoding="utf-8"
+        json.dumps({"skills_source": "E:/shared/skills"}), encoding="utf-8"
     )
     external = home.parent / "env-skills"
     external.mkdir()
@@ -82,9 +82,9 @@ def test_invalid_config_source_type_is_ignored(home):
 
 def test_config_get_state_reports_adopted_source(home):
     (home / "config.json").write_text(
-        json.dumps({"skills_source": "E:/openthink/skills"}), encoding="utf-8"
+        json.dumps({"skills_source": "E:/shared/skills"}), encoding="utf-8"
     )
     from toondeck.deck.skills import get_state
 
     state = get_state()
-    assert state["source"] == str(__import__("pathlib").Path("E:/openthink/skills"))
+    assert state["source"] == str(__import__("pathlib").Path("E:/shared/skills"))
