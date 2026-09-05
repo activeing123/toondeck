@@ -137,6 +137,26 @@ def main() -> int:
             print(r.stderr)
             return 1
 
+        # A clone is what a stranger receives, so it is also the privacy check:
+        # internal planning notes must be absent from the tree AND from history
+        # (untracking alone leaves them reachable via `git show <old-sha>:...`).
+        for private in (".context", ".spec"):
+            if (clone / private).exists():
+                print(f"PRIVACY FAIL: a fresh clone contains {private}/")
+                return 1
+        hist = subprocess.run(
+            ["git", "-C", str(clone), "log", "--all", "--name-only", "--pretty="],
+            capture_output=True,
+            text=True,
+        ).stdout.splitlines()
+        leaked = sorted({h.strip() for h in hist if h.strip().startswith((".context/", ".spec/"))})
+        if leaked:
+            print(f"PRIVACY FAIL: {len(leaked)} private doc path(s) still in history:")
+            for p in leaked[:10]:
+                print("   ", p)
+            return 1
+        print("privacy: fresh clone carries no internal planning docs (tree + history)\n")
+
         # [2] a virtualenv with nothing in it but what the package asks for
         venv = tmp / "venv"
         r = run([sys.executable, "-m", "venv", str(venv)], capture_output=True)
