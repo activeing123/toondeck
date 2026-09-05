@@ -41,3 +41,74 @@ jobs:
         run: pnpm test
       - name: Build
         run: pnpm build
+
+  # The job that would have caught every bug in the 2026-09-05 clean-room audit:
+  # a fresh venv installing the built wheel, with no repo layout and no editable
+  # mcptoon to lean on. Local suites cannot see packaging holes — on a dev box
+  # the engine is already installed and web/dist is already built.
+  packaging:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
+      - name: Rebuild the shipped UI and fail on drift
+        # The SPA is committed inside the package so installs need no node.
+        # That only holds if the committed copy is current — this makes the
+        # "changed the UI, forgot to rebuild" mistake a red build.
+        run: |
+          cd web && pnpm install --frozen-lockfile && pnpm build && cd ..
+          git add -A src/toondeck/deck/api/webui
+          git diff --cached --quiet -- src/toondeck/deck/api/webui || {
+            echo "::error::src/toondeck/deck/api/webui is stale — run 'pnpm build' in web/ and commit the result"
+            git status --porcelain -- src/toondeck/deck/api/webui
+            exit 1
+          }
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build the wheel
+        run: |
+          python -m pip install --quiet build
+          python -m build --wheel
+      - name: Clean-room install and smoke test
+        run: |
+          python -m venv .cleanroom
+          .cleanroom/bin/python -m pip install --quiet dist/*.whl
+          .cleanroom/bin/python - <<'PY'
+          import json, pathlib, sys
+          import toondeck
+
+          root = pathlib.Path(toondeck.__file__).parent
+          data = sorted(p.name for p in root.rglob("*.json"))
+          html = list(root.rglob("*.html"))
+          print("json shipped:", len(data), data[:4])
+          print("html shipped:", len(html))
+          assert {"signature.json", "providers.json"} <= set(data), "data catalogs missing"
+          assert len([p for p in data if p.endswith(".json")]) >= 10, "agent adapters missing"
+          assert (root / "deck" / "api" / "webui" / "index.html").is_file(), "UI missing from wheel"
+
+          # the engine must arrive as a real dependency, not an ambient hope
+          import mcptoon  # noqa: F401
+          import httpx  # noqa: F401
+
+          from fastapi.testclient import TestClient
+          from toondeck.deck.api.app import create_app
+
+          client = TestClient(create_app())
+          shell = client.get("/")
+          assert shell.status_code == 200 and '<div id="root">' in shell.text, "SPA not served"
+          agents = client.get("/api/agents")
+          assert agents.status_code == 200 and len(agents.json()["agents"]) >= 8, "detection broken"
+          assert client.get("/api/agents/providers").json()["providers"], "provider catalog empty"
+          typo = client.get("/api/skills")
+          assert typo.status_code == 404, f"unknown /api path answered {typo.status_code}: the SPA swallowed it"
+          assert "json" in typo.headers["content-type"], "API 404 must be JSON, not HTML"
+          print("CLEANROOM: PASS")
+          PY
