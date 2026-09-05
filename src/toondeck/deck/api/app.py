@@ -511,6 +511,13 @@ def create_app() -> FastAPI:
     # ── SPA hosting (catch-all, last) ──
     @app.get("/{path:path}")
     def spa(path: str):
+        # CLEAN-ROOM AUDIT 2026-09-05: /api/* is a JSON namespace. Before this
+        # guard, a typo like GET /api/skills (real route: /api/skills/state)
+        # fell through to the shell and answered 200 + index.html — which the
+        # browser surfaces as "Unexpected token '<'" instead of a 404, sending
+        # users hunting for a bug that isn't in the code they're reading.
+        if path == "api" or path.startswith("api/"):
+            return JSONResponse({"error": "not_found", "path": "/" + path}, status_code=404)
         target = static.resolve(path)
         if target is None:
             return JSONResponse({"error": "not_found"}, status_code=404)
