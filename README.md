@@ -61,8 +61,10 @@ cd web && pnpm install && pnpm test && pnpm build
 CI runs the backend and web suites on Linux plus a **clean-room job** that
 builds the wheel, installs it into a fresh virtualenv and proves the UI and the
 detection catalogs actually ship — the class of bug that local tests cannot see.
+Reproduce it locally before tagging:
 
-- Spec: `.spec/PRD.md` · `.spec/ARCHITECTURE.md`
-- Decisions: `.context/DECISIONS.md` · Task state: `.context/TASK_GRAPH.md`
+```bash
+python scripts/clean_room_check.py
+```
 
 License: Apache-2.0

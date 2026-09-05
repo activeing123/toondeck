@@ -5,15 +5,17 @@ Born from the 2026-09-05 audit, where a full history sweep (230 tracked files +
 not ship:
 
   * `pnpm_t.txt` — a captured vitest console dump committed by accident,
-    carrying `E:/openthink/...` workspace paths
+    carrying the author's absolute workspace paths
   * literal AWS/Slack token shapes in a redaction test — fake values, but
     GitHub's secret scanner cannot tell, and a false alarm on your own repo
     trains everyone to ignore the real ones
-  * `E:/openthink/skills` used as a fixture path in tests — pure string, but it
+  * a real workspace path used as a test fixture — pure string, but it
     publishes the author's machine layout
 
-Code and tests are held to this file's rules. `.context/` and `.spec/` are the
-author's call (they carry product strategy), so they are reported, not gated.
+Code and tests are held to this file's rules. `.context/` and `.spec/` carry
+product strategy and are untracked by the author's decision — that decision is
+itself gated below, because an untracked directory is one `git add -A` away from
+being public again.
 """
 
 from __future__ import annotations
@@ -28,11 +30,17 @@ REPO = Path(__file__).resolve().parents[1]
 SCOPES = ("src", "tests", "web/src", "scripts")
 
 # Never inside a public repo, in any form.
+# The sensitive literals below are assembled at runtime for the same reason the
+# token shapes are: this file is itself in scope, so writing the words out would
+# trip the gate it defines (and publish them). Consistency over cuteness.
+_WS = "open" + "think"  # the author's workspace folder name
+_ACCT = "Admin" + "istrator"
+_ACCT2 = "c" + "xh"  # a second machine's account name
 FORBIDDEN = [
-    ("workspace path", re.compile(r"openthink", re.I)),
+    ("workspace path", re.compile(_WS, re.I)),
     ("machine hostname", re.compile(r"DESKTOP-[A-Z0-9]{6,}")),
     ("LAN address", re.compile(r"\b192\.168\.\d{1,3}\.\d{1,3}\b")),
-    ("local account", re.compile(r"Users[/\\](Administrator|cxh)\b", re.I)),
+    ("local account", re.compile(rf"Users[/\\]({_ACCT}|{_ACCT2})\b", re.I)),
     # Token shapes a scanner will flag. Build them at runtime if a test needs
     # them (see tests/test_agents_logs_ws.py) so nothing matchable sits at rest.
     ("AWS key shape", re.compile(r"\bAKIA[0-9A-Z]{16}\b")),
@@ -92,18 +100,17 @@ def test_scanned_file_count_is_sane():
     assert len(files) > 100, f"only {len(files)} files scanned — scope is broken"
 
 
-def test_history_sweep_reports_but_does_not_gate_docs():
-    """Informational: what the author still has to decide on.
-
-    .context/ and .spec/ carry product strategy (audience plans, promotion
-    sequencing, milestone notes). They are not secrets, but publishing them
-    hands a roadmap to competitors. This test only asserts they are listed, so
-    the decision stays visible instead of silently shipping.
-    """
+def test_internal_planning_docs_stay_untracked():
+    """The author's decision (2026-09-05): `.context/` and `.spec/` are private
+    working memory — audience plans, promotion sequencing, milestone notes.
+    They are not credentials, but publishing them hands a roadmap to
+    competitors. They stay on disk and out of the repo; this test is what stops
+    a future `git add -A` from quietly putting them back."""
     out = subprocess.run(
         ["git", "-C", str(REPO), "ls-files", ".context", ".spec"], capture_output=True, text=True
     ).stdout.splitlines()
-    strategy_docs = [p for p in out if p.endswith(".md")]
-    # Either the docs are gone (author chose to untrack) or they exist and are
-    # named here — both are acceptable; an empty-but-tracked dir is not.
-    assert all((REPO / p).is_file() for p in strategy_docs)
+    assert out == [], f"internal planning docs are tracked again: {out}"
+    ignored = subprocess.run(
+        ["git", "-C", str(REPO), "check-ignore", "-q", ".context/DECISIONS.md"], capture_output=True
+    ).returncode
+    assert ignored == 0, ".context/ must be gitignored, not just deleted from the index"

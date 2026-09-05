@@ -15,3 +15,7 @@ web/dist/
 # Local
 *.local.json
 .DS_Store
+
+# Internal planning notes — private working memory, never published
+.context/
+.spec/
