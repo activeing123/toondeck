@@ -1,0 +1,11 @@
+# CLEAN-ROOM AUDIT 2026-09-05: an sdist built without these would strip every
+# data file from the tarball, so `pip install toondeck-x.y.z.tar.gz` (what PyPI
+# serves when no wheel matches) reproduced the same empty-package failure.
+# Wheels are covered by [tool.setuptools.package-data]; this covers the sdist.
+# tests/test_packaging_clean_room.py locks this list against drift.
+recursive-include src/toondeck/deck/agents/adapters *.json
+include src/toondeck/deck/agentdiscover/internal/signature.json
+include src/toondeck/deck/vault/internal/providers.json
+recursive-include src/toondeck/deck/api/webui *
+include README.md
+include LICENSE

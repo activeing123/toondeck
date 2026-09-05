@@ -28,10 +28,18 @@ dependencies = [
     "uvicorn>=0.29",
     "keyring>=25.0",
     "watchfiles>=1.0",
+    # CLEAN-ROOM AUDIT 2026-09-05 — a fresh `pip install toondeck` in a new venv
+    # died with `ModuleNotFoundError: No module named 'mcptoon'`. The deck is a
+    # bridge over the mcptoon engine, so the engine is a runtime dependency, not
+    # an ambient assumption of this dev box (which has it editable-installed).
+    "mcptoon>=0.7.3",
+    # httpx sat in dev extras, but deck.agents imports it for live model refresh
+    # and the chat-test endpoint → those buttons would crash on a user's machine.
+    "httpx>=0.27",
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8", "pytest-timeout>=2.3", "httpx>=0.27", "ruff>=0.5"]
+dev = ["pytest>=8", "pytest-timeout>=2.3", "ruff>=0.5"]
 
 [project.scripts]
 toondeck = "toondeck.cli:main"
@@ -43,6 +51,21 @@ Issues = "https://github.com/activeing123/toondeck/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+# CLEAN-ROOM AUDIT 2026-09-05: the installed wheel held 34 .py files and ZERO
+# data files — deck.agents.adapters (8 agent adapters), the 27-entry signature
+# database, the vault provider catalog and the whole built SPA were left behind.
+# A user's deck would boot with no UI and no detection catalog. Ship them.
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.package-data]
+"toondeck.deck.agents" = ["adapters/*.json"]
+"toondeck.deck.agentdiscover.internal" = ["signature.json"]
+"toondeck.deck.vault.internal" = ["providers.json"]
+# The SPA is built straight into the package (web/vite.config.ts outDir), so an
+# installed deck serves its own UI with no node, no build step, no repo layout.
+"toondeck.deck.api" = ["webui/**/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
