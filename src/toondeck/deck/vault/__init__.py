@@ -25,7 +25,10 @@ def set_key(provider: str, secret: str) -> dict:
     try:
         store.set_secret(provider, secret.strip())
     except Exception as e:  # noqa: BLE001 — keychain backend errors are reportable
-        return {"ok": False, "error": f"keychain error: {e}"}
+        # CLEAN-ROOM AUDIT 2026-09-05: same class of leak as deck.agents — on a
+        # machine with no keychain backend this forwarded a raw English exception
+        # into a toast. Hand the UI a stable token; keep the cause in `detail`.
+        return {"ok": False, "error": "keyring_unavailable", "detail": str(e)}
     meta.record_stored(provider)
     return {"ok": True, "provider": provider}
 

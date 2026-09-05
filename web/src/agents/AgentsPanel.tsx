@@ -6,6 +6,7 @@ import { useI18n } from "../i18n";
 import { toast } from "../ui/Toast";
 import { ZeroState } from "../ui/ZeroState";
 import { ConfirmDialog } from "../ui/ConfirmDialog";
+import { backendError } from "../ui/backendError";
 import HowTo from "../ui/HowTo";
 import { Led } from "../ui/Led";
 
@@ -177,7 +178,9 @@ export default function AgentsPanel() {
             }),
           }).then((x) => x.json());
     if (!res.ok) {
-      toast.error(res.error ?? "save failed");
+      // CLEAN-ROOM AUDIT 2026-09-05: a machine with no keychain backend used to
+      // surface a raw English keyring exception in a toast.
+      toast.error(backendError(res, t, "save failed"));
       return;
     }
     setDialog(null);

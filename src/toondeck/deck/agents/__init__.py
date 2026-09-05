@@ -210,6 +210,20 @@ def list_profiles() -> dict:
     return _load_profiles()
 
 
+def _keyring_unavailable(exc: Exception) -> dict:
+    """A machine-readable token, never a raw traceback string.
+
+    CLEAN-ROOM AUDIT 2026-09-05 (cross-platform leg): this box has a Windows
+    credential manager, so the happy path was all the suite ever exercised. On
+    a headless Linux server — or any machine with no Secret Service — keyring
+    raises at set_password time and the deck used to forward the raw English
+    exception into a toast. The user could neither read nor act on it. The UI
+    maps this token to a localized, actionable hint and keeps the detail for
+    anyone who wants the real cause.
+    """
+    return {"ok": False, "error": "keyring_unavailable", "detail": str(exc)}
+
+
 def add_profile(name: str, base_url: str | None = None, api_key: str | None = None) -> dict:
     """Define a custom model source (e.g. my-proxy → https://…/v1 + key).
 
@@ -229,7 +243,7 @@ def add_profile(name: str, base_url: str | None = None, api_key: str | None = No
             keyring.set_password("toondeck://model-profile", name, api_key)
             entry["keyring"] = True
         except Exception as e:  # noqa: BLE001 — keyring failures must be visible
-            return {"ok": False, "error": f"keyring: {e}"}
+            return _keyring_unavailable(e)
     profiles[name] = entry
     _save_profiles(profiles)
     return {"ok": True, "name": name}
@@ -263,7 +277,7 @@ def edit_profile(name: str, base_url: str | None = None, api_key: str | None = N
                 keyring.set_password("toondeck://model-profile", name, stripped_key)
                 entry["keyring"] = True
             except Exception as e:  # noqa: BLE001 — keyring failures must be visible
-                return {"ok": False, "error": f"keyring: {e}"}
+                return _keyring_unavailable(e)
         else:
             entry.pop("keyring", None)  # explicit empty string clears the key
             try:

@@ -3,6 +3,7 @@ import { useI18n } from "../i18n";
 import { toast } from "../ui/Toast";
 import { ConfirmDialog } from "../ui/ConfirmDialog";
 import { ZeroState } from "../ui/ZeroState";
+import { backendError } from "../ui/backendError";
 import { Led } from "../ui/Led";
 import { VaultProviderDialog, type ProviderFormDraft } from "./VaultProviderDialog";
 
@@ -49,7 +50,7 @@ export default function VaultPanel() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ provider: id, secret }),
       }).then((r2) => r2.json());
-      if (!r.ok) toast.error(r.error ?? "store failed");
+      if (!r.ok) toast.error(backendError(r, t, "store failed"));
       else setReStore(null); // recovery complete: collapse the re-store input
       setDrafts((d) => ({ ...d, [id]: "" }));
       await load();

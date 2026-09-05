@@ -326,6 +326,10 @@ export const DICT: Record<string, { en: string; zh: string }> = {
   },
   "agents.bulkPlaceholder": { en: "e.g. claude-sonnet-4-5", zh: "如 claude-sonnet-4-5" },
   "agents.addSourceTop": { en: "＋ add custom model source", zh: "＋ 添加自定义模型源" },
+  "common.keyringUnavailable": {
+    en: "This machine has no usable system keychain, so the key cannot be stored safely — ToonDeck never writes plaintext keys to disk. On Linux desktop, enable GNOME Keyring or KWallet and retry.",
+    zh: "这台机器没有可用的系统钥匙串，密钥无法安全保存（ToonDeck 绝不把密钥写成明文文件）。Linux 桌面请先启用 GNOME Keyring 或 KWallet 再重试。",
+  },
   "agents.gotoProviders": { en: "manage sources ↓", zh: "管理模型来源 ↓" },
   "agents.bulkApply": { en: "apply to all agents", zh: "应用到全部 agent" },
   "agents.bulkConfirm": {
