@@ -7,9 +7,15 @@ on:
 
 jobs:
   backend:
-    runs-on: ubuntu-latest
+    # The backend suite is verified against Windows semantics — console
+    # spawning, APPDATA discovery, command shims, link behavior — so the gate
+    # runs where that is true. Porting the suite to POSIX is real work and
+    # belongs to a later milestone, not to a green-by-omission checkbox.
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # the commit-message privacy gate reads the full history
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"

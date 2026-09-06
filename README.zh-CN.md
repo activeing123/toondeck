@@ -21,7 +21,8 @@
 ## 环境要求
 
 - Python **3.10 或更新**
-- Windows、macOS 或 Linux
+- Windows 是一等公民（控制台会在真实终端窗口里启动 agent）；macOS 和 Linux
+  也可用
 - API 密钥保存在**操作系统钥匙串**里（绝不写入明文文件）。无桌面的 Linux
   机器需要钥匙串服务（GNOME Keyring / KWallet）；没有的话，ToonDeck 会拒绝
   存密钥并告诉你原因，而不是悄悄写进磁盘。

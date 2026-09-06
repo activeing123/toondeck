@@ -23,7 +23,8 @@ pulled in automatically as a dependency.
 ## Requirements
 
 - Python **3.10 or newer**
-- Windows, macOS or Linux
+- Windows (first-class — the console spawns agents in real console windows),
+  macOS and Linux work too
 - API keys live in your **OS keychain** (never in a plaintext file). On a
   headless Linux box you need a keychain service (GNOME Keyring / KWallet);
   without one, ToonDeck refuses to store a key rather than writing it to disk.
