@@ -1,0 +1,30 @@
+name: Feature request
+description: Something you wish ToonDeck did (or did differently).
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: The task, not the solution — "I want to see which agent is consuming tokens" beats "add a chart to the corner".
+    validations:
+      required: true
+
+  - type: textarea
+    id: workaround
+    attributes:
+      label: How do you do it today?
+      description: If the answer is "in each agent's own config, one by one", say so — that is exactly what this deck exists to remove.
+
+  - type: textarea
+    id: idea
+    attributes:
+      label: What you think ToonDeck should do
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Quick checks
+      options:
+        - label: I am on the latest version (or a recent main build).
+          required: true

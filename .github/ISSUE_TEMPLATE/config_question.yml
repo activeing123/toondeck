@@ -1,0 +1,32 @@
+name: Config question
+description: "It didn't break — you're just not sure how it's meant to work."
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Ask away. Before submitting, the README's **What you get** table and the
+        in-app page guides cover the most common ones — each panel has a short
+        "how this works" block at the bottom.
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Your question
+    validations:
+      required: true
+
+  - type: dropdown
+    id: topic
+    attributes:
+      label: About which part?
+      options:
+        - Vault / API keys
+        - MCP servers
+        - Skills
+        - Agents (launch, models, API source)
+        - Logs
+        - install / setup
+        - other
+    validations:
+      required: true

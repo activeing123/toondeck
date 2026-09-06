@@ -1,0 +1,79 @@
+name: Bug report
+description: Something is broken or behaves differently from what the UI says.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time. Two things that make your report twice as
+        useful: **never paste an API key**, and tell us exactly how you
+        installed — "works from source but not installed" (or the reverse) is a
+        real bug class here, not a user error.
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: OS
+      options:
+        - Windows
+        - macOS
+        - Linux (desktop)
+        - Linux (headless / server)
+        - other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: install
+    attributes:
+      label: How did you install ToonDeck?
+      options:
+        - pip install toondeck (PyPI)
+        - pip install . from a clone (source)
+        - pip install -e . (development)
+        - other
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: ToonDeck version
+      description: Output of `pip show toondeck`, or the commit hash if from source.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: keychain
+    attributes:
+      label: Does your OS keychain work?
+      description: "e.g. Windows Credential Manager, macOS Keychain, GNOME Keyring. If unsure, pick 'not sure'."
+      options:
+        - "yes"
+        - "no"
+        - not sure
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, what you saw instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Console output / logs
+      description: Redact any key or token first. A log that contains a secret will have to be removed.
+      render: shell
+
+  - type: checkboxes
+    id: attest
+    attributes:
+      label: Attestation
+      options:
+        - label: I have removed all API keys and tokens from this report.
+          required: true

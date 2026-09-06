@@ -3,9 +3,20 @@
 > One deck for every agent — all your MCP tools, skills, models and API keys,
 > configured once, running everywhere.
 
+[![CI](https://github.com/activeing123/toondeck/actions/workflows/ci.yml/badge.svg)](https://github.com/activeing123/toondeck/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/toondeck)](https://pypi.org/project/toondeck/)
+![Python](https://img.shields.io/badge/python-3.10%2B-blue)
+![License](https://img.shields.io/badge/license-Apache--2.0-green)
+
 **Status: pre-alpha.** Works on your own machine; expect rough edges before a
 1.0. Powered by [mcptoon](https://github.com/activeing123/mcptoon), which is
 pulled in automatically as a dependency.
+
+<!-- TODO before going public: one screenshot of the console (MCP page with a
+few servers green is the most convincing). 1280px wide, PNG, under 500 KB —
+drop it in docs/screenshot.png and uncomment:
+![ToonDeck console](docs/screenshot.png)
+-->
 
 ## Requirements
 
@@ -66,5 +77,16 @@ Reproduce it locally before tagging:
 ```bash
 python scripts/clean_room_check.py
 ```
+
+## Security
+
+API keys never touch disk and never leave your machine — the full model, and
+how to report a vulnerability privately, is in
+[SECURITY.md](.github/SECURITY.md).
+
+## Contributing
+
+The short version: every fix ships with a gate, and the clean-room script is the
+boss. Details in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 License: Apache-2.0
