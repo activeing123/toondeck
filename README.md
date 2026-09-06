@@ -82,8 +82,8 @@ python scripts/clean_room_check.py
 
 ## Security
 
-API keys never touch disk and never leave your machine — the full model, and
-how to report a vulnerability privately, is in
+API keys never touch disk and never leave your machine — the full model and
+the private vulnerability reporting channel are in
 [SECURITY.md](.github/SECURITY.md).
 
 ## Contributing

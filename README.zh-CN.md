@@ -40,7 +40,7 @@ toondeck          # 启动本地控制台并打开浏览器
 从 PyPI 装——还没发布，目前这条命令会失败：
 
 ```bash
-pip install toondeck   # coming soon
+pip install toondeck   # 即将上线
 ```
 
 Web UI **随包发布**，源码安装不需要 node、不需要 pnpm、没有任何构建步骤。
@@ -54,11 +54,6 @@ Web UI **随包发布**，源码安装不需要 node、不需要 pnpm、没有�
 | **代理** | 自动检测已安装的编码 agent，启动/停止，切换模型和 API 来源 |
 | **日志** | 面板启动的一切都有实时终端 |
 | **保险库** | 每个 provider 一把密钥，存进系统钥匙串，配真实探测 |
-
-## 安全
-
-API 密钥不落盘、不离开你的机器——完整的安全模型，以及漏洞私下报告的入口，
-见 [SECURITY.md](.github/SECURITY.md)。
 
 ## 开发
 
@@ -80,6 +75,11 @@ tag 前可在本地复现：
 ```bash
 python scripts/clean_room_check.py
 ```
+
+## 安全
+
+API 密钥不落盘、不离开你的机器——完整的安全模型，以及漏洞私下报告的入口，
+见 [SECURITY.md](.github/SECURITY.md)。
 
 ## 参与贡献
 

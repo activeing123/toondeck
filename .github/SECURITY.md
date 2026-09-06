@@ -19,7 +19,7 @@ vulnerability). Please do not open a public issue for anything security-related.
 
 You will get a response within 7 days. Please include:
 
-- ToonDeck version (`toondeck --version` or the commit you run from)
+- ToonDeck version (output of `pip show toondeck`, or the commit you run from)
 - OS and keychain backend
 - What you expected vs. what happened, with as much of the request/response as
   you can share — **redact every key value** before sending
