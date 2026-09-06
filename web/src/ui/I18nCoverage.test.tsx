@@ -66,7 +66,9 @@ describe("C1: fleet dashboard follows the language toggle", () => {
         <FleetDashboard />
       </I18nProvider>,
     );
-    expect(await screen.findByText(/mcptoon fleet overview/i)).toBeInTheDocument();
+    // N-R14 / U1-②: the heading dropped "fleet" on both sides — 舰队 on the
+    // Chinese, and the warship word itself on the English.
+    expect(await screen.findByText(/mcptoon capabilities/i)).toBeInTheDocument();
     await user_click_toggle_and_expect();
   });
 
@@ -90,7 +92,8 @@ describe("C1: fleet dashboard follows the language toggle", () => {
 async function user_click_toggle_and_expect() {
   await import("@testing-library/user-event").then(async ({ default: userEvent }) => {
     await userEvent.click(screen.getByRole("button", { name: "toggle" }));
-    expect(await screen.findByText(/mcptoon 舰队总览/)).toBeInTheDocument();
-    expect(screen.getByText(/MCP 工具（全量实探）/)).toBeInTheDocument();
+    // N-R14 / U1-②: 舰队→能力, 实探→探测 (one action, one Chinese word)
+    expect(await screen.findByText(/mcptoon 能力总览/)).toBeInTheDocument();
+    expect(screen.getByText(/MCP 工具（全量探测）/)).toBeInTheDocument();
   });
 }

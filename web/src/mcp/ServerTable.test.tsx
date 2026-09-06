@@ -75,7 +75,7 @@ describe("ServerTable (R47)", () => {
     const rows = buildRows(managed, inventory, null);
     renderTable(rows);
     expect(screen.getAllByText(/managed|已接管/).length).toBe(1);
-    expect(screen.getAllByText(/discovered|待收编/).length).toBe(1);
+    expect(screen.getAllByText(/discovered|还没接管/).length).toBe(1);
     expect(screen.getByText(/PROCESS_DIED/)).toBeInTheDocument(); // never buried
   });
 

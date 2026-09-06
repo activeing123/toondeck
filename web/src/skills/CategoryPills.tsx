@@ -98,7 +98,13 @@ export default function CategoryPills({
       </div>
       {skills.length === 0 ? (
         // R33: zero skills is a different story from "no search hits"
-        <ZeroState icon="🧩" titleKey="skills.emptyTitle" hintKey="skills.emptyHint" />
+        <ZeroState
+          icon="🧩"
+          titleKey="skills.emptyTitle"
+          hintKey="skills.emptyHint"
+          ctaHref="#/agents"
+          ctaLabelKey="common.ctaGoAgents"
+        />
       ) : searching ? (
         <>
           <p className="text-xs text-deck-muted" data-testid="search-hits">

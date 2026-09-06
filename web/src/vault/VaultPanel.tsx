@@ -77,8 +77,15 @@ export default function VaultPanel() {
     setBusy(id);
     try {
       const r = await fetch(`/api/vault/test/${id}`, { method: "POST" }).then((r2) => r2.json());
-      if (!r.ok && r.error) toast.error(`probe failed: ${r.error}`);
-      else if (r.ok) toast.ok(t("vault.stored"));
+      // CLEAN-ROOM AUDIT 2026-09-05 leg 2 — two fixes on this one line pair:
+      // 1. Judge success FIRST. The old `!r.ok && r.error` guard went totally
+      //    silent on a 500 body (FastAPI puts the reason in `detail`, not
+      //    `error`), so a missing keychain looked like a dead button.
+      // 2. Route failures through backendError, the single localization
+      //    entrypoint — this was the one save path fe84f5e left forwarding the
+      //    raw token to the user. Success no longer claims the key was stored.
+      if (r.ok) toast.ok(t("vault.probeOk"));
+      else toast.error(backendError(r, t, t("vault.probeFailed")));
       await load();
     } finally {
       setBusy(null);
@@ -138,7 +145,9 @@ export default function VaultPanel() {
           <li>{t("vault.guideStep2")}</li>
           <li>{t("vault.guideStep3")}</li>
         </ol>
-        <p className="mt-2 text-xs text-deck-muted">{t("vault.guideAlias")}</p>
+        {/* N-R14 / N3: the launch-alias sentence was dropped from here — the
+            backend takes `aliases`, but no UI anywhere can send them, so the
+            guide was teaching an operation nobody can perform. */}
         <div className="mt-3">
           <button
             data-testid="vault-add-provider"
@@ -162,7 +171,13 @@ export default function VaultPanel() {
       </section>
 
       {providers.length === 0 ? (
-        <ZeroState icon="🔐" titleKey="vault.emptyTitle" hintKey="vault.emptyHint" />
+        <ZeroState
+          icon="🔐"
+          titleKey="vault.emptyTitle"
+          hintKey="vault.emptyHint"
+          ctaHref="#/agents"
+          ctaLabelKey="common.ctaGoAgents"
+        />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {providers.map((p) => (

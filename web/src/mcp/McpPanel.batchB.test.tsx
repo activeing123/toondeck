@@ -106,7 +106,7 @@ describe("B1: adopt all", () => {
       </I18nProvider>,
     );
     await screen.findByText("alpha");
-    await userEvent.click(screen.getByRole("button", { name: /adopt all|一键收编/ }));
+    await userEvent.click(screen.getByRole("button", { name: /adopt all|一键接管/ }));
     await waitFor(() => {
       const call = fetchMock.mock.calls.find(
         ([u, init]) => u === "/api/mcp/import" && (init as RequestInit | undefined)?.method === "POST",
@@ -127,7 +127,7 @@ describe("B1: adopt all", () => {
       </I18nProvider>);
     await screen.findByText("alpha");
     await userEvent.click(screen.getByRole("checkbox", { name: /alpha/i }));
-    await userEvent.click(screen.getByRole("button", { name: /adopt all|一键收编/ }));
+    await userEvent.click(screen.getByRole("button", { name: /adopt all|一键接管/ }));
     await waitFor(() => {
       const call = fetchMock.mock.calls.find(
         ([u, init]) => u === "/api/mcp/import" && (init as RequestInit | undefined)?.method === "POST",

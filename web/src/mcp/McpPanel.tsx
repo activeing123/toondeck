@@ -195,7 +195,13 @@ export default function McpPanel() {
             </div>
 
             {rows.length === 0 ? (
-              <ZeroState icon="🔌" titleKey="mcp.emptyTitle" hintKey="mcp.emptyHint" />
+              <ZeroState
+                icon="🔌"
+                titleKey="mcp.emptyTitle"
+                hintKey="mcp.emptyHint"
+                ctaHref="#/agents"
+                ctaLabelKey="common.ctaGoAgents"
+              />
             ) : (
               <ServerTable
                 rows={rows}

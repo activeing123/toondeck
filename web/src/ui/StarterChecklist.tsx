@@ -3,23 +3,30 @@ import { useI18n } from "../i18n";
 
 /*
  * N-R2 — the first hour decides whether a novice keeps the deck. This card
- * gives them a checkable three-step path out of the box: seal the default
- * password, see the engine prove the tools alive (health check), push
- * everything to every agent (sync). Each step flips to ✓ the moment the
- * real action happens somewhere in the app (localStorage flag + live
- * event), and the card removes itself when done or dismissed — it teaches
- * once, then gets out of the way.
+ * gives them a checkable path out of the box: seal the default password, see
+ * the engine prove the tools alive (health check), push everything to every
+ * agent (sync), and actually launch one agent (U1-⑤ — the payoff step the
+ * original three forgot). Each step flips to ✓ the moment the real action
+ * happens somewhere in the app (localStorage flag + live event), and the card
+ * removes itself when done or dismissed — it teaches once, then gets out of
+ * the way.
  */
 
-export type ClKey = "pw" | "health" | "sync";
+export type ClKey = "pw" | "health" | "sync" | "launch";
 
 const FLAGS: Record<ClKey, string> = {
   pw: "toondeck.cl.pw",
   health: "toondeck.cl.health",
   sync: "toondeck.cl.sync",
+  launch: "toondeck.cl.launch",
 };
 
-const ORDER: ClKey[] = ["pw", "health", "sync"];
+const ORDER: ClKey[] = ["pw", "health", "sync", "launch"];
+
+/** One construction of the tick map, so adding a step cannot miss a call site. */
+function tickState(): Record<ClKey, boolean> {
+  return ORDER.reduce((acc, k) => ({ ...acc, [k]: done(k) }), {} as Record<ClKey, boolean>);
+}
 
 export function markChecklistDone(key: ClKey): void {
   try {
@@ -40,7 +47,7 @@ function done(key: ClKey): boolean {
 
 export default function StarterChecklist() {
   const { t } = useI18n();
-  const [ticks, setTicks] = useState<Record<ClKey, boolean>>({ pw: done("pw"), health: done("health"), sync: done("sync") });
+  const [ticks, setTicks] = useState<Record<ClKey, boolean>>(tickState);
   const [dismissed, setDismissed] = useState<boolean>(() => {
     try {
       return localStorage.getItem("toondeck.cl.dismissed") === "1";
@@ -50,7 +57,7 @@ export default function StarterChecklist() {
   });
 
   useEffect(() => {
-    const refresh = () => setTicks({ pw: done("pw"), health: done("health"), sync: done("sync") });
+    const refresh = () => setTicks(tickState());
     window.addEventListener("toondeck:checklist", refresh);
     window.addEventListener("storage", refresh);
     return () => {
@@ -67,6 +74,7 @@ export default function StarterChecklist() {
     pw: t("cl.step.pw"),
     health: t("cl.step.health"),
     sync: t("cl.step.sync"),
+    launch: t("cl.step.launch"),
   };
 
   return (

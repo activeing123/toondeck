@@ -17,13 +17,18 @@ describe("ZeroState component", () => {
   it("renders icon, title, hint and optional CTA", () => {
     render(
       <I18nProvider>
-        <ZeroState icon="🤖" titleKey="agents.emptyTitle" hintKey="agents.emptyHint" ctaHref="#/mcp" ctaLabelKey="onboard.goMcp" />
+        <ZeroState icon="🤖" titleKey="agents.emptyTitle" hintKey="agents.emptyHint" ctaHref="#/mcp" ctaLabelKey="common.ctaGoMcp" />
       </I18nProvider>,
     );
     expect(screen.getByText(/no agents detected yet/i)).toBeInTheDocument();
     expect(screen.getByText(/Install a supported CLI agent/i)).toBeInTheDocument();
     const cta = screen.getByRole("link");
     expect(cta).toHaveAttribute("href", "#/mcp");
+    // N-R14: this test used to assert the link EXISTED and never read its
+    // label — which is how a deleted namespace (onboard.goMcp) sat here for
+    // rounds, since t() renders an unknown key as that key's own literal text.
+    expect(cta?.textContent).toMatch(/see what this machine|MCP 页/i);
+    expect(cta?.textContent).not.toMatch(/^[a-z]+\.[a-zA-Z]+$/); // never a raw key
   });
 });
 

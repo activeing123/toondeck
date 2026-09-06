@@ -13,21 +13,30 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
-function walk(dir: string): string[] {
+function walk(dir: string, includeTests: boolean): string[] {
   const out: string[] = [];
   for (const name of readdirSync(dir)) {
     const p = join(dir, name);
     const st = statSync(p);
-    if (st.isDirectory()) out.push(...walk(p));
-    else if (/\.(tsx?|jsx?)$/.test(name) && !/\.test\./.test(name)) out.push(p);
+    if (st.isDirectory()) out.push(...walk(p, includeTests));
+    // N-R14: the old blanket `.test.` exclusion served the DEAD-key rule (a key
+    // kept alive only by a test is still dead to users) but it also blinded the
+    // MISSING-key rule, which is exactly how EmptyStates.test.tsx went on
+    // referencing onboard.goMcp long after R53 deleted that whole namespace —
+    // and t() renders an unknown key as its own name, so the CTA would have
+    // shown a user the literal string "onboard.goMcp". Each rule now gets the
+    // file set it actually needs.
+    else if (/\.(tsx?|jsx?)$/.test(name) && (includeTests || !/\.test\./.test(name))) out.push(p);
   }
   return out;
 }
 
 const SRC = join(__dirname, "..");
-const SRC_FILES = walk(SRC).filter(
-  (f) => !f.endsWith("i18n.tsx") && !f.endsWith("logStream.ts"),
-);
+const notInfra = (f: string) => !f.endsWith("i18n.tsx") && !f.endsWith("logStream.ts");
+/** Production code only — what a user can actually reach. Feeds the DEAD rule. */
+const SRC_FILES = walk(SRC, false).filter(notInfra);
+/** Everything, tests included. Feeds the MISSING rule. */
+const ALL_FILES = walk(SRC, true).filter(notInfra);
 
 /** DICT keys, extracted statically — i18n.tsx keeps DICT module-private. */
 function dictKeysFromSource(): Set<string> {
@@ -39,7 +48,20 @@ function dictKeysFromSource(): Set<string> {
   return keys;
 }
 
-function usedKeys(): Map<string, string[]> {
+/**
+ * Drop comments before matching. The scanner is regex, not an AST, and a test
+ * file that merely WRITES ABOUT `t("key")` in its header comment is not a file
+ * that CALLS it. Without this, widening the scan to tests produced three
+ * phantom keys ("...", "key", and one spanning lines) alongside the real find.
+ * `://` is protected so URLs in copy survive.
+ */
+function stripComments(text: string): string {
+  return text
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/(^|[^:])\/\/[^\n]*/g, "$1");
+}
+
+function usedKeys(files: string[]): Map<string, string[]> {
   const used = new Map<string, string[]>();
   // t("key") literals AND any `*Key="key"` prop (ConfirmDialog's messageKey,
   // ZeroState's titleKey/hintKey/ctaLabelKey — R33 generalized the R26 rule:
@@ -48,8 +70,8 @@ function usedKeys(): Map<string, string[]> {
     /\bt\(\s*["'`]([^"'`]+)["'`]/g,
     /\b[A-Za-z]+Key=["'`]([^"'`]+)["'`]/g,
   ];
-  for (const file of SRC_FILES) {
-    const text = readFileSync(file, "utf-8");
+  for (const file of files) {
+    const text = stripComments(readFileSync(file, "utf-8"));
     for (const re of patterns) {
       for (const m of text.matchAll(re)) {
         const key = m[1];
@@ -62,7 +84,8 @@ function usedKeys(): Map<string, string[]> {
 
 describe("R24: i18n key-space audit", () => {
   const dictKeys = dictKeysFromSource();
-  const used = usedKeys();
+  const usedProd = usedKeys(SRC_FILES);
+  const usedAll = usedKeys(ALL_FILES);
 
   // keys reached through dynamic t(variable) calls — the static regex cannot
   // see them, so they are pinned here with the call site as justification:
@@ -103,13 +126,17 @@ describe("R24: i18n key-space audit", () => {
     "logs.actUnknown",
   ]);
 
-  it("has no dead keys (DICT entries no t() call references)", () => {
-    const dead = [...dictKeys].filter((k) => !used.has(k) && !DYNAMIC_KEYS.has(k));
+  it("has no dead keys (DICT entries no production t() call references)", () => {
+    // production files only on purpose: a key whose sole reader is a test is
+    // still invisible to users, so it must not be kept alive by that test.
+    const dead = [...dictKeys].filter((k) => !usedProd.has(k) && !DYNAMIC_KEYS.has(k));
     expect(dead).toEqual([]);
   });
 
-  it("has no missing keys (t() calls that would render a raw key)", () => {
-    const missing = [...used.keys()].filter((k) => !dictKeys.has(k));
+  it("has no missing keys (any t() call, test included, that would render a raw key)", () => {
+    // every file, tests included: an unknown key renders its own name, so a
+    // test that cites a deleted namespace is a real reference to nothing.
+    const missing = [...usedAll.keys()].filter((k) => !dictKeys.has(k));
     expect(missing).toEqual([]);
   });
 

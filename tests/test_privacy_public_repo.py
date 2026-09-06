@@ -114,3 +114,43 @@ def test_internal_planning_docs_stay_untracked():
         ["git", "-C", str(REPO), "check-ignore", "-q", ".context/DECISIONS.md"], capture_output=True
     ).returncode
     assert ignored == 0, ".context/ must be gitignored, not just deleted from the index"
+
+
+# ── author-environment traces ─────────────────────────────────────────────
+# N2/N4 (2026-09-05): neither the credential sweep nor the clean-room gate can
+# see these. They are not secrets and they do not break an install — they are
+# one developer's own skill names riding along in a public product: pinyin a
+# stranger cannot decode, and private tool names he does not have. Shipping
+# them publishes one person's stack, and a classifier built from them silently
+# sorts every other user's skills into 其他.
+# Assembled from halves, same rule as _WS above: this file is in scope.
+# Deliberately NOT here: `dsh` (ToonDeck formally supports it as an agent — see
+# deck/agents/adapters/, so it is a product feature, not a leak) and `archify`
+# (a public third-party project some fixtures happened to cite; the fixtures
+# have since been renamed to neutral fakes anyway).
+_TRACES = tuple(
+    a + b
+    for a, b in (
+        ("g", "brain"), ("mempal", "ace"), ("ji", "yi"), ("zhang", "ben"),
+        ("hui", "hua"), ("xia", "zai"), ("kua", "ke"),
+        ("tu", "pu"), ("lun", "xun"), ("stream", "guard"), ("dual", "-machine"),
+        ("yu", "ming"), ("tui", "guang"), ("she", "jiao"), ("mail", "bot"),
+        ("ri", "bao"), ("xie", "wen"), ("zcl", "ean"),
+        ("qing", "li"), ("ka", "mi"), ("wig", "olo"), ("om", "ni"), ("last", "30"),
+    )
+)
+_TRACE_RE = re.compile(r"\b(" + "|".join(_TRACES) + r")\b", re.I)
+
+
+def test_no_author_environment_traces_in_shipped_code():
+    """A product meant for strangers must not name one stranger's tools."""
+    offenders = []
+    for f in tracked_code_files():
+        text = f.read_text(encoding="utf-8", errors="replace")
+        for i, line in enumerate(text.splitlines(), 1):
+            m = _TRACE_RE.search(line)
+            if m:
+                offenders.append(f"{f.relative_to(REPO).as_posix()}:{i} [{m.group(1)}]")
+    assert not offenders, (
+        "author-environment names would ship to strangers:\n" + "\n".join(offenders[:20])
+    )

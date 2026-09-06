@@ -128,12 +128,14 @@ export default function SkillsPanel() {
         </div>
       </div>
 
-      <input
-        placeholder="filter skills…"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        className="glass rounded-deck px-3 py-2 text-sm w-full md:w-72"
-      />
+      {/* N-R14 / U1-③: this page had TWO search boxes bound to the same
+          `query` — this one (hardcoded English placeholder) and the one inside
+          CategoryPills right below it. Two identical-looking-but-different
+          inputs on one panel read as two different filters. CategoryPills'
+          box stays: its placeholder is localized and actually tells you what
+          it searches ("skill names or descriptions"), and it sits next to the
+          categories it filters. `query` itself stays — it is still the single
+          source of truth handed down to CategoryPills. */}
 
       {/* R54: tutorial — category pills, search flattens, sync/remove semantics */}
       <HowTo

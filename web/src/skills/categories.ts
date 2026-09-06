@@ -1,13 +1,23 @@
-/** 技能自动分类规则 — SkillsPanel 与 CategoryPills 共用。 */
+/** 技能自动分类规则 — SkillsPanel 与 CategoryPills 共用。
+ *
+ * N4: this table used to carry one developer's own skill ecosystem — pinyin
+ * abbreviations of his Chinese skill names that only he could decode, plus
+ * private tool names. Two reasons to drop them: a stranger's skills can never
+ * match a word he has never heard, and shipping the list publishes one
+ * person's tool stack.
+ * Kept: ordinary vocabulary in either language, and product names anyone can
+ * look up (docker, figma, clash, surfshark, aria2, quark, comfyui, remotion).
+ * tests/test_privacy_public_repo.py enforces this boundary.
+ */
 export const CATEGORY_RULES: Record<string, string> = {
-  "🎬 视频与音频": "video|comfy|remotion|hyperframes|seedance|剪映|视频|tts|asr|语音|播客|口播|字幕|song|music",
-  "🔍 搜索与情报": "search|搜索|exa|wigolo|crawl|抓取|爬虫|reddit|twitter|热榜|trend|last30|research|omni|kb",
-  "📥 下载": "download|下载|网盘|xiazai|kuake|quark|aria2|baidu|xunlei|netdisk",
-  "🧠 记忆与会话": "gbrain|记忆|memory|zhangben|jiyi|mempalace|账本|handoff|huihua|会话|session|index",
-  "🛠 开发工程": "git|github|gh-|code|dev|python|powershell|testing|security|docker|tauri|insforge|skill|规范|review|tdd|archify|tupu|config|debug|error",
-  "🌐 网络与基础设施": "clash|vps|ssh|网络|代理|lunxun|streamguard|surfshark|隧道|dual-machine|cf|cdn|yuming|域名",
-  "📣 内容与增长": "推广|tuiguang|blog|博主|发帖|shejiao|mail|邮箱|mailbot|x-ai|blogger|内容|ribao|xiewen|写文|humanizer|写作",
-  "🔌 平台与工具": "mcp|toondeck|api|key|llm|模型|model|apikey|rotate|dsh|agent|窗口|term|定时|automat|windows|scan|zclean|qingli|password|kami|-pdf|doc",
+  "🎬 视频与音频": "video|comfyui|remotion|hyperframes|seedance|剪映|视频|tts|asr|语音|播客|口播|字幕|song|music",
+  "🔍 搜索与情报": "search|搜索|exa|crawl|抓取|爬虫|reddit|twitter|热榜|trend|research|kb",
+  "📥 下载": "download|下载|网盘|quark|aria2|baidu|xunlei|netdisk",
+  "🧠 记忆与会话": "记忆|memory|账本|ledger|handoff|会话|session|index",
+  "🛠 开发工程": "git|github|gh-|code|dev|python|powershell|testing|security|docker|tauri|insforge|skill|规范|review|tdd|config|debug|error",
+  "🌐 网络与基础设施": "clash|vps|ssh|网络|代理|surfshark|隧道|cf|cdn|域名",
+  "📣 内容与增长": "推广|blog|博主|发帖|mail|邮箱|x-ai|blogger|内容|写文|humanizer|写作",
+  "🔌 平台与工具": "mcp|toondeck|api|key|llm|模型|model|apikey|rotate|agent|窗口|term|定时|automat|windows|scan|password|-pdf|doc",
   "🎨 设计与图像": "设计|design|图|svg|海报|card|figma|图像|vision|ocr|截图|logo|icon|gpt-image",
 };
 

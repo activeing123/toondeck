@@ -57,6 +57,7 @@ describe("N-R2: honest discovery + manual add", () => {
       label: "omp",
       launch_command: ["omp"],
     });
-    expect(await screen.findByText(/已收编.*omp|adopted omp/)).toBeInTheDocument();
+    // N-R14 / U1-②: adopt is 接管 everywhere; 收编 is gone.
+    expect(await screen.findByText(/已接管.*omp|adopted omp/)).toBeInTheDocument();
   });
 });

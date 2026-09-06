@@ -26,7 +26,7 @@ function mk(n: number, prefix: string, desc: string) {
 const state = {
   source: "C:/x/.toondeck/skills",
   exists: true,
-  skills: [...mk(60, "comfy-skill", "video workflow helper"), ...mk(50, "wigolo-skill", "search and crawl helper")],
+  skills: [...mk(60, "comfy-skill", "video workflow helper"), ...mk(50, "atlas-skill", "search and crawl helper")],
   counts: { total: 110, valid: 110 },
 };
 

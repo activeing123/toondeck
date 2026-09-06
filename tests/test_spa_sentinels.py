@@ -11,7 +11,13 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-WEB_DIST = Path(__file__).resolve().parents[1] / "web" / "dist"
+# The shell under test has to be the shell that SHIPS. web/vite.config.ts builds
+# into src/toondeck/deck/api/webui (moved there by the 2026-09-05 clean-room
+# audit), and static.py consults a source-tree web/dist only as a last-resort
+# fallback the packaged copy always pre-empts. This fixture pointed at web/dist,
+# so the sentinels were guarding a directory the build stopped writing — it kept
+# passing off a stale 09-04 artifact as the current shell.
+WEB_DIST = Path(__file__).resolve().parents[1] / "src" / "toondeck" / "deck" / "api" / "webui"
 
 DEEP_LINKS = ["/", "/mcp", "/agents", "/skills", "/logs", "/vault", "/design"]
 

@@ -50,9 +50,10 @@ describe("N-R5: adoption speaks the deal", () => {
     // the adopt block lives inside the expandable row body — open it first
     await userEvent.click(screen.getByTestId("server-row-echo").querySelector("button")!);
     const btn = screen.getByTestId("server-adopt-echo");
-    expect(btn).toHaveTextContent(/收编进我的配置/);
+    // N-R14 / U1-②: adopt is 接管 everywhere; 收编 is gone.
+    expect(btn).toHaveTextContent(/接管它（复制进配置）/);
     const hint = screen.getByTestId(`adopt-hint-echo`);
     expect(hint).toHaveTextContent(/cursor/);
-    expect(hint).toHaveTextContent(/统一管理/);
+    expect(hint).toHaveTextContent(/都在这里管/);
   });
 });

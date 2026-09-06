@@ -23,11 +23,19 @@ export function backendError(
   res: ErrorEnvelope | null | undefined,
   t: Translate,
   fallback = "request failed",
+  hint?: string,
 ): string {
   if (!res) return fallback;
   if (res.error === "keyring_unavailable") {
     // The cause is still useful to whoever debugs this, so keep it appended.
-    return res.detail ? `${t("common.keyringUnavailable")}（${res.detail}）` : t("common.keyringUnavailable");
+    const base = res.detail
+      ? `${t("common.keyringUnavailable")}（${res.detail}）`
+      : t("common.keyringUnavailable");
+    // N5: the same token means different ways out depending on what the user
+    // was doing. Saving a key, the fix is the OS keychain. Launching with
+    // vault injection, there is an immediate way out — untick the switch —
+    // and the caller supplies it rather than a second copy of this sentence.
+    return hint ? `${base} ${hint}` : base;
   }
   return res.error ?? fallback;
 }

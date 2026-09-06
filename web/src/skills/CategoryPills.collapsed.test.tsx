@@ -26,9 +26,9 @@ const state = {
       errors: [],
     })),
     ...Array.from({ length: 18 }, (_, i) => ({
-      dirname: `wigolo-skill-${i}`,
+      dirname: `atlas-skill-${i}`,
       valid: true,
-      name: `wigolo-skill-${i}`,
+      name: `atlas-skill-${i}`,
       description: "search and crawl helper",
       errors: [],
     })),

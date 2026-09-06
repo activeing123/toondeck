@@ -1,9 +1,11 @@
 /*
- * N-R2: the first hour is where novices bounce. A three-step starter
+ * N-R2: the first hour is where novices bounce. A four-step starter
  * checklist on the landing page — change the default password, run one
- * health check, sync all agents — turns "what do I do with this?" into a
- * checkable path. Contract:
- * - 3 pending rows until flags exist; each flag flips its row to ✓
+ * health check, sync all agents, launch one agent — turns "what do I do
+ * with this?" into a checkable path. U1-⑤ added the fourth: the first three
+ * are all preparation, and a novice who finishes them still has nothing
+ * running. Contract:
+ * - 4 pending rows until flags exist; each flag flips its row to ✓
  * - flags arrive via localStorage (survives reloads) or the
  *   "toondeck:checklist" event (live update, no reload)
  * - all done or dismissed → the card vanishes (no nagging veterans)
@@ -26,13 +28,14 @@ describe("N-R2: starter checklist", () => {
     localStorage.removeItem("toondeck.cl.pw");
     localStorage.removeItem("toondeck.cl.health");
     localStorage.removeItem("toondeck.cl.sync");
+    localStorage.removeItem("toondeck.cl.launch");
     localStorage.removeItem("toondeck.cl.dismissed");
   });
 
-  it("starts with three pending steps", async () => {
+  it("starts with four pending steps", async () => {
     renderCard();
     const card = await screen.findByTestId("starter-checklist");
-    expect(card.querySelectorAll('[data-testid^="cl-step-"]')).toHaveLength(3);
+    expect(card.querySelectorAll('[data-testid^="cl-step-"]')).toHaveLength(4);
     expect(card.querySelectorAll('[data-cl-done="1"]')).toHaveLength(0);
   });
 
@@ -50,8 +53,28 @@ describe("N-R2: starter checklist", () => {
     localStorage.setItem("toondeck.cl.pw", "1");
     localStorage.setItem("toondeck.cl.health", "1");
     localStorage.setItem("toondeck.cl.sync", "1");
+    localStorage.setItem("toondeck.cl.launch", "1");
     renderCard();
     expect(screen.queryByTestId("starter-checklist")).toBeNull();
+  });
+
+  // U1-⑤: the card used to stop at preparation. Three ticks and still
+  // nothing was running — the step that pays for the other three has to be
+  // on the list, and it must be LAST, because that is the order a novice
+  // actually walks.
+  it("lists launching an agent as the final step", async () => {
+    renderCard();
+    const card = await screen.findByTestId("starter-checklist");
+    const rows = Array.from(card.querySelectorAll('[data-testid^="cl-step-"]'));
+    expect(rows.map((r) => r.getAttribute("data-testid"))).toEqual([
+      "cl-step-pw",
+      "cl-step-health",
+      "cl-step-sync",
+      "cl-step-launch",
+    ]);
+    expect(rows[3].textContent).toMatch(/Agents 页|Agents page/i);
+    // and it is numbered 4, not silently appended out of order
+    expect(rows[3].textContent).toMatch(/^4\./);
   });
 
   it("dismiss button hides the card for good", async () => {

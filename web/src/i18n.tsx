@@ -17,7 +17,7 @@ export const DICT: Record<string, { en: string; zh: string }> = {
   "portal.wrong": { en: "wrong password", zh: "密码不对" },
   "portal.forgot": {
     en: "Forgot it? Stop the deck, delete portal.json in ~/.toondeck, start again → password resets to admin123.",
-    zh: "忘记密码？停掉 deck，删除 ~/.toondeck 下的 portal.json，重启即恢复默认密码 admin123。",
+    zh: "忘记密码？停掉控制台，删除 ~/.toondeck 下的 portal.json，重启即恢复默认密码 admin123。",
   },
   "portal.change": { en: "change password", zh: "修改密码" },
   "portal.currentPw": { en: "current password", zh: "当前密码" },
@@ -64,8 +64,8 @@ export const DICT: Record<string, { en: string; zh: string }> = {
     zh: "无需任何配置——本机已装的 agent 自动发现。",
   },
   "howto.agents.2": {
-    en: "Press “launch” to start one; keys stored in the vault are injected automatically.",
-    zh: "点「启动」拉起 agent；保险库里存过的密钥会自动注入。",
+    en: "Press “launch” to start one. Want it to use your stored keys? Tick “inject vault keys at launch” first — off by default, so an agent keeps whatever config it already has.",
+    zh: "点「启动」拉起 agent。要让它用保险库里的密钥，先勾上「启动时注入保险库密钥」——默认不勾，agent 会沿用它已有的配置。",
   },
   "howto.agents.3": {
     en: "Model source / model can be switched anytime; live logs stream in the card.",
@@ -73,7 +73,7 @@ export const DICT: Record<string, { en: string; zh: string }> = {
   },
   "howto.logs.1": {
     en: "No configuration needed — every deck action (probe, sync, launch) is recorded here automatically.",
-    zh: "无需任何配置——deck 的每个动作（体检/同步/启动）都自动记录在这里。",
+    zh: "无需任何配置——控制台的每个动作（体检、同步、启动、探测）都自动记录在这里。",
   },
   "howto.logs.2": {
     en: "Something broke? Download the md report on an agent card and hand it to the agent to fix.",
@@ -87,10 +87,18 @@ export const DICT: Record<string, { en: string; zh: string }> = {
   "nav.design": { en: "design", zh: "设计" },
   "common.refresh": { en: "refresh", zh: "刷新" },
   "common.loading": { en: "loading deck…", zh: "加载中…" },
+  // N-R14 / U1-④: ZeroState has supported a CTA link since R33, yet no panel
+  // ever passed one — the only call site that did lived in a test and cited
+  // onboard.goMcp, a namespace R53 deleted, so it would have rendered the
+  // literal key to a user. Rule now: an empty page sends you back to the main
+  // line (Agents); an empty Agents page sends you to MCP to see what this
+  // machine actually has.
+  "common.ctaGoAgents": { en: "→ open the Agents page", zh: "→ 去 Agents 页" },
+  "common.ctaGoMcp": { en: "→ see what this machine has (MCP page)", zh: "→ 去 MCP 页看本机有什么" },
   "mcp.discover": { en: "discover from agent configs", zh: "从代理配置发现" },
   "mcp.scanning": { en: "scanning…", zh: "扫描中…" },
   "mcp.importSelected": { en: "import selected", zh: "导入选中" },
-  "mcp.adoptAll": { en: "adopt all", zh: "一键收编" },
+  "mcp.adoptAll": { en: "adopt all", zh: "一键接管" },
   "mcp.importing": { en: "importing…", zh: "导入中…" },
   "mcp.syncWarn": {
     en: "Sync writes the ToonDeck toolset into every detected agent, overwriting its MCP server list. Continue?",
@@ -100,7 +108,10 @@ export const DICT: Record<string, { en: string; zh: string }> = {
   "agents.stop": { en: "stop", zh: "停止" },
   "agents.starting": { en: "starting…", zh: "启动中…" },
   "agents.stopping": { en: "stopping…", zh: "停止中…" },
-  "mcp.healthWall": { en: "sweep took {s}s", zh: "本轮探测耗时 {s}s" },
+  // N-R14 / U1-②: this line times the HEALTH CHECK, but said 探测 — the one
+  // place the two concepts were spelled with the same word. "sweep" was the
+  // English side's fourth name for the same action.
+  "mcp.healthWall": { en: "health check took {s}s", zh: "本轮体检耗时 {s}s" },
   "mcp.healthBtn": { en: "run health check", zh: "全量体检" },
   "mcp.syncing": { en: "syncing…", zh: "同步中…" },
   "mcp.healthCap": { en: "per-server cap ≤{n}s", zh: "单 server 上限 ≤{n}s" },
@@ -123,7 +134,10 @@ export const DICT: Record<string, { en: string; zh: string }> = {
     zh: "忘记密码？不会被锁死——点开看找回步骤。",
   },
   // N-R2: the first-hour starter checklist
-  "cl.title": { en: "First hour: three steps and you own the deck", zh: "上手三步，牌桌就是你的了" },
+  // U1-⑤: three steps became four. pw/health/sync are all preparation — the
+  // novice's actual goal is an agent running with his tools in it, and the
+  // card never mentioned that step at all.
+  "cl.title": { en: "First hour: four steps and you own the deck", zh: "上手四步，牌桌就是你的了" },
   "cl.subtitle": {
     en: "Do them in the app — each one ticks itself off.",
     zh: "都在界面里点得到——做完一步自动打勾。",
@@ -134,6 +148,10 @@ export const DICT: Record<string, { en: string; zh: string }> = {
   "cl.step.pw": { en: "Change the default password (sidebar → change password)", zh: "改掉默认密码 admin123（侧栏 →「修改密码」）" },
   "cl.step.health": { en: "Run one health check on the MCP page", zh: "在 MCP 页跑一次「全量体检」" },
   "cl.step.sync": { en: "Sync all agents so every agent gets the same tools", zh: "「同步全部 agent」，让每个 agent 拿到同一份工具" },
+  "cl.step.launch": {
+    en: "Launch one agent from the Agents page — the step where it starts working for you",
+    zh: "去 Agents 页启动一个 agent——到这一步，它才开始真正替你干活",
+  },
   "agents.notInstalled": { en: "not found — install it first", zh: "没找到 · 需要先安装" },
   "agents.notLaunched": { en: "installed — press launch", zh: "已装好 · 点启动就行" },
   "agents.running": { en: "running", zh: "运行中" },
@@ -143,17 +161,17 @@ export const DICT: Record<string, { en: string; zh: string }> = {
   "agents.discover": { en: "discover agents", zh: "发现 agent" },
   "agents.discoverHint": {
     en: "adding one registers it into the deck — it gets its own card with launch/stop/logs, and joins skill sync.",
-    zh: "添加后它就正式注册进 deck：拥有自己的卡片（启动/停止/日志），并纳入技能同步。",
+    zh: "添加后它就正式注册进控制台：拥有自己的卡片（启动/停止/日志），并纳入技能同步。",
   },
-  "agents.adopt": { en: "adopt", zh: "收编" },
-  "agents.adopted": { en: "adopted", zh: "已收编" },
+  "agents.adopt": { en: "adopt", zh: "接管" },
+  "agents.adopted": { en: "adopted", zh: "已接管" },
   "agents.installPre": { en: "Install first — the card lights up on its own:", zh: "安装好后卡片会自动点亮：" },
   "agents.installPost": { en: "run it in any terminal", zh: "在任意终端运行即可" },
   "agents.stoppedOk": { en: "stopped — launch again any time", zh: "已停止——随时可以再启动" },
   "agents.unreachableTitle": { en: "engine unreachable", zh: "引擎连不上了" },
   "agents.unreachableHint": {
     en: "The agent list comes from the local engine — is the deck still running? Check the console, then refresh.",
-    zh: "agent 列表来自本地引擎——deck 是否还在运行？确认命令行窗口没关，然后点下面刷新。",
+    zh: "agent 列表来自本地引擎——控制台是否还在运行？确认命令行窗口没关，然后点下面刷新。",
   },
   "agents.probe": { en: "probe", zh: "探测" },
   "agents.launchCmd": { en: "launch command…", zh: "启动命令…" },
@@ -178,6 +196,11 @@ export const DICT: Record<string, { en: string; zh: string }> = {
   "vault.stored": { en: "● key stored in keychain", zh: "● 密钥已存入钥匙串" },
   "vault.local": { en: "local provider — no key required", zh: "本地 provider——无需密钥" },
   "vault.lastProbe": { en: "last probe: {result}", zh: "上次探测：{result}" },
+  // CLEAN-ROOM AUDIT 2026-09-05 leg 2: the probe toast reused vault.stored
+  // ("key stored in keychain") on success — but a probe stores nothing, it only
+  // spends an already-stored key. Say what the test actually proved.
+  "vault.probeOk": { en: "● key works — provider reachable", zh: "● 密钥可用——provider 连得上" },
+  "vault.probeFailed": { en: "probe failed", zh: "探测失败" },
   "vault.failedHint": {
     en: "probe failed — re-store a corrected key, delete it, or switch to another model in Agents.",
     zh: "探测失败——重存一把修正后的 key、删除它，或去 Agents 页换其他模型。",
@@ -191,15 +214,17 @@ export const DICT: Record<string, { en: string; zh: string }> = {
   },
   "vault.guideStep2": {
     en: "② test it — a real probe hits the provider endpoint and grades the result",
-    zh: "② 实测——对 provider 端点发真实探测并给出结论",
+    zh: "② 探测——对 provider 端点发一次真实请求并给出结论",
   },
+  // N-R14 / N3: wording now matches the switch that actually exists on the
+  // Agents page (it is called 启动时注入保险库密钥, not 使用保险库), and the
+  // default-off behaviour is stated so a novice is not surprised when an agent
+  // launches without their key. guideAlias is GONE: launch aliases are wired
+  // in the backend but have no UI entry anywhere, so the sentence taught an
+  // operation nobody can perform.
   "vault.guideStep3": {
-    en: "③ launch with “use vault” — stored keys are injected as env vars (OPENAI_API_KEY…) into the agent process",
-    zh: "③ 启动时勾选“使用保险库”——已存密钥以环境变量（OPENAI_API_KEY…）注入 agent 进程",
-  },
-  "vault.guideAlias": {
-    en: "agents reading a non-catalog env name (e.g. ANTHROPIC_AUTH_TOKEN) can be fed from a stored provider via launch aliases — the secret still never crosses the browser",
-    zh: "agent 读非目录内的环境变量名（如 ANTHROPIC_AUTH_TOKEN）时，可在启动别名里从已存 provider 取值——密钥同样不经过浏览器",
+    en: "③ to hand those keys to an agent, tick “inject vault keys at launch” on the Agents page — it is off by default, so an agent otherwise keeps its own config",
+    zh: "③ 要把密钥交给 agent，在 Agents 页勾上「启动时注入保险库密钥」——默认不勾，否则 agent 沿用它自己的配置",
   },
   "vault.addProvider": { en: "+ custom provider", zh: "+ 自定义 provider" },
   "vault.customBadge": { en: "custom", zh: "自定义" },
@@ -232,16 +257,25 @@ export const DICT: Record<string, { en: string; zh: string }> = {
   "status.engine": { en: "engine", zh: "引擎" },
   "status.offline": { en: "offline", zh: "离线" },
   // UX-C1: fleet dashboard + panel chrome
-  "fleet.overview": { en: "🚀 mcptoon fleet overview", zh: "🚀 mcptoon 舰队总览" },
+  // N-R14 / U1-②: 舰队 was a literal rendering of "fleet" — a word from a
+  // warship, saying nothing to a person looking at their MCP servers. Say
+  // 能力. Same pass unified probe's Chinese: it had FIVE spellings across the
+  // product (探测 / 实探 / 探针), which reads as five different actions.
+  "fleet.overview": { en: "🚀 mcptoon capabilities", zh: "🚀 mcptoon 能力总览" },
   "fleet.capabilities": { en: "capabilities, all managed by mcptoon", zh: "个能力，全部由 mcptoon 统一管理" },
-  "fleet.probing": { en: "probing everything…", zh: "全量实探中…" },  "fleet.summary": {
+  "fleet.probing": { en: "probing everything…", zh: "全量探测中…" },
+  "fleet.summary": {
     en: "{tools} MCP tools + {skills} skills + {agents} CLI agents",
     zh: "{tools} MCP 工具 + {skills} 技能 + {agents} CLI agents",
   },
-  "fleet.mcpTools": { en: "MCP tools (live-probed)", zh: "MCP 工具（全量实探）" },
-  "fleet.adoptedSub": { en: "{a} adopted · {d} more found, ready to adopt", zh: "{a} 已接管 · {d} 发现待收编" },
+  "fleet.mcpTools": { en: "MCP tools (live-probed)", zh: "MCP 工具（全量探测）" },
+  "fleet.adoptedSub": { en: "{a} adopted · {d} more found, ready to adopt", zh: "{a} 已接管 · {d} 个刚发现，可接管" },
   "fleet.firstScan": { en: "first full scan takes ~10-30s", zh: "首次全量扫描约 10-30 秒" },
-  "fleet.skills": { en: "skills (gbrain/jiyi & more)", zh: "技能（含 gbrain/jiyi 等）" },
+  // N2: this label used to name two skills from one developer's own machine,
+  // hardcoded into a public product's copy. A stranger's deck has neither, so
+  // the example taught nothing and it leaked the author's environment. The
+  // count/detail line below already says what a user needs to know.
+  "fleet.skills": { en: "skills", zh: "技能" },
   "fleet.skillsSub": { en: "{total} in total · views {ok}/{views} healthy", zh: "{total} 总数 · 视图 {ok}/{views} 健康" },
   "fleet.launchable": { en: "{n} launchable in one click", zh: "{n} 个可一键启动" },
   "fleet.bySource": { en: "tool sources:", zh: "工具来源：" },
@@ -255,7 +289,9 @@ export const DICT: Record<string, { en: string; zh: string }> = {
   },
   "fleet.tools": { en: "tools", zh: "工具" },
   "fleet.sourcesScanned": { en: "sources ({n} config sources scanned):", zh: "来源（{n} 个配置源已扫）：" },
-  "fleet.sot": { en: "single source of truth: {path}", zh: "单一真源: {path}" },
+  // N-R14 / U1-②: "single source of truth" is architecture jargon; the plain
+  // fact is that one file is what everything reads.
+  "fleet.sot": { en: "one config file everything reads: {path}", zh: "统一配置文件：{path}" },
   // UX-C2: three-state component
   "state.unreachable": { en: "engine unreachable — check the service and retry", zh: "引擎无响应——请检查服务后重试" },
   "state.retry": { en: "retry", zh: "重试" },
@@ -276,6 +312,26 @@ export const DICT: Record<string, { en: string; zh: string }> = {
   "agents.modelsCount": { en: "({n} models)", zh: "（{n} 模型）" },
   "agents.refreshModels": { en: "⟳ latest models", zh: "⟳ 拉取最新模型" },
   "agents.chatTest": { en: "▶ test chat", zh: "▶ 测试对话" },
+  // N-R14: these two buttons used to only dim to 40% while working — no
+  // spinner, no word change, so a click looked like a dead button. The shape
+  // is R27's (spinner + changed label); the wait is named in words but NOT as
+  // a number, because nobody has ever measured it on a real provider.
+  "agents.refreshModelsBusy": { en: "pulling… usually a few seconds", zh: "拉取中…（通常几秒）" },
+  "agents.chatTestBusy": { en: "testing… depends on the model", zh: "测试中…（要看模型响应）" },
+  // N-R14 / N3: the launch switch behind the promise vault.guideStep3 makes.
+  "agents.useVaultOnLaunch": { en: "inject vault keys at launch", zh: "启动时注入保险库密钥" },
+  "agents.useVaultHint": {
+    en: "Stored keys arrive as env vars (OPENAI_API_KEY…) in the agent's own process — they never leave this machine. Leave off to launch with whatever config the agent already has.",
+    zh: "已存密钥以环境变量（OPENAI_API_KEY…）注入 agent 自己的进程——不离开本机。不勾则沿用 agent 已有的配置。",
+  },
+  // N5: the way out, appended to the shared keyring message only when the user
+  // was launching. Saving a key has no equivalent escape hatch, so it lives
+  // here rather than in common.keyringUnavailable.
+  "agents.vaultLaunchHint": {
+    en: "Untick “inject vault keys at launch” and the agent will start normally on its own config.",
+    zh: "取消勾选「启动时注入保险库密钥」，agent 会照常用它自己的配置启动。",
+  },
+  "agents.actionFailed": { en: "action failed", zh: "操作失败" },
   "agents.modelsRefreshed": { en: "fetched {n} live models", zh: "拉到 {n} 个最新模型" },
   "agents.chatTestOk": { en: "「{model}」 replied: {reply} — source works ✓", zh: "「{model}」回复了：{reply} —— 来源可用 ✓" },
   "agents.liveCache": { en: "live from provider", zh: "来自实时拉取" },
@@ -354,19 +410,19 @@ export const DICT: Record<string, { en: string; zh: string }> = {
   },
   "logs.empty": {
     en: "no agent pipe logs yet — launch an agent (Agents page). Deck actions are recorded below in the activity journal.",
-    zh: "还没有 agent 管道日志 — 去 Agents 页启动一个。deck 自身的动作会记录在下方活动日志里。",
+    zh: "还没有 agent 管道日志 — 去 Agents 页启动一个。控制台自身的动作会记录在下方活动日志里。",
   },
   // R45: activity journal — what the deck itself did (honest ledger, not pipe logs)
   "logs.activityTitle": { en: "Activity", zh: "活动日志" },
-  "logs.activityHint": { en: "what the deck itself did — checks, syncs, launches, probes", zh: "deck 自身的动作 — 体检、同步、启动、探针" },
+  "logs.activityHint": { en: "what the deck itself did — checks, syncs, launches, probes", zh: "控制台自身的动作 — 体检、同步、启动、探测" },
   "logs.actHealth": { en: "MCP health check", zh: "MCP 体检" },
   "logs.actSync": { en: "MCP config sync", zh: "MCP 配置同步" },
   "logs.actSkillsSync": { en: "skills sync", zh: "技能同步" },
   "logs.actSkillsSyncOne": { en: "skill sync", zh: "单技能同步" },
   "logs.actLaunch": { en: "agent launch", zh: "启动 agent" },
   "logs.actStop": { en: "agent stop", zh: "停止 agent" },
-  "logs.actProbe": { en: "vault probe", zh: "密钥探针" },
-  "logs.actAdopt": { en: "agent adopt", zh: "收编 agent" },
+  "logs.actProbe": { en: "vault probe", zh: "密钥探测" },
+  "logs.actAdopt": { en: "agent adopt", zh: "接管 agent" },
   "logs.actUnknown": { en: "event", zh: "事件" },
   "logs.actOk": { en: "ok", zh: "成功" },
   "logs.actFail": { en: "failed", zh: "失败" },
@@ -395,20 +451,22 @@ export const DICT: Record<string, { en: string; zh: string }> = {
   "mcp.emptyTitle": { en: "no MCP servers under management", zh: "还没有被接管的 MCP server" },
   "mcp.emptyHint": {
     en: "Run a discovery from your agent configs and adopt the servers you trust.",
-    zh: "从各 agent 配置里跑一次发现，把你信任的 server 一键收编。",
+    zh: "从各 agent 配置里跑一次发现，把你信任的 server 一键接管。",
   },
   // R47: unified server table
   "mcp.badgeManaged": { en: "managed", zh: "已接管" },
-  "mcp.badgeDiscovered": { en: "discovered", zh: "待收编" },
+  "mcp.badgeDiscovered": { en: "discovered", zh: "还没接管" },
   "mcp.toolsCount": { en: "{n} tools", zh: "{n} 个工具" },
   "mcp.toolsOff": { en: "tools off — click to re-enable", zh: "已关工具 — 点击重新开启" },
   "mcp.noTools": { en: "no tools exposed", zh: "未暴露任何工具" },
-  "mcp.adoptOne": { en: "adopt into my config", zh: "收编进我的配置" },
+  // N-R14 / U1-②: 收编 ("conscript") was adopt's second Chinese spelling, on
+  // top of 接管 — and it read like a military term. One word for one action.
+  "mcp.adoptOne": { en: "adopt into my config", zh: "接管它（复制进配置）" },
   "mcp.adoptHint": {
-    en: "Discovered in {src}'s config, not yet yours. Adopting copies it into your single source of truth — managed here from now on.",
-    zh: "这是在 {src} 的配置里发现的，还没归你管。收编后会复制进你的单一真源，以后都在这里统一管理。",
+    en: "Discovered in {src}'s config, not yet yours. Adopting copies it into your one config file — managed here from now on.",
+    zh: "这是在 {src} 的配置里发现的，还没归你管。接管后会复制进你的统一配置，以后都在这里管。",
   },
-  "mcp.universe": { en: "{managed} managed · {discovered} awaiting adoption", zh: "{managed} 个已接管 · {discovered} 个待收编" },
+  "mcp.universe": { en: "{managed} managed · {discovered} awaiting adoption", zh: "{managed} 个已接管 · {discovered} 个还没接管" },
   "vault.emptyTitle": { en: "no providers detected", zh: "未发现任何 provider" },
   "vault.emptyHint": {
     en: "Provider profiles ship with the CLI agents you install — they land here.",
@@ -478,7 +536,7 @@ export const DICT: Record<string, { en: string; zh: string }> = {
   "skills.unreachableTitle": { en: "engine unreachable", zh: "引擎连不上了" },
   "skills.unreachableHint": {
     en: "Skills read from the local engine — is the deck still running? Check the console, then refresh.",
-    zh: "技能数据来自本地引擎——deck 是否还在运行？确认命令行窗口没关，然后点下面刷新。",
+    zh: "技能数据来自本地引擎——控制台是否还在运行？确认命令行窗口没关，然后点下面刷新。",
   },
 };
 

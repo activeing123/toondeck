@@ -44,6 +44,7 @@ describe("N-R7: adoption speaks its deal", () => {
     );
     await userEvent.type(await screen.findByTestId("manual-label"), "omp");
     await userEvent.click(screen.getByTestId("manual-add"));
-    expect(await screen.findByText(/已收编.*omp|adopted omp/)).toBeInTheDocument();
+    // N-R14 / U1-②: adopt is 接管 everywhere; 收编 is gone.
+    expect(await screen.findByText(/已接管.*omp|adopted omp/)).toBeInTheDocument();
   });
 });

@@ -67,7 +67,9 @@ describe("SkillsPanel", () => {
   it("filters skills by query", async () => {
     render(<SkillsPanel />);
     await screen.findByTestId("pick-category"); // collapsed default
-    await userEvent.type(screen.getByPlaceholderText("filter skills…"), "goo");
+    // N-R14: the panel's own duplicate box is gone — one box now, the one
+    // CategoryPills renders next to the categories it filters.
+    await userEvent.type(screen.getByPlaceholderText(/search skill names/), "goo");
     // search flattens results — no category click needed
     expect(await screen.findByText("good")).toBeInTheDocument();
     expect(screen.queryByText("broken")).not.toBeInTheDocument();

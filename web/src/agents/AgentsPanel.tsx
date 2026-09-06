@@ -9,6 +9,7 @@ import { ConfirmDialog } from "../ui/ConfirmDialog";
 import { backendError } from "../ui/backendError";
 import HowTo from "../ui/HowTo";
 import { Led } from "../ui/Led";
+import { markChecklistDone } from "../ui/StarterChecklist";
 
 function useI18nSafe() {
   try {
@@ -50,6 +51,11 @@ export default function AgentsPanel() {
   const [dialog, setDialog] = useState<ProviderDraft | null>(null);
   const [openLogs, setOpenLogs] = useState<string | null>(null);
   const [pending, setPending] = useState<{ id: string; action: "launch" | "stop" } | null>(null);
+  // N-R14 / N3: the backend has taken `use_vault` since R48 and vault.guide
+  // even tells the user to tick it at launch — but no UI ever sent the field,
+  // so the flag defaulted false, resolve_env() never ran, and a stored key
+  // could not reach an agent process. Wire the switch the copy promised.
+  const [useVaultOnLaunch, setUseVaultOnLaunch] = useState(false);
   // N-R5: an agent the user stopped on purpose is not a failure — remember
   // the stop so the exited card does not flash the self-fix loop.
   const [userStopped, setUserStopped] = useState<Set<string>>(new Set());
@@ -217,11 +223,14 @@ export default function AgentsPanel() {
 
   // N-R12: per-provider live actions — refresh the model list from the
   // provider's /models endpoint, and a 3-second chat round-trip test.
-  const [providerBusy, setProviderBusy] = useState<string | null>(null);
+  // N-R14: the slot now carries WHICH action is running (R27's `pending`
+  // shape), so each button can show its own spinner while both stay locked —
+  // they write to one shared providerResult row, so they must not race.
+  const [providerBusy, setProviderBusy] = useState<{ id: string; action: "models" | "test" } | null>(null);
   const [providerResult, setProviderResult] = useState<Record<string, string>>({});
 
   const refreshModels = async (name: string) => {
-    setProviderBusy(name);
+    setProviderBusy({ id: name, action: "models" });
     try {
       const r = await fetch(`/api/agents/providers/${name}/models/refresh`).then((x) => x.json());
       if (r.ok) {
@@ -236,7 +245,7 @@ export default function AgentsPanel() {
   };
 
   const testChat = async (name: string) => {
-    setProviderBusy(name);
+    setProviderBusy({ id: name, action: "test" });
     try {
       const r = await fetch(`/api/agents/providers/${name}/test`, { method: "POST" }).then((x) => x.json());
       setProviderResult((p) => ({
@@ -266,10 +275,28 @@ export default function AgentsPanel() {
     setPending({ id, action });
     setFlash((f) => ({ ...f, [id]: "" }));
     try {
-      const r = await fetch(`/api/agents/${id}/${action}`, { method: "POST" }).then((r2) => r2.json());
+      // Only a launch carries a payload; stop takes none. Sending
+      // Content-Type without a body would make FastAPI reject the call.
+      const r = await fetch(`/api/agents/${id}/${action}`, {
+        method: "POST",
+        ...(action === "launch"
+          ? {
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ use_vault: useVaultOnLaunch }),
+            }
+          : {}),
+      }).then((r2) => r2.json());
       if (!r.ok) {
-        toast.error(`${id}: ${r.error ?? "action failed"}`);
+        // N5: this used to print the raw token, or nothing at all when the
+        // backend answered 500 without an `error` field. Route it through the
+        // one localization entrypoint, and for a launch hand the user the way
+        // out — the vault switch is optional, the agent is not.
+        const hint = action === "launch" ? t("agents.vaultLaunchHint") : undefined;
+        toast.error(`${id}: ${backendError(r, t, t("agents.actionFailed"), hint)}`);
       } else if (action === "launch") {
+        // U1-⑤: the first-hour card's payoff step seals on the real action,
+        // exactly as pw / health / sync do on theirs.
+        markChecklistDone("launch");
         setUserStopped((s) => {
           const n = new Set(s);
           n.delete(id); // a fresh launch clears any earlier manual stop
@@ -336,6 +363,23 @@ export default function AgentsPanel() {
         steps={[t("howto.agents.1"), t("howto.agents.2"), t("howto.agents.3")]}
       />
 
+      {/* N-R14 / N3: the switch vault.guideStep3 has been promising since R48.
+          Off by default — launching with the agent's own config is what has
+          always happened, and this must not silently change it. */}
+      <label className="glass flex items-start gap-2.5 rounded-deck p-3 text-sm" data-testid="vault-launch-row">
+        <input
+          type="checkbox"
+          data-testid="use-vault-on-launch"
+          checked={useVaultOnLaunch}
+          onChange={(e) => setUseVaultOnLaunch(e.target.checked)}
+          className="mt-0.5"
+        />
+        <span>
+          <span className="font-semibold">{t("agents.useVaultOnLaunch")}</span>
+          <span className="mt-0.5 block text-xs text-deck-muted">{t("agents.useVaultHint")}</span>
+        </span>
+      </label>
+
       {/* N-R11 (user ask): one-shot model setup for every agent — the model
           string passes through verbatim, so custom model names just work.
           Explicit confirm: this overwrites per-card choices. */}
@@ -400,7 +444,13 @@ export default function AgentsPanel() {
       )}
 
       {agents.length === 0 ? (
-        <ZeroState icon="🤖" titleKey="agents.emptyTitle" hintKey="agents.emptyHint" />
+        <ZeroState
+          icon="🤖"
+          titleKey="agents.emptyTitle"
+          hintKey="agents.emptyHint"
+          ctaHref="#/mcp"
+          ctaLabelKey="common.ctaGoMcp"
+        />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {agents.map((a) => {
@@ -713,21 +763,45 @@ export default function AgentsPanel() {
                   <span className="text-led-ok">{t("agents.enabled")}</span>
                   {/* N-R12: live models + chat test — verify a source in
                       3 seconds instead of trusting a stale list */}
+                  {/* N-R14: while working, each button shows R27's spinner and
+                      says what it is doing plus how long to expect. Before
+                      this they only dimmed to 40% — indistinguishable from a
+                      dead button. */}
                   <button
                     onClick={() => refreshModels(p.id)}
-                    disabled={providerBusy === p.id}
+                    disabled={providerBusy?.id === p.id}
                     data-testid={`provider-models-refresh-${p.id}`}
                     className="rounded-deck border border-deck-line px-2 py-1 hover:bg-deck-panel2 disabled:opacity-40"
                   >
-                    {t("agents.refreshModels")}
+                    {providerBusy?.id === p.id && providerBusy.action === "models" ? (
+                      <>
+                        <span
+                          className="mr-1.5 inline-block h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent align-[-2px]"
+                          aria-hidden
+                        />
+                        {t("agents.refreshModelsBusy")}
+                      </>
+                    ) : (
+                      t("agents.refreshModels")
+                    )}
                   </button>
                   <button
                     onClick={() => testChat(p.id)}
-                    disabled={providerBusy === p.id}
+                    disabled={providerBusy?.id === p.id}
                     data-testid={`provider-test-${p.id}`}
                     className="rounded-deck border border-deck-line px-2 py-1 hover:bg-deck-panel2 disabled:opacity-40"
                   >
-                    {t("agents.chatTest")}
+                    {providerBusy?.id === p.id && providerBusy.action === "test" ? (
+                      <>
+                        <span
+                          className="mr-1.5 inline-block h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent align-[-2px]"
+                          aria-hidden
+                        />
+                        {t("agents.chatTestBusy")}
+                      </>
+                    ) : (
+                      t("agents.chatTest")
+                    )}
                   </button>
                   <button
                     onClick={() => openEdit(p.id)}

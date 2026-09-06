@@ -77,16 +77,21 @@ def test_frontmatter_folded_scalar_joins_lines():
 
 
 def test_frontmatter_nested_blocks_are_not_errors():
-    """Real-world: metadata: with indented sub-keys (archify style) must not fail lint."""
+    """A `metadata:` block with indented sub-keys must not fail lint.
+
+    The shape is common in the wild. The name and author here are neutral
+    fakes: a fixture that cites somebody's real project breaks the day they
+    rename it, and it advertises a third party's handle in our test suite.
+    """
     from toondeck.deck.skills.internal import frontmatter
 
     text = (
-        "---\nname: archify\ndescription: Diagrams as explorable standalone HTML.\n"
-        "license: MIT\nmetadata:\n  version: \"2.16\"\n  author: tt-a1i\n---\n\n# Body\n"
+        "---\nname: diagrammer\ndescription: Diagrams as explorable standalone HTML.\n"
+        "license: MIT\nmetadata:\n  version: \"2.16\"\n  author: example\n---\n\n# Body\n"
     )
     meta, errors = frontmatter.parse(text)
     assert errors == [], errors
-    assert meta["name"] == "archify"
+    assert meta["name"] == "diagrammer"
     assert meta["license"] == "MIT"
 
 
