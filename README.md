@@ -3,6 +3,8 @@
 > One deck for every agent — all your MCP tools, skills, models and API keys,
 > configured once, running everywhere.
 
+English | [简体中文](README.zh-CN.md)
+
 [![CI](https://github.com/activeing123/toondeck/actions/workflows/ci.yml/badge.svg)](https://github.com/activeing123/toondeck/actions/workflows/ci.yml)
 [![PyPI](https://img.shields.io/pypi/v/toondeck)](https://pypi.org/project/toondeck/)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
@@ -12,11 +14,11 @@
 1.0. Powered by [mcptoon](https://github.com/activeing123/mcptoon), which is
 pulled in automatically as a dependency.
 
-<!-- TODO before going public: one screenshot of the console (MCP page with a
-few servers green is the most convincing). 1280px wide, PNG, under 500 KB —
-drop it in docs/screenshot.png and uncomment:
-![ToonDeck console](docs/screenshot.png)
--->
+![ToonDeck console — the MCP page: every server and tool in one place, with the honest context-cost math](docs/screenshot-mcp.png)
+
+| Vault — keys in your OS keychain, never on disk | Skills — one folder, synced to every agent |
+| --- | --- |
+| ![Vault page](docs/screenshot-vault.png) | ![Skills page](docs/screenshot-skills.png) |
 
 ## Requirements
 
