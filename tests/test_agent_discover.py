@@ -136,8 +136,6 @@ def test_omp_is_a_first_class_adapter(tmp_path):
 def test_detect_exposes_install_hint_for_uninstalled_agents(tmp_path):
     """N-R4: a novice staring at an uninstalled card needs the install
     command right there — adapters carry an optional install_hint."""
-    import json as _json
-    from pathlib import Path
 
     from toondeck.deck.agents import internal
     from toondeck.deck.agents.internal.probes import detect
