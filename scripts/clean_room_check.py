@@ -106,6 +106,104 @@ st, body = call("/api/skills")
 check("unknown /api path is an honest 404 JSON (not the shell)",
       st == 404 and b"not_found" in body, f"-> {st}")
 
+# ── ACTIONS, not just reads ───────────────────────────────────────────────
+# CLEAN-ROOM AUDIT 2026-09-05 leg 2: every check above is a GET, which is how a
+# broken POST survived a "RESULT: PASS". The vault probe is the one action the
+# UI fires unconditionally, and on a machine with no usable keyring the raise
+# escaped the handler: FastAPI answered 500 with the reason under `detail`, and
+# the UI's `!r.ok && r.error` guard showed the user nothing at all.
+#
+# Two checks follow, because one is not enough. The first exercises the real
+# HTTP failure path. The second breaks the keyring deliberately — necessary
+# because fake HOME does NOT disable it on Windows (WinVault follows the
+# logged-in user, not $HOME), so without that second step this gate passes on
+# machines that would still crash a Linux user, and says so while lying.
+def post(p, data=b"{}"):
+    req = urllib.request.Request(
+        f"http://127.0.0.1:{PORT}{p}", data=data, method="POST",
+        headers={"Content-Type": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=30) as r:
+            return r.status, r.read()
+    except urllib.error.HTTPError as e:
+        return e.code, e.read()
+
+st, body = call("/api/vault/state")
+vs = json.loads(body or b"{}")
+provs = vs.get("providers") or []
+pid = provs[0].get("id") if provs else ""
+check("vault state lists a provider to act on", bool(pid), f"providers={len(provs)}")
+if pid:
+    st, body = post(f"/api/vault/test/{pid}")
+    try:
+        env = json.loads(body or b"{}")
+        parsed = isinstance(env, dict)
+    except Exception:
+        env, parsed = {}, False
+    check("POST vault probe answers JSON, never a 500",
+          st != 500 and parsed and "ok" in env, f"-> {st} keys={sorted(env)[:4]}")
+    if env.get("ok") is False:
+        check("a failed probe names a reason (never silent)", bool(env.get("error")),
+              f"error={env.get('error')!r}")
+    check("probe never echoes a secret value", b"sk-" not in body and b"api_key" not in body)
+
+    # ── now actually break the keyring ────────────────────────────────────
+    # N1, honestly: the check above does NOT prove the bug. Fake HOME does not
+    # disable the keyring on Windows — WinVault follows the logged-in user, not
+    # $HOME — so a machine that passes it would still 500 on a Linux box with no
+    # Secret Service, which is the class of machine the bug was filed against.
+    # The server runs in THIS process, so the probe can take the one dependency
+    # the bug was about and break it on purpose. That is the only way this gate
+    # can prove N1 on any platform.
+    import toondeck.deck.vault as _v
+
+    def _no_keyring(provider):
+        raise RuntimeError("No recommended backend was available. Install a keyring backend.")
+
+    _orig = _v.store.get_secret
+    _v.store.get_secret = _no_keyring
+    try:
+        st, body = post(f"/api/vault/test/{pid}")
+        try:
+            env = json.loads(body or b"{}")
+            parsed = isinstance(env, dict)
+        except Exception:
+            env, parsed = {}, False
+        check("probe survives a BROKEN keyring (N1: never a 500)",
+              st != 500 and parsed and env.get("ok") is False
+              and env.get("error") == "keyring_unavailable",
+              f"-> {st} error={env.get('error')!r}")
+        check("broken keyring gives a reason, not a stack trace",
+              bool(env.get("detail")) and b"Traceback" not in body,
+              f"detail={str(env.get('detail'))[:44]!r}")
+        check("broken keyring still leaks no secret", b"sk-" not in body)
+
+        # N5: the same hole, one layer down. The Agents page now sends
+        # use_vault, so resolve_env() is reachable from an ordinary click — and
+        # metadata outlives keyring health: a key stored on a healthy machine
+        # leaves stored:true behind after the keyring dies, so the provider
+        # still looks injectable right up until get_secret() throws. Refusing
+        # the launch is the honest answer; starting an agent without the key it
+        # was just promised is a slower, more confusing failure.
+        _orig_meta = _v.meta.load_all
+        _v.meta.load_all = lambda: {"providers": {pid: {"stored": True}}}
+        try:
+            st, body = post("/api/agents/cleanroom-probe/launch", b'{"use_vault": true}')
+            try:
+                env = json.loads(body or b"{}")
+                parsed = isinstance(env, dict)
+            except Exception:
+                env, parsed = {}, False
+            check("launch with vault injection survives a BROKEN keyring (N5: never a 500)",
+                  st != 500 and parsed and env.get("ok") is False
+                  and env.get("error") == "keyring_unavailable",
+                  f"-> {st} error={env.get('error')!r}")
+            check("refused launch leaks no secret", b"sk-" not in body)
+        finally:
+            _v.meta.load_all = _orig_meta
+    finally:
+        _v.store.get_secret = _orig
+
 print("RESULT:", "PASS" if not fails else f"FAIL {fails}")
 raise SystemExit(0 if not fails else 1)
 '''
@@ -116,10 +214,58 @@ def run(cmd, **kw):
     return subprocess.run(cmd, text=True, **kw)
 
 
+def stranger_file_set() -> list[str]:
+    """What a stranger receives once this work lands: everything tracked, plus
+    new files that are not ignored. Ignored artifacts (a stale web/dist, a
+    .venv, a stray .env) stay out — that exclusion is the sandbox's whole point.
+    """
+    out = subprocess.run(
+        ["git", "-C", str(REPO), "ls-files", "--cached", "--others", "--exclude-standard"],
+        capture_output=True,
+        text=True,
+    ).stdout.splitlines()
+    return [rel for rel in out if (REPO / rel).is_file()]
+
+
+def overlay_worktree(clone: Path) -> tuple[int, int]:
+    """Write the working tree's content over the clone, keeping its .git.
+
+    Without this the gate can only ever prove the last commit, which is no
+    help while a fix is still under review — and a fix to a crash-on-probe bug
+    is exactly the kind of thing that must be clean-room proven BEFORE it is
+    committed, not after. The clone's history stays untouched, so the privacy
+    check above still reads real commits.
+    """
+    files = stranger_file_set()
+    keep = set(files)
+    tracked_at_head = subprocess.run(
+        ["git", "-C", str(clone), "ls-files"], capture_output=True, text=True
+    ).stdout.splitlines()
+    dropped = 0
+    for rel in tracked_at_head:
+        if rel not in keep and not (REPO / rel).exists():
+            victim = clone / rel
+            if victim.is_file():
+                victim.unlink()
+                dropped += 1
+    for rel in files:
+        dst = clone / rel
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(REPO / rel, dst)
+    return len(files), dropped
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--keep", action="store_true", help="keep the sandbox afterwards")
     ap.add_argument("--port", type=int, default=8813, help="port for the probe server")
+    ap.add_argument(
+        "--worktree",
+        action="store_true",
+        help="install and probe the WORKING TREE, not HEAD — proves a fix that "
+        "is not committed yet. Ignored files still stay out, so the stranger's "
+        "file set is unchanged in kind.",
+    )
     args = ap.parse_args()
 
     if shutil.which("git") is None:
@@ -157,6 +303,10 @@ def main() -> int:
             return 1
         print("privacy: fresh clone carries no internal planning docs (tree + history)\n")
 
+        if args.worktree:
+            n, dropped = overlay_worktree(clone)
+            print(f"WORKTREE MODE: overlaid {n} file(s), dropped {dropped} — HEAD is NOT what is being proven\n")
+
         # [2] a virtualenv with nothing in it but what the package asks for
         venv = tmp / "venv"
         r = run([sys.executable, "-m", "venv", str(venv)], capture_output=True)
@@ -190,10 +340,13 @@ def main() -> int:
         r = run([py, str(probe), str(args.port)], env=env, cwd=str(work))
         code = r.returncode
 
+        subject = "the WORKING TREE (not committed)" if args.worktree else "HEAD as a stranger gets it"
         if code == 0:
-            print("\nA stranger can install this commit and open the console.")
+            print(f"\nOK — {subject}: installs, boots, and answers the probe.")
+            if args.worktree:
+                print("     commit it, then re-run WITHOUT --worktree to prove the real artifact.")
         else:
-            print("\nNOT RELEASE-READY — fix the lines above before tagging.")
+            print(f"\nNOT RELEASE-READY — {subject} failed above. Fix it before tagging.")
         return code
     finally:
         if args.keep:

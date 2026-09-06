@@ -428,10 +428,20 @@ def create_app() -> FastAPI:
     @app.post("/api/agents/{agent_id}/launch")
     def agent_launch(agent_id: str, payload: LaunchIn | None = None) -> dict:
         env_extra: dict[str, str] = {}
-        if payload and payload.use_vault:
-            env_extra.update(vault.resolve_env())
-        if payload and payload.aliases:
-            env_extra.update(vault.alias_env(payload.aliases))
+        # N5: the vault helpers now raise a typed error instead of leaking a raw
+        # exception. That used to reach FastAPI as a bare 500 with no `error`
+        # field — the one response shape the frontend guard cannot display, so
+        # the user saw a click do nothing. Refuse the launch and say why,
+        # rather than start an agent missing the key it was just asked to
+        # inject; that agent would fail later with a provider-side "not
+        # authenticated", which is far harder to trace back to this checkbox.
+        try:
+            if payload and payload.use_vault:
+                env_extra.update(vault.resolve_env())
+            if payload and payload.aliases:
+                env_extra.update(vault.alias_env(payload.aliases))
+        except vault.VaultUnavailable as e:
+            return {"ok": False, "error": "keyring_unavailable", "detail": str(e)}
         if payload and payload.plain_env:
             env_extra.update(payload.plain_env)
         profile = payload.profile if payload and payload.profile else agents.get_sources().get(agent_id)

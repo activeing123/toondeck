@@ -14,6 +14,25 @@ from .internal import meta, store
 from .internal import providers as _providers
 
 
+class VaultUnavailable(RuntimeError):
+    """The keyring could not be read, so no keys could be injected.
+
+    N5: `test()` and `set_key()` already answer keyring failures with the
+    stable `keyring_unavailable` token, but the two injection helpers let the
+    raw exception escape. That was a latent hole while nothing in the UI could
+    ask for injection; the Agents page now has a "inject vault keys at launch"
+    switch, so an ordinary click reaches it. And metadata and keyring health
+    are separate facts — a key stored on a healthy machine leaves `stored:
+    true` behind when the keyring later dies (new box, wiped credentials, a
+    Linux session without Secret Service), so the provider still looks
+    injectable right up until the call throws.
+
+    Typed so the launch endpoint can turn it into the same envelope the rest
+    of the vault emits, instead of a bare 500 with no `error` field — the
+    exact shape the frontend guard cannot display.
+    """
+
+
 def set_key(provider: str, secret: str) -> dict:
     catalog = _providers.load_all()
     if provider not in catalog:
@@ -79,7 +98,15 @@ def test(provider: str, timeout: float = 12.0) -> dict:
         return {"ok": False, "error": f"unknown provider: {provider}"}
 
     headers = {"User-Agent": "toondeck/0.1"}
-    secret = store.get_secret(provider)
+    try:
+        secret = store.get_secret(provider)
+    except Exception as e:  # noqa: BLE001 — same class as set_key above
+        # CLEAN-ROOM AUDIT 2026-09-05 leg 2: set_key was token-ized, but this
+        # read path was missed. On a machine with no keychain backend the raise
+        # escaped test() entirely -> HTTP 500 -> the UI's `!r.ok && r.error`
+        # guard found no `error` field in FastAPI's 500 body and showed
+        # NOTHING: the probe button appeared to do nothing at all.
+        return {"ok": False, "error": "keyring_unavailable", "detail": str(e)}
     if p["auth_style"] == "bearer" and secret:
         headers["Authorization"] = f"Bearer {secret}"
     elif p["auth_style"] == "x-api-key" and secret:
@@ -112,7 +139,10 @@ def resolve_env(providers: list[str] | None = None) -> dict:
         providers = [pid for pid, e in stored.items() if e.get("stored")]
     env: dict[str, str] = {}
     for pid in providers:
-        env.update(store.provider_env(pid))
+        try:
+            env.update(store.provider_env(pid))
+        except Exception as e:  # noqa: BLE001 — keyring backends raise anything
+            raise VaultUnavailable(str(e)) from e
     return env
 
 
@@ -124,7 +154,10 @@ def alias_env(aliases: dict[str, str]) -> dict:
     """
     env: dict[str, str] = {}
     for target_var, provider in (aliases or {}).items():
-        secret = store.get_secret(provider)
+        try:
+            secret = store.get_secret(provider)
+        except Exception as e:  # noqa: BLE001 — same class as resolve_env above
+            raise VaultUnavailable(str(e)) from e
         if secret is not None:
             env[target_var] = secret
     return env
