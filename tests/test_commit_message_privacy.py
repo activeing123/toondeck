@@ -110,7 +110,7 @@ def test_no_private_planning_file_wording():
         for line in msg.splitlines()
         if re.search(r"hands? a roadmap to competitors|roadmap to competitors", line, re.I)
     ]
-    assert not bad, f"strategy framing leaked into history:\n" + "\n".join(f"{s}: {l[:90]}" for s, l in bad[:5])
+    assert not bad, "strategy framing leaked into history:\n" + "\n".join(f"{s}: {line[:90]}" for s, line in bad[:5])
 
 
 def test_commit_messages_carry_no_author_environment():

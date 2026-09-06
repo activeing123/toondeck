@@ -9,7 +9,6 @@ The catalog used to ship hardcoded model names that go stale. Now:
 - provider_catalog() merges the cached live models for configured profiles
 """
 
-import json
 
 import pytest
 from fastapi.testclient import TestClient
