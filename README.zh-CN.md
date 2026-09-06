@@ -29,22 +29,18 @@
 
 ## 安装
 
-从源码装——现在就能用：
+```bash
+pip install toondeck          # Web UI 随 wheel 发布——不需要 node、不需要构建
+toondeck                      # 启动本地控制台并打开浏览器
+```
+
+或从源码装：
 
 ```bash
 git clone https://github.com/activeing123/toondeck.git
 cd toondeck
 pip install .
-toondeck          # 启动本地控制台并打开浏览器
 ```
-
-从 PyPI 装——还没发布，目前这条命令会失败：
-
-```bash
-pip install toondeck   # 即将上线
-```
-
-Web UI **随包发布**，源码安装不需要 node、不需要 pnpm、没有任何构建步骤。
 
 ## 你会得到什么
 

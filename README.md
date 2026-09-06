@@ -31,23 +31,18 @@ pulled in automatically as a dependency.
 
 ## Install
 
-From source — works today:
+```bash
+pip install toondeck          # the web UI ships inside the wheel — no node, no build
+toondeck                      # starts the local console and opens your browser
+```
+
+Or from source:
 
 ```bash
 git clone https://github.com/activeing123/toondeck.git
 cd toondeck
 pip install .
-toondeck          # starts the local console and opens your browser
 ```
-
-From PyPI — not published yet, so this currently fails:
-
-```bash
-pip install toondeck   # coming soon
-```
-
-The web UI is **shipped inside the package**, so a source install needs no
-node, no `pnpm`, and no build step.
 
 ## What you get
 
