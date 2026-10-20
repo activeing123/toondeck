@@ -27,11 +27,15 @@ def engine_env(tmp_path, monkeypatch):
     monkeypatch.setenv("MCPTOON_CONFIG_FILE", str(cfg_file))
     monkeypatch.setenv("MCPTOON_CONFIG_FILE_TOML", str(tmp_path / "nope.toml"))
     monkeypatch.chdir(tmp_path)
-    import mcptoon.cache as mcache
     import mcptoon.config as mcfg
 
     monkeypatch.setattr(mcfg, "TOGGLE_FILE", tmp_path / "toggles.json")
-    monkeypatch.setattr(mcache, "_CACHE_FILE", tmp_path / "schema_cache.json")
+    # mcptoon 0.8.22 split the schema cache from one shared `schema_cache.json`
+    # into one file per server under a cache directory, and dropped the private
+    # `_CACHE_FILE` symbol this fixture used to patch. Redirect the documented
+    # env var instead: it is resolved at call time inside mcptoon.cache, so no
+    # private name is touched and a future layout change cannot break the suite.
+    monkeypatch.setenv("MCPTOON_CACHE_DIR", str(tmp_path / "cache"))
     monkeypatch.setenv("TOONDECK_SKILLS_DIR", str(tmp_path / "skills"))
     monkeypatch.setenv("TOONDECK_VIEWS_DIR", str(tmp_path / "views"))
     # R45: the activity journal must be hermetic too — API tests record deck

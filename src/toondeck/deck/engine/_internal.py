@@ -31,6 +31,24 @@ def sync_to_all(**kwargs) -> list[dict]:
     return msync.sync_to_all(**kwargs)
 
 
+def load_cache() -> dict:
+    """Read the schema cache through one guarded seam.
+
+    `mcptoon.cache._load_cache` is private and its entry shape moved in 0.8.22
+    (single shared file → one file per server). It is the only cache reader the
+    deck has, so a rename upstream must degrade this panel — not blow up the
+    whole `/api/state` route. Missing symbol or unreadable cache → empty dict.
+    """
+    reader = getattr(mcache, "_load_cache", None)
+    if reader is None:
+        return {}
+    try:
+        cache = reader()
+    except Exception:  # noqa: BLE001 — a cache read must never break the panel
+        return {}
+    return cache if isinstance(cache, dict) else {}
+
+
 def check_all(**kwargs) -> list[dict]:
     """Seam (tests monkeypatch this name) → legacy+deadline probe in production."""
     return check_all_legacy(**kwargs)
@@ -189,10 +207,7 @@ def get_manifest(use_cache: bool = True) -> dict[str, list[dict]]:
 
 def cache_meta(name: str) -> tuple[int, float | None]:
     """(cached tool count, cache age in seconds or None). No live probing."""
-    import mcptoon.cache as cache_mod
-
-    cache = cache_mod._load_cache()
-    entry = cache.get(name)
+    entry = load_cache().get(name)
     if not entry:
         return 0, None
     return len(entry.get("tools", [])), round(time.time() - entry.get("ts", 0), 1)
@@ -205,7 +220,7 @@ def token_savings() -> dict:
     NEVER triggers live probing (get_manifest would fetch on cache miss).
     Empty cache → zeroed, honest numbers.
     """
-    cache = mcache._load_cache()
+    cache = load_cache()
     manifest: dict[str, list[dict]] = {}
     for name, entry in cache.items():
         tools = [t for t in entry.get("tools", []) if isinstance(t, dict) and "name" in t]

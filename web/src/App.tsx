@@ -97,9 +97,9 @@ function Sidebar({ route }: { route: string }) {
       .catch(() => setHealth(null));
   }, []);
   return (
-    <aside role="complementary" aria-label="deck nav" className="hidden md:flex w-56 shrink-0 border-r border-deck-line flex-col p-4 gap-1 min-h-screen">
-      <a href="#/" className="text-xl font-bold mb-6">
-        Toon<span className="text-deck-accent">Deck</span>
+    <aside role="complementary" aria-label="deck nav" className="relative z-10 hidden md:flex w-56 shrink-0 border-r border-deck-line flex-col p-4 gap-1 min-h-screen bg-deck-bg/40 backdrop-blur-sm">
+      <a href="#/" className="text-xl font-extrabold tracking-tight mb-6 deck-gradient-text">
+        ToonDeck
       </a>
       <nav aria-label="sections" className="flex flex-col gap-1">
         {prodNav().map((n) => {
@@ -109,10 +109,18 @@ function Sidebar({ route }: { route: string }) {
               key={n.hash}
               href={n.hash}
               aria-current={active ? "page" : undefined}
-              className={`flex items-center gap-2.5 rounded-deck px-3 py-2 text-sm ${
-                active ? "bg-deck-panel2 text-deck-ink font-semibold" : "text-deck-muted hover:text-deck-ink"
+              className={`relative flex items-center gap-2.5 rounded-deck px-3 py-2 text-sm transition-colors ${
+                active
+                  ? "bg-deck-panel2/80 text-deck-ink font-semibold ring-1 ring-deck-accent/40"
+                  : "text-deck-muted hover:text-deck-ink hover:bg-deck-panel/60"
               }`}
             >
+              {active && (
+                <span
+                  aria-hidden="true"
+                  className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-0.5 rounded-full bg-deck-accent"
+                />
+              )}
               <span>{n.icon}</span>
               {t(n.key)}
             </a>
@@ -260,9 +268,10 @@ function PageFocus({ viewTag, children }: { viewTag: string; children: React.Rea
 function Shell({ children }: { children: React.ReactNode }) {
   const route = useHashRoute();
   return (
-    <div className="min-h-screen bg-deck-bg text-deck-ink flex">
+    <div className="relative min-h-screen bg-deck-bg text-deck-ink flex">
+      <div className="deck-atmosphere" aria-hidden="true" />
       <Sidebar route={route} />
-      <div className="flex-1 min-w-0 flex flex-col">
+      <div className="relative z-10 flex-1 min-w-0 flex flex-col">
         {/* R31: below md the sidebar is gone — this horizontal tab bar is the nav */}
         <nav
           aria-label="tabs"
@@ -273,7 +282,7 @@ function Shell({ children }: { children: React.ReactNode }) {
             return <MobileTab key={n.hash} n={n} active={active} />;
           })}
         </nav>
-        <main className="flex-1 p-4 md:p-8 max-w-6xl">
+        <main className="flex-1 p-4 md:p-8 max-w-6xl w-full">
           <PageFocus viewTag={route}>{children}</PageFocus>
         </main>
         <HelpFooter />
@@ -288,8 +297,8 @@ function MobileTab({ n, active }: { n: { hash: string; key: string; icon: string
     <a
       href={n.hash}
       aria-current={active ? "page" : undefined}
-      className={`flex items-center gap-1.5 whitespace-nowrap rounded-deck px-3 py-1.5 text-sm ${
-        active ? "bg-deck-panel2 text-deck-ink font-semibold" : "text-deck-muted"
+      className={`flex items-center gap-1.5 whitespace-nowrap rounded-deck px-3 py-1.5 text-sm transition-colors ${
+        active ? "bg-deck-panel2 text-deck-ink font-semibold ring-1 ring-deck-accent/40" : "text-deck-muted"
       }`}
     >
       <span>{n.icon}</span>

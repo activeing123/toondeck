@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "toondeck"
-version = "0.2.0"
+version = "0.2.1"
 description = "One deck for every agent — MCP tools, skills, models and API keys, configured once, running everywhere. Powered by mcptoon."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -32,7 +32,11 @@ dependencies = [
     # died with `ModuleNotFoundError: No module named 'mcptoon'`. The deck is a
     # bridge over the mcptoon engine, so the engine is a runtime dependency, not
     # an ambient assumption of this dev box (which has it editable-installed).
-    "mcptoon>=0.7.3",
+    # 0.8.22 is the floor, not a taste: that release split the schema cache into
+    # one file per server and reshaped `cache._load_cache()`'s entries. Below it
+    # `deck.engine` reads a layout that no longer exists (and the suite's fixture
+    # patched a private `_CACHE_FILE` that 0.8.22 deleted).
+    "mcptoon>=0.8.22",
     # httpx sat in dev extras, but deck.agents imports it for live model refresh
     # and the chat-test endpoint → those buttons would crash on a user's machine.
     "httpx>=0.27",

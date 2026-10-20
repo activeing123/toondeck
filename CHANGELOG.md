@@ -3,6 +3,45 @@
 All notable changes to ToonDeck are documented here. Dates are local ship dates;
 every entry lists the gate numbers it shipped with.
 
+## [0.2.1] — 2026-10-20
+
+Compatibility + looks release. mcptoon 0.8.22 reshaped the schema cache
+(one file per server, private `_CACHE_FILE` deleted); this release follows it,
+and re-skins the console to the mcptoon.github.io palette.
+
+### Fixed
+
+- **Test fixture pinned a symbol mcptoon deleted** (`tests/conftest.py`):
+  `monkeypatch.setattr(mcache, "_CACHE_FILE", ...)` raised `AttributeError` on
+  mcptoon >= 0.8.22, so every test using `engine_env` errored — 28 of them.
+  The fixture now redirects the documented `MCPTOON_CACHE_DIR` env var, which
+  mcptoon resolves at call time; no private name is touched.
+- **`deck.engine` read the private cache API from two places unguarded**
+  (`cache_meta`, `token_savings`). Both now go through one `load_cache()` seam
+  that returns `{}` when the symbol is missing or the cache is unreadable — a
+  future mcptoon rename degrades the panel instead of killing `/api/state`.
+- **`mcptoon>=0.7.3` floor was wrong after 0.8.22**: the deck reads a cache
+  layout that only exists from 0.8.22 on. Floor raised to `mcptoon>=0.8.22`
+  (verified against 0.8.24).
+
+### Changed
+
+- **Console re-skinned to the mcptoon.github.io look**: near-black `#090D16`
+  canvas, masked grid + indigo/cyan orbs, glass cards with hover lift, gradient
+  wordmark, indigo `#818CF8` accent replacing toon gold. Token names are
+  unchanged, so all 275 `bg-deck-*` / `text-deck-*` call sites re-skin at once.
+- **`web/landing/index.html` rebuilt** in the same language: gradient hero,
+  stat ribbon, six feature cards, responsive grid — one static file, no build
+  step, still served at `/landing`.
+- Lock screen gets the same atmosphere, gradient wordmark and a
+  "powered by mcptoon" pill; nav gains an active-rail marker.
+
+### Verified
+
+- `pytest`: **265 passed, 0 failed, 0 error** (mcptoon 0.8.24, Python 3.12).
+- `vitest`: **205 passed** (67 files). `ruff check src tests`: clean.
+- `pnpm build`: SPA rebuilt into `src/toondeck/deck/api/webui`.
+
 ## [0.2.0] — 2026-09-04
 
 The UX hardening release: 13 campaign rounds (R25-R37) that took the deck

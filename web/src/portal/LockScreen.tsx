@@ -53,20 +53,24 @@ export default function LockScreen({ onUnlock }: { onUnlock: () => void }) {
   };
 
   return (
-    <main className="min-h-screen bg-deck-bg text-deck-ink flex flex-col items-center justify-center gap-5 p-4">
-      <h1 className="text-3xl font-bold tracking-tight">
-        Toon<span className="text-deck-accent">Deck</span>
+    <main className="relative min-h-screen bg-deck-bg text-deck-ink flex flex-col items-center justify-center gap-5 p-4">
+      <div className="deck-atmosphere" aria-hidden="true" />
+      <h1 className="relative z-10 text-4xl font-extrabold tracking-tight deck-gradient-text">
+        ToonDeck
       </h1>
       {/* R54 小白-1: the one-line human value proposition — the landing page
           is gone, so this is the first honest sentence a newcomer reads */}
-      <p className="text-sm text-deck-muted max-w-md text-center" data-testid="portal-oneliner">
+      <p className="relative z-10 text-sm text-deck-muted max-w-md text-center" data-testid="portal-oneliner">
         {t("portal.oneliner")}
       </p>
+      <span className="relative z-10 rounded-full border border-deck-line bg-deck-panel/60 px-3 py-1 text-xs text-deck-muted">
+        powered by <span className="font-mono text-deck-accent">mcptoon</span>
+      </span>
       <div
         role="dialog"
         aria-label={t("portal.lockTitle")}
         data-testid="lock-screen"
-        className="glass rounded-deck p-6 w-full max-w-sm space-y-4"
+        className="deck-card relative z-10 p-6 w-full max-w-sm space-y-4"
       >
         <p className="font-semibold">{t("portal.lockTitle")}</p>
         {firstRun && (

@@ -25,7 +25,8 @@ def _apply() -> None:
         return
 
     # 1) Dead-stdin write (EINVAL 22) -> honest MCPError with stderr excerpt.
-    # mcptoon 0.7.4's response pump passes `timeout=` to _stdio_request; the
+    # `_stdio_request(payload, timeout=)` has carried the timeout parameter since
+    # 0.7.4 and still does at 0.8.24 (verified against the released wheel); the
     # shim must accept and forward it or every probed request TypeErrors.
     orig_request = mcptoon_client.MCPClient._stdio_request
 
