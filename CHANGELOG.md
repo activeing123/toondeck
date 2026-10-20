@@ -3,6 +3,14 @@
 All notable changes to ToonDeck are documented here. Dates are local ship dates;
 every entry lists the gate numbers it shipped with.
 
+## [0.2.2] — 2026-10-20
+
+Ships the standalone-landing fix on top of 0.2.1 (0.2.1 went out with an inline
+`data:` favicon `<link>`, which the landing contract forbids) and adds the local
+drift gate that would have caught it: `tests/test_packaged_webui.py` compares the
+packaged landing page with its source and checks every `--color-deck-*` token in
+`tokens.css` is present in the built stylesheet.
+
 ## [0.2.1] — 2026-10-20
 
 Compatibility + looks release. mcptoon 0.8.22 reshaped the schema cache
